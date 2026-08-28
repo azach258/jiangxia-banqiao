@@ -55,9 +55,23 @@ GEMINI_API_KEY=您的_GEMINI_API_KEY
 
 ---
 
-## 🛡️ 3. 台灣民俗調理法規紅線 (SOP 規範)
+## 🛡️ 3. 台灣民俗調理法規紅線與 Prompt SSOT 管理
 
-AI 客服的行為規則由 [line_bot_prompt.md](file:///c:/Users/love_/OneDrive/10_Antigravity_Workspace/meta/prompts/line_bot_prompt.md) 定義。為符合衛生局法規，AI 對答必須嚴格遵循以下界線：
+AI 客服的行為規則由專案集中倉庫的 [01_line_bot_customer_service.md](file:///c:/Users/love_/OneDrive/04_筆記與知識庫/00_my_obsidian/01_Projects/江夏傳統整復推拿_板橋館/prompts/01_line_bot_customer_service.md) 定義，並透過 `prompt_manager.py` 納入 Git 版本控制。
+
+> 💡 **Prompt 更新與同步指令**：
+> ```bash
+> # 1. 比對修改差異 (除錯/比對)
+> python prompt_manager.py diff 01_line_bot
+> 
+> # 2. 自動升級版本並提交 Git
+> python prompt_manager.py commit 01_line_bot -m "優化預約引導流程"
+> 
+> # 3. 同步至伺服器端點
+> python prompt_manager.py sync
+> ```
+
+為符合衛生局法規，AI 對答必須嚴格遵循以下界線：
 
 *   **🚫 禁忌詞彙 (醫療效果，嚴禁使用)**：治療、療效、根治、骨盆矯正、關節復位、脊椎側彎矯正、正骨、消炎、止痛、扭傷拉傷發炎、復健、療程。
 *   **✅ 替代詞彙 (保健舒緩，推薦使用)**：日常舒壓、紓解筋骨、消除疲勞、放鬆肌肉、身體平衡保養、調整體態。

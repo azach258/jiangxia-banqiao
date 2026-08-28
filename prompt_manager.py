@@ -105,11 +105,14 @@ def get_git_status_map():
     status_map = {}
     if code == 0 and out:
         for line in out.split("\n"):
-            line = line.strip()
-            if len(line) >= 3:
-                status_code = line[:2].strip()
-                filepath = line[3:].strip().replace('"', '')
-                status_map[filepath] = status_code
+            if not line.strip():
+                continue
+            # porcelain 格式前 2 字元為狀態碼，第 3 字元起為路徑
+            status_code = line[:2].strip()
+            filepath = line[3:].strip().strip('"')
+            # 轉換 Windows 反斜線為正斜線
+            filepath = filepath.replace("\\", "/")
+            status_map[filepath] = status_code
     return status_map
 
 def cmd_list(args):
@@ -305,8 +308,11 @@ def cmd_test(args):
     print(f"{'-' * 60}")
 
     # 1. 檢查禁忌詞防線
-    forbidden_words = ["治療", "療效", "根治", "骨盆矯正", "關節復位", "脊椎側彎矯正", "正骨", "消炎", "止痛", "復健", "療程"]
-    recommended_words = ["紓解筋骨", "消除疲勞", "放鬆肌肉", "保養", "日常舒壓", "身體平衡", "調整體態"]
+    forbidden_words = [
+        "治療", "療效", "根治", "矯正", "骨盆矯正", "關節復位", "脊椎側彎", "脊椎側彎矯正", 
+        "正骨", "消炎", "止痛", "復健", "療程", "椎間盤", "五十肩", "骨刺", "扭傷", "拉傷", "發炎"
+    ]
+    recommended_words = ["紓解筋骨", "消除疲勞", "放鬆肌肉", "保養", "日常舒壓", "身體平衡", "調整體態", "促進循環"]
 
     has_forbidden_section = "🚫 禁忌詞彙" in content or "禁用詞彙" in content or "絕對禁用" in content
     has_recommended_section = "✅ 建議替換" in content or "可用詞彙" in content or "推薦合規" in content
