@@ -20,3 +20,6 @@ meta_ads_creatives/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Build / Distribution
+dist/
