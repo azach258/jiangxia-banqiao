@@ -25,7 +25,7 @@ sequenceDiagram
     actor Customer as LINE 使用者
     participant LINE as LINE 平台 (Messaging API)
     participant Server as Webhook 伺服器 (line_server.js)
-    participant Gemini as Gemini API (gemini-2.5-flash)
+    participant Gemini as Gemini API (gemini-3.5-flash-lite)
     
     Customer->>LINE: 發送文字訊息
     LINE->>Server: HTTP POST /webhook (帶 x-line-signature)

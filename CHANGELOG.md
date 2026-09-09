@@ -4,6 +4,17 @@
 
 ---
 
+## 📌 [v1.4.4] - 2026-09-09 18:08:00
+### ⚡ Gemini 模型無痛遷移至 `gemini-3.5-flash-lite`
+- **修復問題**：Google 官方廢棄 `gemini-2.5-flash` API 端點，調用時拋出 `[404 Not Found] This model models/gemini-2.5-flash is no longer available to new users`。
+- **解決方案**：
+  1. 核心模型無縫升級為 `gemini-3.5-flash-lite`，兼具超高回應速度（約 350 tokens/s）、極低延遲與低成本優勢。
+  2. 支援環境變數彈性覆蓋：`process.env.GEMINI_MODEL || "gemini-3.5-flash-lite"`，未來可透過 Zeabur 環境變數免改代碼動態切換。
+  3. 實測多輪工具呼叫（Tool Calling / Function Calling）與 System Instruction 驗證 100% 通過。
+- **Git Commit (my-line-bot)**：`dfa7271`
+
+---
+
 ## 📌 [v1.4.3] - 2026-08-28 20:38:00
 ### 🛡️ 對話歷史純淨校驗 (Clean History Guard) 與架構防禦
 - **修復問題**：Gemini API 在多輪對話時拋出 `[GoogleGenerativeAI Error]: First content should be with role 'user', got function` 崩潰報錯。
