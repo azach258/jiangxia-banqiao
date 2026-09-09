@@ -1,0 +1,4 @@
+﻿User-agent: *
+Allow: /
+
+Sitemap: https://azach258.github.io/jiangxia-banqiao/sitemap.xml
