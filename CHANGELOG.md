@@ -4,6 +4,19 @@
 
 ---
 
+## 📌 [v1.4.5] - 2026-09-11 14:40:00
+### 🛡️ 修復 Gemini 3.5 API `role: function` 400 報錯與日曆環境變數去引號防禦
+- **修復問題**：
+  1. Gemini API 調用工具後回傳結果拋出 `[GoogleGenerativeAI Error]: [400 Bad Request] Role 'function' is not supported. Please use a valid role: SYSTEM, SYSTEM_1, USER, ASSISTANT, DEVELOPER, CONTEXT, USER_CONTEXT, MODEL, USER.`，導致客服對話崩潰。
+  2. Google 日曆報錯 `invalid_grant: Invalid grant: account not found`。
+- **解決方案**：
+  1. **Gemini 工具回傳角色相容重構 (`sendToolResponse`)**：繞過舊版 `@google/generative-ai` SDK 內部將 `functionResponse` 硬編碼為 `role: "function"` 之缺陷，改以 Gemini 3.5 官方規範的 `role: "user"` 封裝回傳，並加入熔斷機制，確保任何異常皆平滑進入保底自然回覆。
+  2. **雲端環境變數去引號清洗防禦 (`getCleanEnvString`)**：為 `GOOGLE_CLIENT_EMAIL` 與 `GOOGLE_CALENDAR_ID` 實裝自動去雙引號、單引號與空白防禦，杜絕複製貼上殘留外層引號導致 Google OAuth JWT 查無帳號。
+  3. **日曆日誌強化**：於查詢/寫入/刪除失敗時明確輸出連線帳號與目標日曆 ID，排查一秒定位。
+- **Git Commit (my-line-bot)**：`5a04e7a`
+
+---
+
 ## 📌 [v1.4.4] - 2026-09-09 18:08:00
 ### ⚡ Gemini 模型無痛遷移至 `gemini-3.5-flash-lite`
 - **修復問題**：Google 官方廢棄 `gemini-2.5-flash` API 端點，調用時拋出 `[404 Not Found] This model models/gemini-2.5-flash is no longer available to new users`。
