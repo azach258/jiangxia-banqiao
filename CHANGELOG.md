@@ -2,6 +2,19 @@
 
 本文檔記錄「江夏傳統整復推拿 板橋館」AI 客服機器人、Prompt 集中倉庫與自動化工具的所有版本演進、功能修復與 Git 變更紀錄。
 
+## 📌 [v1.4.7] - 2026-09-14 16:48:00
+### 🛡️ 徹底根除 `validateChatHistory` 報錯 (`role 'user' can't contain 'functionResponse' part`)
+- **修復問題**：
+  在多輪對話時伺服器崩潰並拋出：
+  `GoogleGenerativeAIError: [GoogleGenerativeAI Error]: Content with role 'user' can't contain 'functionResponse' part at validateChatHistory ... at new ChatSession ... at startChat`。
+- **根本原因**：
+  Google Generative AI SDK 內建的 `validateChatHistory` 會嚴格檢查 `role: 'user'` 物件，若其 `parts` 中含有 `functionResponse` 鍵值即直接阻斷並拋錯。當歷史紀錄或前次工具反饋物件殘留時，即導致 `startChat` 崩潰。
+- **解決方案**：
+  1. **工具反饋純文字化封裝**：將工具執行結果由原本的 `functionResponse` 物件改為以自然語言純文字 (`{ text: "【系統日曆反饋 - 工具執行結果】..." }`) 封裝回傳，徹底消除任何 `functionResponse` 鍵值，讓 SDK 與 API 100% 視為合法對話內容。
+  2. **歷史紀錄深度純淨淨化 (Pure Text Sanitizer)**：在每次 `startChat` 前，強制過濾對話歷史，嚴格剔除非純文字（只保留純文字 `text`，剝除任何 `functionResponse` / `functionCall`），即使舊 Session 中帶有污染也能即刻自愈重啟。
+
+---
+
 ## 📌 [v1.4.6] - 2026-09-14 16:45:00
 ### 🛡️ 實裝過期時間硬性防禦 (Past Time Hard Guard) 與當日過期時段動態切除
 - **修復問題**：
