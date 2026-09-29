@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#ffffff">
+  <title>江夏傳統整復推拿（板橋館）｜預約管理核心 (純白極簡版)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Font: Noto Sans TC & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans TC"', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+              900: '#881337'
+            }
+          },
+          boxShadow: {
+            'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02)',
+            'card': '0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03)',
+            'float': '0 12px 24px -4px rgba(0, 0, 0, 0.06), 0 4px 8px -2px rgba(0, 0, 0, 0.02)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-brand-100 selection:text-brand-900 bg-slate-50/80">
+
+  <!-- Staging QA Testing Banner (Clean Subtle Light) -->
+  <aside aria-label="測試沙盒工具列" class="bg-amber-50/90 border-b border-amber-200/80 px-4 py-2 text-xs text-amber-900">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 font-medium">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200/70 text-amber-900 border border-amber-300">
+          🧪 本地測試環境 (Staging Branch: staging/booking-system-v2)
+        </span>
+        <span class="text-amber-800">純白極簡審美重塑 ✕ 單一師傅 ✕ 防重複排程 ✕ 上下文記憶 CRM ✕ 離線容錯</span>
+      </div>
+      <div class="flex items-center gap-2">
+                <a href="http://localhost:8090/test_front_booking.html" target="_blank" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 rounded-lg border border-slate-300 font-semibold shadow-subtle transition flex items-center gap-1 text-[11px]">
+          <i data-lucide="external-link" class="w-3.5 h-3.5 text-brand-600"></i>
+          <span>開啟顧客前台 (實測下單)</span>
+        </a>
+        <button onclick="app.runQATest('conflict')" class="px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-700 rounded-lg border border-rose-200 text-[11px] font-semibold shadow-subtle transition">
+          ⚡ 模擬排程衝突
+        </button>
+        <button onclick="app.runQATest('crm')" class="px-2.5 py-1 bg-white hover:bg-cyan-50 text-cyan-800 rounded-lg border border-cyan-200 text-[11px] font-semibold shadow-subtle transition">
+          💡 模擬帶入老顧客記憶
+        </button>
+        <button id="btnToggleSimulateOffline" onclick="app.toggleSimulateOffline()" class="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-800 rounded-lg border border-amber-300 text-[11px] font-semibold shadow-subtle transition">
+          🌐 模擬 Google 斷網: 關閉
+        </button>
+        <button onclick="app.resetTestData()" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 text-[11px] font-medium shadow-subtle transition">
+          🔄 重設測試資料
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Clean Top Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-subtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-rose-700 p-0.5 shadow-sm shadow-rose-200 flex-shrink-0">
+          <div class="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
+            <span class="text-brand-600 font-bold text-lg leading-none">江</span>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900">江夏傳統整復推拿</h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-rose-50 text-brand-700 border border-brand-200 font-medium">板橋館</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-medium hidden sm:inline-block">單一師傅專屬</span>
+          </div>
+          <p class="text-xs text-slate-500 font-normal">門店排程大腦 ＆ 顧客健康歷程上下文記憶庫</p>
+        </div>
+      </div>
+
+      <!-- Sync Status & Action Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        
+        <!-- Live Connection Status Badge -->
+        <div id="syncStatusBadge" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
+          <div id="syncStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span id="syncStatusText" class="font-medium">本地優先 ＆ 日曆即時連線</span>
+          <span id="syncQueueBadge" class="hidden px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold"></span>
+        </div>
+
+        <!-- Offline Retry Button -->
+        <button id="btnRetrySync" onclick="app.flushSyncQueue()" class="hidden px-2.5 py-1 text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg transition font-semibold flex items-center gap-1.5">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span>補傳日曆</span>
+        </button>
+
+        <!-- Cloud Sync & Settings Button -->
+        <button onclick="app.syncFromCloudManual()" id="btnCloudSync" title="手動同步 Google 雲端預約" class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95">
+          <i data-lucide="cloud-download" id="cloudSyncIcon" class="w-3.5 h-3.5 text-blue-600"></i>
+          <span class="hidden sm:inline">雲端同步</span>
+        </button>
+
+        <button onclick="app.openModal('cloudSettingsModal')" title="Google 雲端 API 設定" class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95">
+          <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span class="hidden sm:inline">雲端設定</span>
+        </button>
+
+        <!-- Elegant View Switcher Nav -->
+        <nav class="flex bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600">
+          <button onclick="app.switchView('timeline')" id="viewBtn-timeline" class="px-3 py-1.5 rounded-lg transition bg-white text-slate-900 shadow-sm border border-slate-200/60">
+            <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-600"></i>日曆排程</span>
+          </button>
+          <button onclick="app.switchView('customers')" id="viewBtn-customers" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
+            <span class="flex items-center gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5"></i>顧客 CRM 記憶庫</span>
+          </button>
+          <button onclick="app.switchView('reports')" id="viewBtn-reports" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
+            <span class="flex items-center gap-1.5"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>營收統計</span>
+          </button>
+        </nav>
+
+        <!-- New Booking CTA -->
+        <button onclick="app.openModal('bookingModal')" class="flex items-center gap-1.5 sm:gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm shadow-brand-500/30 transition transform active:scale-95">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>新增預約</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 pb-36 sm:pb-12">
+
+    <!-- VIEW 1: TIMELINE (Calendar & Hourly Time Slots) -->
+    <div id="view-timeline" class="space-y-5">
+      
+      <!-- Date Navigation Banner -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+            <button onclick="app.changeDate(-1)" title="前一天" class="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button onclick="app.goToToday()" class="px-2.5 py-1 rounded-lg hover:bg-slate-200/70 text-xs font-semibold text-slate-700 transition">
+              今天
+            </button>
+            <button onclick="app.changeDate(1)" title="後一天" class="p-1.5 rounded-lg hover:bg-slate-200/70 text-slate-600 transition">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Direct Calendar Date Picker (點擊彈出日曆直接選取任意日期) -->
+          <div class="flex items-center gap-1.5">
+            <div class="relative flex items-center">
+              <input type="date" id="timelineDatePicker" onchange="app.setDateFromPicker(this.value)" class="bg-white border border-slate-300 hover:border-brand-500 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-bold text-slate-800 shadow-subtle focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition cursor-pointer">
+            </div>
+          </div>
+
+          <div class="ml-1">
+            <h2 id="currentDateDisplay" class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">2026年9月29日 星期二</h2>
+            <p id="dateSummaryStats" class="text-xs text-slate-500 font-normal">當日共 0 筆預約 ｜ 單一師傅時段守衛中</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- 金額防窺開關 (Privacy Toggle) -->
+          <label class="flex items-center gap-2 cursor-pointer bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 transition select-none">
+            <input type="checkbox" id="toggleHidePrice" onchange="app.toggleHidePrice(this.checked)" class="sr-only peer">
+            <span class="w-8 h-4 bg-slate-300 peer-checked:bg-brand-600 rounded-full relative transition flex items-center p-0.5">
+              <span class="w-3 h-3 bg-white rounded-full transition transform peer-checked:translate-x-4 shadow-sm"></span>
+            </span>
+            <span id="hidePriceLabelText">金額顯示</span>
+          </label>
+
+          <button onclick="app.openModal('bookingModal')" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>排入新預約</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Weekend Closed Notice Banner (Shown dynamically when Saturday or Sunday) -->
+      <div id="weekendNoticeBanner" class="hidden p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-center gap-3 text-amber-900 text-xs shadow-subtle">
+        <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 flex-shrink-0 font-bold">
+          ☕
+        </div>
+        <div class="flex-1">
+          <span class="font-bold">江夏板橋館・週末公休保養日</span>
+          <p class="text-amber-700 mt-0.5">門店常態營業時間為「週一至週五 14:00 ~ 22:00（最晚預約 21:00）」，週末時段為師傅研習與休息日。若有特殊指定排程仍可點選下方「＋新增」手動安排。</p>
+        </div>
+      </div>
+
+      <!-- Time Slots Grid Container (Clean White Table) -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-subtle p-4 sm:p-6">
+        
+        <!-- Timeline Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-brand-600"></div>
+            <h3 class="text-sm font-bold text-slate-900">江夏板橋館・賴師傅營業排程 (週一至週五 14:00 ~ 22:00 ｜ 每次 1 小時)</h3>
+            <span class="text-xs text-slate-400 font-normal">｜ 最晚預約 21:00</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-600">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>已確認</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-cyan-500"></span>已到店</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>已完成</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-300"></span>可預約空檔</span>
+          </div>
+        </div>
+
+        <!-- Hourly Timeline Rows -->
+        <div id="timelineContainer" class="space-y-2.5">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW 2: CUSTOMERS (Context Memory CRM) -->
+    <div id="view-customers" class="hidden space-y-5">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="book-open-check" class="w-5 h-5 text-brand-600"></i>
+            顧客健康歷程記憶庫 (CRM Context Database)
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">累計紀錄每位顧客的身體慣性、舊傷禁忌、偏好力道與回訪週期</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <button onclick="app.downloadCsvTemplate()" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+            <span>下載 CSV 範本</span>
+          </button>
+          <button onclick="app.openModal('importModal')" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-1.5">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            <span>匯入歷史資料 (CSV)</span>
+          </button>
+          <div class="w-full sm:w-60 relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="customerSearchInput" oninput="app.searchCustomers(this.value)" placeholder="搜尋顧客姓名或手機..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+          </div>
+        </div>
+      </div>
+
+      <!-- Customers Grid -->
+      <div id="customersListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+
+    <!-- VIEW 3: REPORTS (Revenue Analytics) -->
+    <div id="view-reports" class="hidden space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+          <p class="text-xs text-slate-500 font-medium">今日預估/實收金額</p>
+          <p id="reportTodayRevenue" class="text-2xl font-bold text-emerald-600 mt-1">$0</p>
+          <p id="reportTodayCount" class="text-xs text-slate-400 mt-1">調理 0 人次</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+          <p class="text-xs text-slate-500 font-medium">本月累計營收</p>
+          <p id="reportMonthRevenue" class="text-2xl font-bold text-brand-600 mt-1">$0</p>
+          <p id="reportMonthCount" class="text-xs text-slate-400 mt-1">本月共 0 人次</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+          <p class="text-xs text-slate-500 font-medium">客單價平均 (AOV)</p>
+          <p id="reportAov" class="text-2xl font-bold text-purple-600 mt-1">$0</p>
+          <p class="text-xs text-slate-400 mt-1">單一師傅服務產能</p>
+        </div>
+      </div>
+
+      <!-- Detailed Booking History Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-subtle p-5">
+                <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-bold text-slate-900">近期預約與付款清單</h3>
+          <button onclick="app.exportCSV()" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
+            <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+            <span>匯出 CSV 報表</span>
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="text-slate-500 border-b border-slate-100 font-semibold">
+              <tr>
+                <th class="py-3 px-2">預約時間</th>
+                <th class="px-2">顧客姓名</th>
+                <th class="px-2">手機號碼</th>
+                <th class="px-2">調理項目</th>
+                <th class="px-2">費用</th>
+                <th class="px-2">支付方式</th>
+                <th class="px-2">狀態</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Mobile Bottom Floating Bar (Clean Light, only on small phones < 640px) -->
+  <nav aria-label="行動版底部快捷列" class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200 px-8 py-2.5 flex items-center justify-between shadow-float">
+    <button type="button" onclick="app.switchView('timeline')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-brand-600 transition">
+      <i data-lucide="calendar" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">日曆排程</span>
+    </button>
+    
+    <!-- Central Plus Button (non-overlapping) -->
+    <button type="button" onclick="app.openModal('bookingModal')" class="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-sm shadow-brand-500/40 active:scale-95 transition">
+      <i data-lucide="plus" class="w-5 h-5"></i>
+    </button>
+
+    <button type="button" onclick="app.switchView('customers')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-brand-600 transition">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">顧客記憶</span>
+    </button>
+  </nav>
+
+  <!-- MODAL 1: 新增 / 編輯預約 (純白高質感 ✕ 防撞期 ✕ 上下文自動帶出) -->
+  <div id="bookingModal" onclick="if(event.target === this) app.closeModal('bookingModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
+            <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">建立預約排程</h3>
+            <p class="text-[11px] text-slate-500">江夏板橋館・單一師傅專屬時間槽</p>
+          </div>
+        </div>
+        <button onclick="app.closeModal('bookingModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Form Body -->
+      <form id="bookingForm" onsubmit="app.handleSaveBooking(event)" class="p-6 space-y-4">
+        
+        <!-- Phone & Search (Context Memory trigger) -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">顧客手機號碼 <span class="text-brand-600">*</span></label>
+          <div class="relative">
+            <input type="tel" id="formPhone" required oninput="app.handlePhoneInput(this.value)" placeholder="例如: 0912-345-678" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            <div id="phoneContextHint" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-amber-700 flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600"></i>
+              <span>老顧客已識別</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Name -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">顧客姓名 <span class="text-brand-600">*</span></label>
+          <input type="text" id="formName" required placeholder="請輸入姓名" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+        </div>
+
+        <!-- Context CRM Memory Card (Auto-revealed for returning customers) -->
+        <div id="customerContextCard" class="hidden p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs space-y-1.5">
+          <div class="flex items-center justify-between text-amber-900 font-bold">
+            <span class="flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-amber-700"></i>健康歷程上下文記憶</span>
+            <span id="ctxVisitCountBadge" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-semibold">來訪 0 次</span>
+          </div>
+          <p id="ctxHealthNotes" class="text-amber-800 leading-relaxed font-normal">
+            載入中...
+          </p>
+          <div class="text-[10px] text-amber-700 pt-1 flex items-center justify-between border-t border-amber-200/60">
+            <span id="ctxLastVisit">上次來訪：--</span>
+            <span class="text-slate-500">已自動融入本次備忘</span>
+          </div>
+        </div>
+
+        <!-- Date & Time (Anti-Collision Guard trigger) -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">預約日期 <span class="text-brand-600">*</span></label>
+            <input type="date" id="formDate" required onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">開始時間 <span class="text-brand-600">*</span></label>
+            <input type="time" id="formTime" required step="1800" onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+          </div>
+        </div>
+
+        <!-- Service Item (部位計價) -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">調理部位（依部位計價） <span class="text-brand-600">*</span></label>
+          <select id="formService" onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
+            <option value="頸、背、腰 (含整體結構調整)" data-duration="60" data-price="1500" selected>頸、背、腰 (含整體結構調整) ｜ NT$ 1,500 (旗艦推薦)</option>
+            <option value="骨盆調理" data-duration="60" data-price="1200">骨盆調理 ｜ NT$ 1,200</option>
+            <option value="四肢 (肩膀/手肘/膝蓋/腳)" data-duration="60" data-price="800">四肢 (肩膀/手肘/膝蓋/腳) ｜ NT$ 800</option>
+            <option value="手指、手腕、腳踝" data-duration="60" data-price="600">手指、手腕、腳踝 ｜ NT$ 600</option>
+            <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0">【免費】檢查評估諮詢 ｜ NT$ 0 (親自評估)</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">※ 每次預約固定占用 1 小時（含深度鬆筋、結構評估與調理），營業時間 14:00~22:00 最晚預約 21:00</p>
+        </div>
+
+        <!-- Symptoms / Chief Complaints (主訴症狀獨立分欄) -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">主訴症狀 / 痠痛部位 <span class="text-slate-400 font-normal">(例: 久坐腰背痠痛、落枕、五十肩)</span></label>
+          <input type="text" id="formSymptoms" placeholder="請簡述顧客不適狀況或想特別調理的症狀..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+        </div>
+
+        <!-- Anti-Collision Indicator (Light Theme) -->
+        <div id="conflictStatusBox" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+          <span id="conflictStatusText" class="font-medium">時段檢測中...</span>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">本次調理備註 / 特殊狀況說明</label>
+          <textarea id="formNotes" rows="2" placeholder="例如：客人反應最近搬重物左下背微痠、需要加強熱敷..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button type="button" onclick="app.closeModal('bookingModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
+            取消
+          </button>
+          <button type="button" onclick="app.validateAndSubmitBooking()" id="btnSubmitBooking" class="px-5 py-2 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition active:scale-95">
+            確認儲存預約
+          </button>
+        </div>
+
+      </form>
+    </div></div>
+  </div>
+
+  <!-- MODAL 2: 預約詳情 ＆ 健康備忘 (Care Record) -->
+  <div id="detailModal" onclick="if(event.target === this) app.closeModal('detailModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg">
+    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float">
+      
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="file-text" class="w-4 h-4 text-brand-600"></i>
+          <span>預約詳情與健康備忘</span>
+        </h3>
+        <button onclick="app.closeModal('detailModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 id="detailCustomerName" class="text-lg font-bold text-slate-900">王大偉</h4>
+            <p id="detailPhone" class="text-xs text-slate-500">0912-345-678</p>
+          </div>
+          <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            已確認
+          </span>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-500">調理部位：</span>
+            <span id="detailService" class="font-bold text-slate-900">頸、背、腰 (含整體結構調整)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">主訴症狀：</span>
+            <span id="detailSymptoms" class="font-bold text-slate-800">無特殊主訴</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">預約時段：</span>
+            <span id="detailTimeRange" class="font-semibold text-slate-800">2026-09-29 14:00 ~ 15:00</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">來訪歷程：</span>
+            <span id="detailVisitBadge"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">服務師傅：</span>
+            <span class="font-semibold text-brand-700">江夏板橋館・賴師傅 (每次1小時)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">日曆同步：</span>
+            <span id="detailSyncStatus" class="font-semibold text-emerald-700">🟢 本地優先 / 已同步 Google 日曆</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
+              <i data-lucide="file-edit" class="w-3.5 h-3.5 text-brand-600"></i>
+              <span>健康備忘 / 上下文歷史註記：</span>
+            </span>
+            <button onclick="app.toggleEditDetailNotes()" id="btnToggleEditNotes" class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold hover:underline">
+              編輯備忘
+            </button>
+          </div>
+          <div id="detailNotesDisplay" class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed font-normal">
+            無備註
+          </div>
+          <div id="detailNotesEditArea" class="hidden space-y-2">
+            <textarea id="detailNotesInput" rows="3" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs text-slate-900 focus:outline-none focus:border-brand-500 transition"></textarea>
+            <div class="flex justify-end gap-2">
+              <button onclick="app.toggleEditDetailNotes(false)" class="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700">取消</button>
+              <button onclick="app.saveDetailNotes()" class="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">儲存並同步至 CRM</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Status Update & Actions -->
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+          <button type="button" onclick="app.rebookFromDetail()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-subtle active:scale-95">
+            <i data-lucide="calendar-plus" class="w-3.5 h-3.5 text-amber-700"></i>
+            <span>預約下次</span>
+          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="app.updateBookingStatus('已到店')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 transition">
+              標記已到店
+            </button>
+            <button onclick="app.updateBookingStatus('已完成')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition">
+              完成調理
+            </button>
+            <button onclick="app.updateBookingStatus('已取消')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition">
+              取消此預約
+            </button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+
+  <!-- MODAL 3: 匯入歷史資料 (CSV / Excel 試算表) -->
+  <div id="importModal" onclick="if(event.target === this) app.closeModal('importModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-lg">
+      <div class="bg-white border border-slate-200 rounded-2xl w-full overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">匯入歷史資料 (CSV 表格)</h3>
+              <p class="text-[11px] text-slate-500">批次匯入老顧客名冊、歷史來訪次數與健康備忘</p>
+            </div>
+          </div>
+          <button onclick="app.closeModal('importModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-4 text-xs">
+          
+          <!-- Instructions & Download Template -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                <i data-lucide="info" class="w-3.5 h-3.5 text-brand-600"></i>
+                <span>支援欄位格式說明：</span>
+              </span>
+              <button onclick="app.downloadCsvTemplate()" class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold hover:underline flex items-center gap-1">
+                <i data-lucide="download" class="w-3 h-3"></i>下載標準範本.csv
+              </button>
+            </div>
+            <p class="text-slate-600 leading-relaxed font-normal">
+              標準欄位順序：<strong>姓名, 手機號碼, 來訪次數, 最後來訪日期, 健康備忘/舊傷/偏好手法</strong>。<br>
+              💡 系統會自動以<strong>「手機號碼」</strong>進行智慧比對，已存在顧客將自動累加次數與補充備忘，不會重覆建檔！
+            </p>
+          </div>
+
+          <!-- File Upload Zone -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">選擇欲匯入的 CSV 檔案：</label>
+            <div id="dropZone" onclick="document.getElementById('csvFileInput').click()" class="border-2 border-dashed border-slate-300 hover:border-brand-500 hover:bg-rose-50/20 rounded-xl p-6 text-center cursor-pointer transition">
+              <input type="file" id="csvFileInput" accept=".csv,text/csv" onchange="app.handleFileSelect(event)" class="hidden">
+              <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+              <p class="text-xs font-semibold text-slate-700">點擊此處選擇檔案 或 將 CSV 拖曳至此</p>
+              <p class="text-[11px] text-slate-400 mt-1">支援 UTF-8 編碼之標準 CSV 試算表檔案</p>
+            </div>
+          </div>
+
+          <!-- Parsed Preview Box (Hidden by default) -->
+          <div id="csvPreviewBox" class="hidden p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1.5">
+            <div class="flex items-center justify-between text-emerald-900 font-bold">
+              <span class="flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>解析成功！</span>
+              <span id="csvParsedCountBadge" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">已識別 0 筆</span>
+            </div>
+            <div id="csvPreviewList" class="max-h-28 overflow-y-auto custom-scrollbar text-[11px] text-emerald-800 space-y-1">
+              <!-- populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button type="button" onclick="app.closeModal('importModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
+              取消
+            </button>
+            <button type="button" id="btnConfirmImport" onclick="app.executeImport()" disabled class="px-5 py-2 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition">
+              確認批次匯入
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GOOGLE CLOUD API SETTINGS -->
+  <div id="cloudSettingsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50/40 px-6 py-4 border-b border-blue-100 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-blue-600 rounded-xl text-white shadow-sm">
+            <i data-lucide="cloud" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Google 雲端資料庫 ＆ 日曆即時連線設定</h3>
+            <p class="text-xs text-slate-500">零元串接 Google Calendar ＆ Sheets，支援跨手機即時預約與 CRM 同步</p>
+          </div>
+        </div>
+        <button onclick="app.closeModal('cloudSettingsModal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white/80 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-4">
+        
+        <!-- API URL Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+            <span>Google Apps Script 網頁應用程式網址 (Web App URL)</span>
+            <span class="text-[11px] text-blue-600 font-normal">必填</span>
+          </label>
+          <input type="url" id="settingGasUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-mono text-slate-800 placeholder-slate-400 bg-slate-50/50">
+          <p class="text-[11px] text-slate-500 mt-1">
+            部署 Google Apps Script 後產生的專屬網址（以 <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700">/exec</code> 結尾）
+          </p>
+        </div>
+
+        <!-- API Secret Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+            <span>安全驗證金鑰 (API Secret Key)</span>
+            <span class="text-[11px] text-slate-400 font-normal">預設保護</span>
+          </label>
+          <input type="text" id="settingGasSecret" placeholder="jiangxia_banqiao_2026" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-mono text-slate-800 bg-slate-50/50">
+          <p class="text-[11px] text-slate-500 mt-1">需與 GAS 腳本中設定的 <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700">API_SECRET</code> 一致（預設為 jiangxia_banqiao_2026）</p>
+        </div>
+
+        <!-- Connection Test & Status Banner -->
+        <div id="gasDiagnosticsCard" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+              <span id="gasDiagDot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+              <span id="gasDiagTitle">尚未測試連線</span>
+            </span>
+            <button type="button" id="btnTestGasPing" onclick="app.testGasConnection()" class="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>測試連線 (Ping)</span>
+            </button>
+          </div>
+          <div id="gasDiagDetails" class="text-[11px] text-slate-500 font-mono hidden space-y-0.5 pt-1 border-t border-slate-200">
+            <!-- Diagnostics dynamic fill -->
+          </div>
+        </div>
+
+        <!-- Helpful Step-by-Step Accordion -->
+        <details class="group border border-slate-200 rounded-xl text-xs overflow-hidden">
+          <summary class="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 font-semibold text-slate-700 cursor-pointer flex items-center justify-between select-none">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="help-circle" class="w-4 h-4 text-blue-500"></i>
+              如何 3 分鐘免費取得 Google 雲端網址？（點此展開指南）
+            </span>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition"></i>
+          </summary>
+          <div class="p-4 bg-white space-y-2 text-slate-600 leading-relaxed border-t border-slate-200">
+            <ol class="list-decimal list-inside space-y-1.5 pl-1">
+              <li>打開電腦前往 <a href="https://script.google.com/" target="_blank" class="text-blue-600 underline font-semibold">Google Apps Script</a> 建立「新專案」。</li>
+              <li>複製本專案的 <code class="bg-slate-100 px-1 rounded text-rose-600 font-mono">gas_calendar_api.js</code> 完整內容貼上。</li>
+              <li>點選右上角<strong>「部署」</strong> ➔ <strong>「新增部署作業」</strong> ➔ 點齒輪選<strong>「網頁應用程式」</strong>。</li>
+              <li>執行身分選<strong>「我」</strong>，誰可以存取選<strong>「任何人 (Anyone)」</strong>。</li>
+              <li>點部署並完成 Google 權限同意，將生成的「網頁應用程式網址」複製貼到上方輸入框即可！</li>
+            </ol>
+          </div>
+        </details>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <button type="button" onclick="app.clearCloudSettings()" class="text-xs text-rose-600 hover:text-rose-700 font-medium">
+          清除雲端設定 (恢復純本地)
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="app.closeModal('cloudSettingsModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200/60 transition">
+            取消
+          </button>
+          <button type="button" onclick="app.saveCloudSettings()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
+            儲存連線設定
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-20 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- Core JavaScript Application Logic -->
+  <script>
+    // Initial Seed Data
+    const SEED_CUSTOMERS = [
+      {
+        id: "c-1",
+        name: "王大偉",
+        phone: "0912-345-678",
+        visit_count: 5,
+        last_visited_at: "2026-09-15",
+        health_notes: "長期久坐，肩頸重度僵硬，腰部曾有輕微拉傷忌大力扭轉；偏好中偏重力道。"
+      },
+      {
+        id: "c-2",
+        name: "李小姐",
+        phone: "0988-765-432",
+        visit_count: 3,
+        last_visited_at: "2026-09-08",
+        health_notes: "常抱小孩致右手腕酸脹（媽媽手）、右肩胛骨內側緊繃；喜好熱敷輔助。"
+      },
+      {
+        id: "c-3",
+        name: "張經理",
+        phone: "0933-222-111",
+        visit_count: 8,
+        last_visited_at: "2026-09-22",
+        health_notes: "定期全身保養，膏肓處特別緊繃，下背久坐僵硬；對推拿油微敏，以乾推為主。"
+      }
+    ];
+
+    const SEED_BOOKINGS = [
+      {
+        id: "b-1",
+        customerName: "王大偉",
+        phone: "0912-345-678",
+        serviceItem: "頸、背、腰 (含整體結構調整)",
+        symptoms: "久坐肩頸重度僵硬、腰部偶有拉傷不適",
+        durationMin: 60,
+        price: 1500,
+        paymentMethod: "現金",
+        status: "已確認",
+        syncStatus: "synced",
+        notes: "老顧客回訪，腰傷定期結構順應調理。",
+        start: "2026-09-29T14:00:00",
+        end: "2026-09-29T15:00:00"
+      },
+      {
+        id: "b-2",
+        customerName: "李小姐",
+        phone: "0988-765-432",
+        serviceItem: "骨盆調理",
+        symptoms: "常抱小孩致右手腕酸脹、骨盆受力歪斜不適",
+        durationMin: 60,
+        price: 1200,
+        paymentMethod: "LINE Pay",
+        status: "已到店",
+        syncStatus: "synced",
+        notes: "骨盆前傾調校與深層筋骨舒緩放鬆。",
+        start: "2026-09-29T16:00:00",
+        end: "2026-09-29T17:00:00"
+      },
+      {
+        id: "b-3",
+        customerName: "張經理",
+        phone: "0933-222-111",
+        serviceItem: "頸、背、腰 (含整體結構調整)",
+        symptoms: "膏肓處深層緊繃、下背久坐僵硬卡頓",
+        durationMin: 60,
+        price: 1500,
+        paymentMethod: "現金",
+        status: "已完成",
+        syncStatus: "synced",
+        notes: "膏肓痛與下背舒緩，乾推與中軸疏解為主。",
+        start: "2026-09-28T16:00:00",
+        end: "2026-09-28T17:00:00"
+      }
+    ];
+
+    class JiangxiaBookingApp {
+      constructor() {
+        this.currentDate = new Date("2026-09-29T00:00:00");
+        this.currentView = 'timeline';
+        this.activeDetailId = null;
+        this.simulateOffline = false;
+        this.hidePrice = localStorage.getItem('jiangxia_hide_price') === 'true';
+
+        this.initStorage();
+        this.init();
+      }
+
+      initStorage() {
+        let storedBookings = [];
+        try {
+          storedBookings = JSON.parse(localStorage.getItem('jiangxia_bookings_v2') || '[]');
+        } catch(e) { storedBookings = []; }
+        if (!storedBookings || storedBookings.length === 0) {
+          storedBookings = [...SEED_BOOKINGS];
+          localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(storedBookings));
+        } else {
+          SEED_BOOKINGS.forEach(sb => {
+            if (!storedBookings.some(b => b.id === sb.id)) {
+              storedBookings.push(sb);
+            }
+          });
+          localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(storedBookings));
+        }
+
+        let storedCustomers = [];
+        try {
+          storedCustomers = JSON.parse(localStorage.getItem('jiangxia_customers_v2') || '[]');
+        } catch(e) { storedCustomers = []; }
+        if (!storedCustomers || storedCustomers.length === 0) {
+          storedCustomers = [...SEED_CUSTOMERS];
+          localStorage.setItem('jiangxia_customers_v2', JSON.stringify(storedCustomers));
+        } else {
+          SEED_CUSTOMERS.forEach(sc => {
+            if (!storedCustomers.some(c => c.id === sc.id)) {
+              storedCustomers.push(sc);
+            }
+          });
+          localStorage.setItem('jiangxia_customers_v2', JSON.stringify(storedCustomers));
+        }
+
+        if (!localStorage.getItem('jiangxia_sync_queue_v2')) {
+          localStorage.setItem('jiangxia_sync_queue_v2', JSON.stringify([]));
+        }
+
+        this.bookings = storedBookings;
+        this.customers = storedCustomers;
+        this.syncQueue = JSON.parse(localStorage.getItem('jiangxia_sync_queue_v2') || '[]');
+        this.gasUrl = localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
+        this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
+      }
+
+      saveState() {
+        localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
+        localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
+        localStorage.setItem('jiangxia_sync_queue_v2', JSON.stringify(this.syncQueue));
+        if (this.gasUrl) {
+          localStorage.setItem('jiangxia_gas_api_url', this.gasUrl);
+          localStorage.setItem('jiangxia_gas_api_secret', this.gasSecret);
+        }
+        this.updateSyncBadge();
+      }
+
+
+      init() {
+        // 限制預約日期不可早於今天
+        const todayStr = this.currentDate.toISOString().split('T')[0];
+        const dateInput = document.getElementById('formDate');
+        if (dateInput) dateInput.min = todayStr;
+
+        // 初始化金額防窺開關狀態
+        const toggle = document.getElementById('toggleHidePrice');
+        if (toggle) {
+          toggle.checked = this.hidePrice;
+          const label = document.getElementById('hidePriceLabelText');
+          if (label) label.textContent = this.hidePrice ? '金額防窺 (開)' : '金額顯示';
+        }
+
+        this.updateDateDisplay();
+        this.renderTimeline();
+        this.renderCustomers();
+        this.renderReports();
+        this.updateSyncBadge();
+        lucide.createIcons();
+      }
+
+      // ==========================================
+      // 詳情彈窗備忘即時編輯與同步 CRM
+      // ==========================================
+      toggleEditDetailNotes(enable = true) {
+        const display = document.getElementById('detailNotesDisplay');
+        const editArea = document.getElementById('detailNotesEditArea');
+        const btn = document.getElementById('btnToggleEditNotes');
+        const input = document.getElementById('detailNotesInput');
+
+        if (enable && editArea.classList.contains('hidden')) {
+          editArea.classList.remove('hidden');
+          display.classList.add('hidden');
+          input.value = display.textContent.trim();
+          btn.textContent = '關閉編輯';
+        } else {
+          editArea.classList.add('hidden');
+          display.classList.remove('hidden');
+          btn.textContent = '編輯備忘';
+        }
+      }
+
+      saveDetailNotes() {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        const newNotes = document.getElementById('detailNotesInput').value.trim();
+        if (b) {
+          b.notes = newNotes;
+          // 同步更新至顧客 CRM 記憶庫
+          const c = this.customers.find(cust => cust.phone.replace(/[^0-9]/g, '') === b.phone.replace(/[^0-9]/g, ''));
+          if (c) c.health_notes = newNotes;
+
+          this.saveState();
+          document.getElementById('detailNotesDisplay').textContent = newNotes || '無特殊備註說明';
+          this.toggleEditDetailNotes(false);
+          this.renderTimeline();
+          this.renderCustomers();
+          this.showToast('✅ 已儲存備忘並同步至顧客 CRM 記憶庫！', 'success');
+        }
+      }
+
+      // ==========================================
+      // 匯出 UTF-8 BOM CSV 營收報表
+      // ==========================================
+
+      // ==========================================
+      // CSV 範本下載與批次匯入核心
+      // ==========================================
+      downloadCsvTemplate() {
+        const headers = '姓名,手機號碼,來訪次數,最後來訪日期,健康備忘';
+        const sampleRows = [
+          '王大偉,0912-345-678,5,2026-09-15,長期久坐肩頸重度僵硬，腰部輕微拉傷忌大力扭轉；偏好中偏重力道',
+          '李美麗,0988-765-432,3,2026-09-08,常抱小孩手腕酸痛（媽媽手）、右肩胛骨緊繃；喜好熱敷輔助',
+          '陳建宏,0922-333-444,12,2026-09-20,定期全身整復保養，左骨盆慣性微歪，喜好深層筋膜放鬆',
+          '林淑芬,0935-888-999,2,2026-09-10,偏頭痛失眠，後頸風池穴易緊繃，力道適中偏輕'
+        ];
+        const csvContent = '\uFEFF' + headers + '\r\n' + sampleRows.join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', '江夏傳統整復推拿_歷史顧客名冊範本.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showToast('📄 已下載 CSV 顧客範本檔案！請用 Excel 填寫後匯入。', 'success');
+      }
+
+      handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target.result;
+          this.parseCsvContent(text);
+        };
+        reader.readAsText(file, 'utf-8');
+      }
+
+      parseCsvContent(text) {
+        const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+        if (lines.length <= 1) {
+          this.showToast('⚠️ 檔案內容為空或僅有標題列！', 'warning');
+          return;
+        }
+
+        this.pendingImportData = [];
+        // Detect header row
+        const hasHeader = lines[0].includes('姓名') || lines[0].includes('手機');
+        const startIdx = hasHeader ? 1 : 0;
+
+        for (let i = startIdx; i < lines.length; i++) {
+          const row = lines[i];
+          // simple csv split handling commas
+          const parts = row.split(',').map(s => s.trim().replace(/^["']|["']$/g, ''));
+          if (parts.length >= 2) {
+            const name = parts[0];
+            const phone = parts[1];
+            const visitCount = parseInt(parts[2] || '1', 10);
+            const lastVisit = parts[3] || new Date().toISOString().split('T')[0];
+            const healthNotes = parts.slice(4).join(', ') || '歷史資料匯入';
+
+            if (name && phone) {
+              this.pendingImportData.push({
+                name,
+                phone,
+                visit_count: isNaN(visitCount) ? 1 : visitCount,
+                last_visited_at: lastVisit,
+                health_notes: healthNotes
+              });
+            }
+          }
+        }
+
+        const previewBox = document.getElementById('csvPreviewBox');
+        const badge = document.getElementById('csvParsedCountBadge');
+        const listEl = document.getElementById('csvPreviewList');
+        const btn = document.getElementById('btnConfirmImport');
+
+        if (this.pendingImportData.length > 0) {
+          previewBox.classList.remove('hidden');
+          badge.textContent = `已識別 ${this.pendingImportData.length} 筆名單`;
+          listEl.innerHTML = this.pendingImportData.slice(0, 5).map(c => `
+            <div class="flex justify-between border-b border-emerald-200/50 pb-0.5">
+              <span><strong>${c.name}</strong> (${c.phone}) - 來訪 ${c.visit_count} 次</span>
+              <span class="truncate max-w-[150px] text-slate-500">${c.health_notes}</span>
+            </div>
+          `).join('') + (this.pendingImportData.length > 5 ? `<div class="text-[10px] text-slate-400 italic">... 其餘 ${this.pendingImportData.length - 5} 筆已準備好匯入</div>` : '');
+
+          btn.disabled = false;
+          btn.classList.remove('opacity-40', 'cursor-not-allowed');
+          this.showToast(`✨ 成功識別 ${this.pendingImportData.length} 筆顧客資料！請點擊確認匯入。`, 'success');
+        } else {
+          previewBox.classList.add('hidden');
+          btn.disabled = true;
+          this.showToast('⚠️ 未能從檔案中識別出有效顧客資料，請檢查欄位格式！', 'warning');
+        }
+      }
+
+      executeImport() {
+        if (!this.pendingImportData || this.pendingImportData.length === 0) return;
+
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        this.pendingImportData.forEach(incoming => {
+          const cleanPhone = incoming.phone.replace(/[^0-9]/g, '');
+          const existing = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
+
+          if (existing) {
+            existing.visit_count += incoming.visit_count;
+            if (incoming.health_notes && incoming.health_notes !== '歷史資料匯入') {
+              existing.health_notes = existing.health_notes ? `${existing.health_notes}；${incoming.health_notes}` : incoming.health_notes;
+            }
+            existing.last_visited_at = incoming.last_visited_at || existing.last_visited_at;
+            updatedCount++;
+          } else {
+            this.customers.push({
+              id: 'c-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+              name: incoming.name,
+              phone: incoming.phone,
+              visit_count: incoming.visit_count,
+              last_visited_at: incoming.last_visited_at,
+              health_notes: incoming.health_notes
+            });
+            addedCount++;
+          }
+        });
+
+        this.saveState();
+        this.renderCustomers();
+        this.closeModal('importModal');
+        this.pendingImportData = [];
+        document.getElementById('csvFileInput').value = '';
+        document.getElementById('csvPreviewBox').classList.add('hidden');
+
+        this.showToast(`🎉 匯入完成！新增 ${addedCount} 位新顧客，更新 ${updatedCount} 位老顧客歷程！`, 'success');
+      }
+
+      exportCSV() {
+        if (this.bookings.length === 0) {
+          this.showToast('目前尚無預約資料可匯出', 'info');
+          return;
+        }
+
+        const headers = ['預約ID', '預約時間', '結束時間', '顧客姓名', '手機號碼', '調理項目', '時長(分)', '費用', '支付方式', '預約狀態', '同步狀態', '健康備忘'];
+        const rows = this.bookings.map(b => [
+          b.id,
+          b.start.replace('T', ' '),
+          b.end.replace('T', ' '),
+          b.customerName,
+          b.phone,
+          b.serviceItem,
+          b.durationMin || 60,
+          b.price || 1200,
+          b.paymentMethod || '現金',
+          b.status,
+          b.syncStatus,
+          `"${(b.notes || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = '﻿' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `江夏板橋館_預約報表_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showToast('📊 已成功匯出 UTF-8 CSV 報表！', 'success');
+      }
+
+
+      // ==========================================
+      // 1. 日期切換與顯示
+      // ==========================================
+      updateDateDisplay() {
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth() + 1;
+        const day = this.currentDate.getDate();
+        const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+        const weekDay = weekDays[this.currentDate.getDay()];
+        
+        const dateStr = `${year}年${month}月${day}日 星期${weekDay}`;
+        document.getElementById('currentDateDisplay').textContent = dateStr;
+
+        const monthPad = String(month).padStart(2, '0');
+        const dayPad = String(day).padStart(2, '0');
+        this.currentDateStr = `${year}-${monthPad}-${dayPad}`;
+
+        // 同步日曆選取器之當前數值
+        const picker = document.getElementById('timelineDatePicker');
+        if (picker) picker.value = this.currentDateStr;
+
+        const todayBookings = this.bookings.filter(b => b.start.startsWith(this.currentDateStr) && b.status !== '已取消');
+        document.getElementById('dateSummaryStats').textContent = `當日共 ${todayBookings.length} 筆有效預約 ｜ 單一師傅時段守衛中`;
+      }
+
+      setDateFromPicker(dateStr) {
+        if (!dateStr) return;
+        this.currentDate = new Date(dateStr + "T00:00:00");
+        this.updateDateDisplay();
+        this.renderTimeline();
+      }
+
+      changeDate(offset) {
+        this.currentDate.setDate(this.currentDate.getDate() + offset);
+        this.updateDateDisplay();
+        this.renderTimeline();
+      }
+
+      goToToday() {
+        this.currentDate = new Date("2026-09-29T00:00:00");
+        this.updateDateDisplay();
+        this.renderTimeline();
+      }
+
+      // ==========================================
+      // 2. 視圖切換
+      // ==========================================
+      switchView(viewName) {
+        this.currentView = viewName;
+        ['timeline', 'customers', 'reports'].forEach(v => {
+          const el = document.getElementById(`view-${v}`);
+          const btn = document.getElementById(`viewBtn-${v}`);
+          if (v === viewName) {
+            el.classList.remove('hidden');
+            btn.className = 'px-3 py-1.5 rounded-lg transition bg-white text-slate-900 shadow-sm border border-slate-200/60 font-semibold';
+          } else {
+            el.classList.add('hidden');
+            btn.className = 'px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 font-medium';
+          }
+        });
+        if (viewName === 'customers') this.renderCustomers();
+        if (viewName === 'reports') this.renderReports();
+        lucide.createIcons();
+      }
+
+      // ==========================================
+      // 金額隱私防窺開關 (Privacy Toggle)
+      // ==========================================
+      toggleHidePrice(checked) {
+        this.hidePrice = checked;
+        localStorage.setItem('jiangxia_hide_price', checked ? 'true' : 'false');
+        const label = document.getElementById('hidePriceLabelText');
+        if (label) label.textContent = checked ? '金額防窺 (開)' : '金額顯示';
+        this.renderTimeline();
+        this.renderReports();
+        this.showToast(checked ? '🔒 已開啟金額防窺模式 (顧客不可見)' : '👁️ 已切換為金額正常顯示', 'info');
+      }
+
+      // ==========================================
+      // 顧客來訪次數智能計算與徽章 (Visit Count & Badge)
+      // ==========================================
+      getVisitCount(phone) {
+        if (!phone) return 1;
+        const clean = phone.replace(/[^0-9]/g, '');
+        const cust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === clean);
+        let baseCount = cust ? (cust.visit_count || 1) : 0;
+        const bCount = this.bookings.filter(b => b.phone && b.phone.replace(/[^0-9]/g, '') === clean && b.status !== '已取消').length;
+        return Math.max(baseCount, bCount, 1);
+      }
+
+      formatVisitBadge(count) {
+        if (count <= 1) {
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">第 1 次 (新客)</span>`;
+        } else if (count >= 5) {
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">第 ${count} 次 (熟客)</span>`;
+        } else {
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">第 ${count} 次</span>`;
+        }
+      }
+
+      // ==========================================
+      // 快速「預約下次」(Rebook Next Visit)
+      // ==========================================
+      rebookNext(bookingId) {
+        const b = this.bookings.find(x => x.id === bookingId);
+        if (!b) return;
+
+        // 1. 推算 7 天後的同一時間
+        const currentBDate = new Date(b.start.slice(0, 10) + 'T00:00:00');
+        currentBDate.setDate(currentBDate.getDate() + 7);
+        const nextDateStr = currentBDate.toISOString().slice(0, 10);
+        const nextTimeStr = b.start.slice(11, 16);
+
+        // 2. 開啟預約彈窗並預填資料
+        this.openModal('bookingModal');
+        document.getElementById('formName').value = b.customerName;
+        document.getElementById('formPhone').value = b.phone;
+        this.handlePhoneInput(b.phone);
+
+        document.getElementById('formDate').value = nextDateStr;
+        document.getElementById('formTime').value = nextTimeStr;
+        if (document.getElementById('formSymptoms')) {
+          document.getElementById('formSymptoms').value = b.symptoms || '';
+        }
+
+        // 預選相同服務項目
+        const serviceSelect = document.getElementById('formService');
+        for (let i = 0; i < serviceSelect.options.length; i++) {
+          if (serviceSelect.options[i].value === b.serviceItem) {
+            serviceSelect.selectedIndex = i;
+            break;
+          }
+        }
+
+        this.checkTimeConflict();
+        this.showToast(`📅 已為【${b.customerName}】預載下次回訪資料 (建議: ${nextDateStr} ${nextTimeStr})`, 'info');
+      }
+
+      rebookFromDetail() {
+        if (!this.activeDetailId) return;
+        const id = this.activeDetailId;
+        this.closeModal('detailModal');
+        this.rebookNext(id);
+      }
+
+      // ==========================================
+      // 刪除 / 取消預約 (Delete Booking)
+      // ==========================================
+      deleteBooking(bookingId) {
+        const b = this.bookings.find(x => x.id === bookingId);
+        if (!b) return;
+        if (!confirm(`確定要刪除/取消【${b.customerName}】於 ${b.start.slice(0, 16).replace('T', ' ')} 的預約排程嗎？`)) {
+          return;
+        }
+        b.status = '已取消';
+        this.saveState();
+        this.renderTimeline();
+        this.renderReports();
+        this.showToast(`🗑️ 已取消【${b.customerName}】的預約排程`, 'info');
+      }
+
+      // ==========================================
+      // 3. 單一師傅排程總表 (週一至週五 14:00 ~ 22:00 ｜ 每次1小時)
+      // ==========================================
+      renderTimeline() {
+        const container = document.getElementById('timelineContainer');
+        container.innerHTML = '';
+
+        // 營業時間 14:00 ~ 22:00，最晚預約 21:00 (共 8 個 1 小時時段)
+        const hours = [14, 15, 16, 17, 18, 19, 20, 21];
+        const dayBookings = this.bookings.filter(b => b.start.startsWith(this.currentDateStr));
+
+        // 判斷週末公休提示
+        const dayOfWeek = this.currentDate.getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const weekendBanner = document.getElementById('weekendNoticeBanner');
+        if (weekendBanner) {
+          if (isWeekend) weekendBanner.classList.remove('hidden');
+          else weekendBanner.classList.add('hidden');
+        }
+
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'overflow-x-auto';
+
+        let rowsHtml = '';
+
+        hours.forEach(hour => {
+          const hourStr = String(hour).padStart(2, '0') + ':00';
+          const nextHourStr = String(hour + 1).padStart(2, '0') + ':00';
+
+          const slotStart = new Date(`${this.currentDateStr}T${hourStr}:00`);
+          const slotEnd = new Date(`${this.currentDateStr}T${nextHourStr}:00`);
+
+          const matches = dayBookings.filter(b => {
+            if (b.status === '已取消') return false;
+            const bStart = new Date(b.start);
+            const bEnd = new Date(b.end);
+            return (bStart < slotEnd && bEnd > slotStart);
+          });
+
+          if (matches.length > 0) {
+            matches.forEach(b => {
+              const startT = b.start.slice(11, 16);
+              const endT = b.end.slice(11, 16);
+              const statusColors = {
+                '已確認': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                '已到店': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                '已完成': 'bg-purple-50 text-purple-700 border-purple-200'
+              };
+              const badgeClass = statusColors[b.status] || 'bg-slate-100 text-slate-600 border-slate-200';
+              const syncDot = b.syncStatus === 'pending' ? '🟡' : '🟢';
+              const visitCount = this.getVisitCount(b.phone);
+              const visitBadge = this.formatVisitBadge(visitCount);
+              const priceDisplay = this.hidePrice 
+                ? '<span class="text-slate-400 font-mono tracking-widest font-bold">***</span>' 
+                : `<span class="font-bold text-slate-900">$${(b.price || 1500).toLocaleString()}</span>`;
+
+              rowsHtml += `
+                <tr class="hover:bg-slate-50/80 transition duration-150 border-b border-slate-100">
+                  <td class="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">
+                    <div class="flex items-center gap-1.5">
+                      <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-600"></i>
+                      <span>${startT}</span>
+                      <span class="text-[10px] text-slate-400 font-normal">~${endT}</span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-3 whitespace-nowrap">
+                    <span class="px-2 py-0.5 rounded-full border ${badgeClass} text-[10px] font-semibold">${b.status}</span>
+                    <span class="text-[10px] ml-1" title="${b.syncStatus === 'pending' ? '待同步至 Google 日曆' : '已同步'}">${syncDot}</span>
+                  </td>
+                  <td class="py-3 px-3 whitespace-nowrap">
+                    <button type="button" onclick="app.showBookingDetail('${b.id}')" class="font-bold text-slate-900 hover:text-brand-600 hover:underline flex items-center gap-1">
+                      <span>${b.customerName}</span>
+                    </button>
+                  </td>
+                  <td class="py-3 px-3 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+                    ${b.phone}
+                  </td>
+                  <td class="py-3 px-3 whitespace-nowrap">
+                    ${visitBadge}
+                  </td>
+                  <td class="py-3 px-3 text-brand-700 font-semibold text-xs whitespace-nowrap">
+                    ${b.serviceItem}
+                  </td>
+                  <td class="py-3 px-3 text-slate-600 text-xs max-w-[200px] truncate" title="${b.symptoms || b.notes || '無特殊主訴'}">
+                    ${b.symptoms || b.notes || '<span class="text-slate-300">─</span>'}
+                  </td>
+                  <td class="py-3 px-3 text-right whitespace-nowrap">
+                    ${priceDisplay}
+                  </td>
+                  <td class="py-3 px-3 text-right whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button type="button" onclick="app.rebookNext('${b.id}')" class="px-2.5 py-1 text-[11px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1" title="預約下次回訪">
+                        <i data-lucide="calendar-plus" class="w-3 h-3 text-amber-700"></i>
+                        <span>預約下次</span>
+                      </button>
+                      <button type="button" onclick="app.showBookingDetail('${b.id}')" class="px-2 py-1 text-[11px] font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition active:scale-95 shadow-subtle">
+                        編輯
+                      </button>
+                      <button type="button" onclick="app.deleteBooking('${b.id}')" class="px-2 py-1 text-[11px] font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition active:scale-95 shadow-subtle">
+                        刪除
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            });
+          } else {
+            // Free slot row
+            rowsHtml += `
+              <tr class="hover:bg-slate-50/50 transition duration-150 border-b border-slate-100/70">
+                <td class="py-3 px-3 font-bold text-slate-400 whitespace-nowrap">
+                  <div class="flex items-center gap-1.5">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span>${hourStr}</span>
+                  </div>
+                </td>
+                <td class="py-3 px-3 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200">可預約空檔</span>
+                </td>
+                <td class="py-3 px-3 text-slate-300 whitespace-nowrap">─</td>
+                <td class="py-3 px-3 text-slate-300 whitespace-nowrap font-mono text-[11px]">─</td>
+                <td class="py-3 px-3 text-slate-300 whitespace-nowrap">─</td>
+                <td class="py-3 px-3 text-slate-400 italic text-xs whitespace-nowrap">可隨時排入預約</td>
+                <td class="py-3 px-3 text-slate-300 whitespace-nowrap">─</td>
+                <td class="py-3 px-3 text-right text-slate-300 whitespace-nowrap">─</td>
+                <td class="py-3 px-3 text-right whitespace-nowrap">
+                  <button type="button" onclick="app.quickBookSlot('${hourStr}')" class="px-3 py-1 text-[11px] font-bold bg-white hover:bg-brand-50 text-brand-700 border border-brand-300 hover:border-brand-500 rounded-lg transition active:scale-95 shadow-subtle inline-flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3 h-3 text-brand-600"></i>
+                    <span>新增</span>
+                  </button>
+                </td>
+              </tr>
+            `;
+          }
+        });
+
+        tableWrapper.innerHTML = `
+          <table class="w-full text-left text-xs text-slate-700 border-collapse min-w-[780px]">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-bold text-[11px]">
+                <th class="py-3 px-3 w-28">時間 (1小時)</th>
+                <th class="py-3 px-3 w-24">狀態</th>
+                <th class="py-3 px-3 w-24">姓名</th>
+                <th class="py-3 px-3 w-28">電話</th>
+                <th class="py-3 px-3 w-24">次數</th>
+                <th class="py-3 px-3 min-w-[150px]">調理部位</th>
+                <th class="py-3 px-3 min-w-[160px]">主訴症狀</th>
+                <th class="py-3 px-3 w-20 text-right">金額</th>
+                <th class="py-3 px-3 min-w-[160px] text-right">選項</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${rowsHtml}
+            </tbody>
+          </table>
+        `;
+
+        container.appendChild(tableWrapper);
+        lucide.createIcons();
+      }
+
+      quickBookSlot(timeStr) {
+        document.getElementById('formDate').value = this.currentDateStr;
+        document.getElementById('formTime').value = timeStr;
+        this.openModal('bookingModal');
+        this.checkTimeConflict();
+      }
+
+      // ==========================================
+      // 4. 排程防撞檢測 (Anti-Double Booking Guard)
+      // ==========================================
+      checkTimeConflict() {
+        const date = document.getElementById('formDate').value;
+        const time = document.getElementById('formTime').value;
+        const serviceSelect = document.getElementById('formService');
+        const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        
+        const box = document.getElementById('conflictStatusBox');
+        const text = document.getElementById('conflictStatusText');
+        const btn = document.getElementById('btnSubmitBooking');
+
+        if (!date || !time) {
+          box.className = 'p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs flex items-center gap-2 text-slate-500';
+          text.textContent = '請先選擇預約日期與開始時間';
+          btn.disabled = true;
+          btn.classList.add("opacity-60");
+          return;
+        }
+
+        const newStart = new Date(`${date}T${time}:00`);
+        const newEnd = new Date(newStart.getTime() + duration * 60 * 1000);
+
+        const conflict = this.bookings.find(b => {
+          if (b.status === '已取消') return false;
+          const bStart = new Date(b.start);
+          const bEnd = new Date(b.end);
+          return (newStart < bEnd && newEnd > bStart);
+        });
+
+        if (conflict) {
+          const cStartT = conflict.start.slice(11, 16);
+          const cEndT = conflict.end.slice(11, 16);
+          box.className = 'p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs flex items-center gap-2 text-rose-800 animate-pulse-subtle';
+          text.innerHTML = `⛔ <strong>排程衝突警告！</strong> 該時段已與【${conflict.customerName}】的預約 (${cStartT} ~ ${cEndT}) 重疊！已鎖定送出按鈕。`;
+          btn.disabled = true;
+          btn.classList.add("opacity-60");
+        } else {
+          const endTStr = newEnd.toTimeString().slice(0, 5);
+          box.className = 'p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800';
+          text.innerHTML = `✅ <strong>時段暢通無衝突！</strong> 預約區間 ${time} ~ ${endTStr} (共 ${duration} 分鐘) 賴師傅可接單。`;
+          btn.disabled = false;
+          btn.classList.remove("opacity-60");
+        }
+      }
+
+      // ==========================================
+      // 5. 顧客上下文記憶自動帶出 (Context CRM Memory)
+      // ==========================================
+      handlePhoneInput(phone) {
+        // 自動防呆過濾非數字與加減號
+        let clean = phone.replace(/[^0-9-]/g, '');
+        if (clean !== phone) {
+          document.getElementById('formPhone').value = clean;
+        }
+        const cleanPhone = clean.trim();
+        const hint = document.getElementById('phoneContextHint');
+        const card = document.getElementById('customerContextCard');
+        const nameInput = document.getElementById('formName');
+        const notesInput = document.getElementById('formNotes');
+
+        const matchedCustomer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone.replace(/[^0-9]/g, ''));
+
+        if (matchedCustomer && cleanPhone.length >= 8) {
+          hint.classList.remove('hidden');
+          card.classList.remove('hidden');
+
+          if (!nameInput.value) nameInput.value = matchedCustomer.name;
+          document.getElementById('ctxVisitCountBadge').textContent = `來訪 ${matchedCustomer.visit_count} 次`;
+          document.getElementById('ctxHealthNotes').textContent = matchedCustomer.health_notes || '尚無特殊禁忌備忘';
+          document.getElementById('ctxLastVisit').textContent = `上次來訪：${matchedCustomer.last_visited_at || '無紀錄'}`;
+
+          if (!notesInput.value) {
+            notesInput.value = `[顧客習慣備忘] ${matchedCustomer.health_notes || ''}`;
+          }
+        } else {
+          hint.classList.add('hidden');
+          card.classList.add('hidden');
+        }
+      }
+
+
+      // ==========================================
+      // 智慧送出驗證（確保點擊永遠有即時反饋，絕不靜默失效）
+      // ==========================================
+      validateAndSubmitBooking() {
+        const nameInput = document.getElementById('formName');
+        const phoneInput = document.getElementById('formPhone');
+        const name = nameInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const date = document.getElementById('formDate').value;
+        const time = document.getElementById('formTime').value;
+
+        if (!phone) {
+          this.showToast('⚠️ 請輸入顧客手機號碼！', 'warning');
+          phoneInput.focus();
+          return;
+        }
+
+        if (!name) {
+          this.showToast('⚠️ 請輸入顧客姓名！', 'warning');
+          nameInput.focus();
+          return;
+        }
+
+        if (!date || !time) {
+          this.showToast('⚠️ 請選擇預約日期與開始時間！', 'warning');
+          return;
+        }
+
+        // 檢查時段衝突
+        const hasConflict = this.isCurrentSlotConflict();
+        if (hasConflict) {
+          this.showToast('⛔ 無法儲存：該時段已與現有預約重疊，請調整預約時段！', 'warning');
+          const box = document.getElementById('conflictStatusBox');
+          if (box) {
+            box.classList.add('ring-2', 'ring-rose-400');
+            setTimeout(() => box.classList.remove('ring-2', 'ring-rose-400'), 1500);
+          }
+          return;
+        }
+
+        // 執行儲存
+        this.executeSaveBooking();
+      }
+
+      isCurrentSlotConflict() {
+        const date = document.getElementById('formDate').value;
+        const time = document.getElementById('formTime').value;
+        const serviceSelect = document.getElementById('formService');
+        const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        if (!date || !time) return false;
+
+        const newStart = new Date(`${date}T${time}:00`);
+        const newEnd = new Date(newStart.getTime() + duration * 60 * 1000);
+
+        return this.bookings.some(b => {
+          if (b.status === '已取消') return false;
+          const bStart = new Date(b.start);
+          const bEnd = new Date(b.end);
+          return (newStart < bEnd && newEnd > bStart);
+        });
+      }
+
+      executeSaveBooking() {
+        const name = document.getElementById('formName').value.trim();
+        const phone = document.getElementById('formPhone').value.trim();
+        const date = document.getElementById('formDate').value;
+        const time = document.getElementById('formTime').value;
+        const serviceSelect = document.getElementById('formService');
+        const service = serviceSelect.value;
+        const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        const price = parseInt(serviceSelect.selectedOptions[0]?.dataset.price || 1200, 10);
+        const symptoms = document.getElementById('formSymptoms')?.value.trim() || '';
+        const notes = document.getElementById('formNotes').value.trim();
+
+        const start = new Date(`${date}T${time}:00`);
+        const end = new Date(start.getTime() + duration * 60 * 1000);
+
+        const newId = 'b-' + Date.now();
+        const newBooking = {
+          id: newId,
+          customerName: name,
+          phone: phone,
+          serviceItem: service,
+          symptoms: symptoms,
+          durationMin: duration,
+          price: price,
+          paymentMethod: '現金',
+          status: '已確認',
+          syncStatus: this.simulateOffline ? 'pending' : 'synced',
+          notes: notes,
+          start: `${date}T${time}:00`,
+          end: `${date}T${end.toTimeString().slice(0, 5)}:00`
+        };
+
+        // 1. 本地落庫
+        this.bookings.push(newBooking);
+
+        // 2. 更新顧客 CRM
+        const crmNotes = symptoms ? `[主訴] ${symptoms}${notes ? ' ｜ ' + notes : ''}` : notes;
+        let customer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === phone.replace(/[^0-9]/g, ''));
+        if (customer) {
+          customer.visit_count = (customer.visit_count || 1) + 1;
+          customer.last_visited_at = date;
+          if (crmNotes) customer.health_notes = crmNotes;
+        } else {
+          this.customers.push({
+            id: 'c-' + Date.now(),
+            name: name,
+            phone: phone,
+            visit_count: 1,
+            last_visited_at: date,
+            health_notes: crmNotes || '首次來訪'
+          });
+        }
+
+        // 3. 處理同步佇列與雲端推播
+        if (this.simulateOffline) {
+          this.syncQueue.push({
+            id: newId,
+            type: 'create',
+            payload: newBooking,
+            queuedAt: new Date().toISOString()
+          });
+          this.showToast('⚠️ Google 日曆離線中，已本機安全入庫並存入同步佇列！', 'warning');
+        } else if (this.gasUrl) {
+          this.pushBookingToCloud(newBooking).then(ok => {
+            if (ok) {
+              this.showToast(`✨ 預約成功！已同步至 Google 日曆與試算表 (${time})！`, 'success');
+            } else {
+              newBooking.syncStatus = 'pending';
+              this.syncQueue.push({
+                id: newId,
+                type: 'create',
+                payload: newBooking,
+                queuedAt: new Date().toISOString()
+              });
+              this.saveState();
+              this.showToast(`⚠️ 雲端連線失敗，已本機儲存並加入補傳佇列！`, 'warning');
+            }
+          });
+        } else {
+          this.showToast(`✨ 預約成功！已為【${name}】完成排程 (${time})！`, 'success');
+        }
+
+        this.saveState();
+        this.closeModal('bookingModal');
+        this.renderTimeline();
+        this.renderCustomers();
+        this.renderReports();
+      }
+
+
+      // ==========================================
+      // 7. 佇列補傳 (Flush Sync Queue)
+      // ==========================================
+      flushSyncQueue() {
+        if (this.simulateOffline) {
+          alert('目前仍處於「模擬斷網」模式，請先關閉模擬斷網再進行補傳！');
+          return;
+        }
+
+        const count = this.syncQueue.length;
+        if (count === 0) {
+          this.showToast('佇列中無待同步項目。', 'info');
+          return;
+        }
+
+        this.syncQueue.forEach(item => {
+          const b = this.bookings.find(x => x.id === item.id);
+          if (b) b.syncStatus = 'synced';
+        });
+
+        this.syncQueue = [];
+        this.saveState();
+        this.renderTimeline();
+        this.showToast(`🎉 補傳成功！已將 ${count} 筆離線預約成功推播至 Google 日曆！`, 'success');
+      }
+
+      toggleSimulateOffline() {
+        this.simulateOffline = !this.simulateOffline;
+        const btn = document.getElementById('btnToggleSimulateOffline');
+        if (this.simulateOffline) {
+          btn.className = 'px-2.5 py-1 bg-rose-600 text-white font-bold rounded-lg border border-rose-500 shadow-subtle transition';
+          btn.textContent = '🌐 模擬 Google 斷網: 開啟中 (斷線)';
+          this.showToast('⚠️ 已啟用 Google 日曆斷網模擬模式', 'warning');
+        } else {
+          btn.className = 'px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-800 rounded-lg border border-amber-300 text-[11px] font-semibold shadow-subtle transition';
+          btn.textContent = '🌐 模擬 Google 斷網: 關閉';
+          this.showToast('🟢 已恢復正常網路連線', 'success');
+        }
+        this.updateSyncBadge();
+      }
+
+      updateSyncBadge() {
+        const dot = document.getElementById('syncStatusDot');
+        const text = document.getElementById('syncStatusText');
+        const qBadge = document.getElementById('syncQueueBadge');
+        const retryBtn = document.getElementById('btnRetrySync');
+
+        const queueCount = this.syncQueue.length;
+
+        if (this.simulateOffline || queueCount > 0) {
+          dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+          text.textContent = queueCount > 0 ? `離線暫存 (${queueCount} 筆待補傳)` : '離線模式中';
+          qBadge.classList.remove('hidden');
+          qBadge.textContent = `${queueCount} 筆待同步`;
+          retryBtn.classList.remove('hidden');
+        } else if (this.gasUrl) {
+          dot.className = 'w-2 h-2 rounded-full bg-blue-500';
+          text.textContent = 'Google 雲端雙向連線中 (日曆＆試算表)';
+          qBadge.classList.add('hidden');
+          retryBtn.classList.add('hidden');
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          text.textContent = '本地落庫 (無雲端網址)';
+          qBadge.classList.add('hidden');
+          retryBtn.classList.add('hidden');
+        }
+      }
+
+      // ==========================================
+      // Google Apps Script 雲端資料庫 ＆ 雙向同步核心
+      // ==========================================
+      async testGasConnection() {
+        const url = (document.getElementById('settingGasUrl').value || '').trim();
+        const secret = (document.getElementById('settingGasSecret').value || '').trim();
+        const btn = document.getElementById('btnTestGasPing');
+        const diagCard = document.getElementById('gasDiagDetails');
+        const diagDot = document.getElementById('gasDiagDot');
+        const diagTitle = document.getElementById('gasDiagTitle');
+
+        if (!url) {
+          alert('請先輸入 Google Apps Script 網頁應用程式網址！');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>連線檢測中...</span>`;
+        if (window.lucide) lucide.createIcons();
+
+        const startTime = Date.now();
+        try {
+          const testUrl = `${url}?action=ping&secret=${encodeURIComponent(secret)}`;
+          const res = await fetch(testUrl, { mode: 'cors' });
+          const latency = Date.now() - startTime;
+          const data = await res.json();
+
+          if (data && data.success) {
+            diagDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+            diagTitle.innerHTML = `<span class="text-emerald-700 font-bold">🟢 連線成功！(${latency}ms)</span>`;
+            diagCard.classList.remove('hidden');
+            diagCard.innerHTML = `
+              <div>• 日曆名稱: <span class="text-slate-800 font-semibold">${data.diagnostics?.calendarName || '主要日曆'}</span></div>
+              <div>• 伺服器時間: <span class="text-slate-800">${data.diagnostics?.serverTime || '正常'}</span></div>
+              <div>• 今日行程數: <span class="text-slate-800 font-semibold">${data.diagnostics?.todayEventsCount ?? 0} 筆</span></div>
+              <div>• 試算表備份: <span class="${data.diagnostics?.hasSpreadsheet ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${data.diagnostics?.hasSpreadsheet ? '已啟用' : '未設定試算表ID (僅日曆)'}</span></div>
+            `;
+            this.showToast(`✨ Google 雲端連線測試成功！延遲 ${latency}ms`, 'success');
+          } else {
+            throw new Error(data.message || '未知錯誤');
+          }
+        } catch (err) {
+          diagDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+          diagTitle.innerHTML = `<span class="text-rose-700 font-bold">❌ 連線失敗</span>`;
+          diagCard.classList.remove('hidden');
+          diagCard.innerHTML = `
+            <div class="text-rose-600 font-semibold">• 錯誤原因: ${err.message}</div>
+            <div class="text-slate-500">• 請確認：1. 網址是否以 /exec 結尾 2. 部署權限是否選「任何人 (Anyone)」</div>
+          `;
+          this.showToast('連線測試失敗，請檢查網址或權限設定', 'warning');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = `<i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i><span>測試連線 (Ping)</span>`;
+          if (window.lucide) lucide.createIcons();
+        }
+      }
+
+      saveCloudSettings() {
+        const url = (document.getElementById('settingGasUrl').value || '').trim();
+        const secret = (document.getElementById('settingGasSecret').value || '').trim();
+
+        this.gasUrl = url;
+        this.gasSecret = secret || 'jiangxia_banqiao_2026';
+
+        localStorage.setItem('jiangxia_gas_api_url', this.gasUrl);
+        localStorage.setItem('jiangxia_gas_api_secret', this.gasSecret);
+
+        this.showToast('✅ Google 雲端連線設定已儲存！', 'success');
+        this.closeModal('cloudSettingsModal');
+        this.updateSyncBadge();
+
+        if (this.gasUrl) {
+          this.fetchFromCloud(false);
+        }
+      }
+
+      clearCloudSettings() {
+        if (!confirm('確定要清除雲端設定嗎？系統將恢復純本地模式。')) return;
+        this.gasUrl = '';
+        this.gasSecret = 'jiangxia_banqiao_2026';
+        localStorage.removeItem('jiangxia_gas_api_url');
+        localStorage.removeItem('jiangxia_gas_api_secret');
+
+        document.getElementById('settingGasUrl').value = '';
+        document.getElementById('settingGasSecret').value = '';
+        document.getElementById('gasDiagDetails').classList.add('hidden');
+        document.getElementById('gasDiagTitle').textContent = '尚未測試連線';
+        document.getElementById('gasDiagDot').className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
+
+        this.updateSyncBadge();
+        this.closeModal('cloudSettingsModal');
+        this.showToast('已清除雲端設定，恢復為純本地運行模式', 'info');
+      }
+
+      async syncFromCloudManual() {
+        if (!this.gasUrl) {
+          this.showToast('💡 尚未設定雲端 API 網址，請先點擊「雲端設定」填入網址', 'warning');
+          this.openModal('cloudSettingsModal');
+          return;
+        }
+
+        const icon = document.getElementById('cloudSyncIcon');
+        if (icon) icon.classList.add('animate-spin');
+
+        // 1. 若有待補傳的佇列，先補傳
+        if (this.syncQueue.length > 0 && !this.simulateOffline) {
+          this.flushSyncQueue();
+        }
+
+        // 2. 從 Google 日曆拉取最新預約
+        await this.fetchFromCloud(false);
+
+        if (icon) icon.classList.remove('animate-spin');
+      }
+
+      async fetchFromCloud(silent = false) {
+        if (!this.gasUrl || this.simulateOffline) return;
+
+        try {
+          const fetchUrl = `${this.gasUrl}?action=getEvents&secret=${encodeURIComponent(this.gasSecret)}`;
+          const res = await fetch(fetchUrl);
+          const result = await res.json();
+
+          if (result && result.success && Array.isArray(result.data)) {
+            let addedCount = 0;
+            result.data.forEach(evt => {
+              // 透過 ID 或相同開始時間判斷是否已有該事件
+              const exists = this.bookings.find(b => b.id === evt.id || (b.start === evt.start && b.phone === evt.phone));
+              if (!exists) {
+                this.bookings.push({
+                  id: evt.id,
+                  customerName: evt.customerName || '線上預約顧客',
+                  phone: evt.phone || '',
+                  serviceItem: evt.serviceItem || '傳統整復推拿放鬆',
+                  durationMin: 60,
+                  price: evt.price || 1200,
+                  paymentMethod: evt.paymentMethod || '現場支付',
+                  status: evt.status || '已確認',
+                  syncStatus: 'synced',
+                  notes: evt.notes || '來自 Google 日曆同步',
+                  start: evt.start.slice(0, 19),
+                  end: evt.end.slice(0, 19)
+                });
+                addedCount++;
+
+                // 同步至顧客 CRM
+                if (evt.phone) {
+                  const cleanPhone = evt.phone.replace(/[^0-9]/g, '');
+                  let cust = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
+                  if (cust) {
+                    cust.visit_count += 1;
+                    cust.last_visited_at = evt.start.slice(0, 10);
+                  } else {
+                    this.customers.push({
+                      id: 'c-' + Date.now(),
+                      name: evt.customerName || '新顧客',
+                      phone: evt.phone,
+                      visit_count: 1,
+                      last_visited_at: evt.start.slice(0, 10),
+                      health_notes: evt.notes || '來自 Google 雲端'
+                    });
+                  }
+                }
+              }
+            });
+
+            this.saveState();
+            this.renderTimeline();
+            this.renderCustomers();
+            this.renderReports();
+
+            if (!silent) {
+              if (addedCount > 0) {
+                this.showToast(`🎉 成功從 Google 日曆同步新增 ${addedCount} 筆最新預約！`, 'success');
+              } else {
+                this.showToast('✅ 雲端資料庫已是最新狀態，無新預約', 'info');
+              }
+            }
+          }
+        } catch (err) {
+          if (!silent) {
+            console.error('拉取 Google 日曆失敗:', err);
+            this.showToast('同步失敗：無法連線至 Google 伺服器', 'warning');
+          }
+        }
+      }
+
+      async pushBookingToCloud(newBooking) {
+        if (!this.gasUrl || this.simulateOffline) {
+          return false;
+        }
+
+        try {
+          const payload = {
+            action: 'create',
+            customerName: newBooking.customerName,
+            phone: newBooking.phone,
+            serviceItem: newBooking.serviceItem,
+            durationMin: newBooking.durationMin,
+            startTime: newBooking.start,
+            notes: (newBooking.symptoms ? `[主訴] ${newBooking.symptoms} ｜ ` : '') + (newBooking.notes || ''),
+            staff: '賴師傅',
+            status: newBooking.status,
+            secret: this.gasSecret
+          };
+
+          const res = await fetch(this.gasUrl, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+          const result = await res.json();
+          if (result && result.success) {
+            return true;
+          }
+          return false;
+        } catch (e) {
+          console.warn('推播至 Google 日曆失敗，回退至佇列:', e);
+          return false;
+        }
+      }
+
+      // ==========================================
+      // 8. 顧客 CRM 記憶庫渲染 (Customers View)
+      // ==========================================
+      renderCustomers(filterText = '') {
+        const container = document.getElementById('customersListContainer');
+        container.innerHTML = '';
+
+        let list = this.customers;
+        if (filterText) {
+          list = list.filter(c => c.name.includes(filterText) || c.phone.includes(filterText));
+        }
+
+        if (list.length === 0) {
+          container.innerHTML = '<div class="col-span-3 text-center text-slate-400 py-12 bg-white rounded-2xl border border-slate-200">查無符合的顧客資料</div>';
+          return;
+        }
+
+        list.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card hover:border-slate-300 space-y-3 transition duration-150';
+          card.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-sm font-bold text-slate-900">${c.name}</span>
+                <span class="text-xs text-slate-500 block font-normal">${c.phone}</span>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
+                來訪 ${c.visit_count} 次
+              </span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1">
+              <span class="text-[11px] text-amber-800 font-bold block">💡 身體狀況 ＆ 習慣上下文備忘：</span>
+              <p class="leading-relaxed font-normal">${c.health_notes || '尚無紀錄'}</p>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+              <span>上次來訪: ${c.last_visited_at || '未記錄'}</span>
+              <button onclick="app.quickBookForCustomer('${c.name}', '${c.phone}')" class="text-brand-600 hover:text-brand-700 font-semibold hover:underline">排程預約</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      searchCustomers(val) {
+        this.renderCustomers(val.trim());
+      }
+
+      quickBookForCustomer(name, phone) {
+        this.openModal('bookingModal');
+        document.getElementById('formPhone').value = phone;
+        document.getElementById('formName').value = name;
+        this.handlePhoneInput(phone);
+        this.checkTimeConflict();
+      }
+
+      // ==========================================
+      // 9. 營收統計渲染 (Reports View)
+      // ==========================================
+      renderReports() {
+        const todayBookings = this.bookings.filter(b => b.start.startsWith(this.currentDateStr));
+
+        const todayRev = todayBookings.reduce((sum, b) => sum + (b.price || 1200), 0);
+        const monthRev = this.bookings.reduce((sum, b) => sum + (b.price || 1200), 0);
+        const aov = this.bookings.length > 0 ? Math.round(monthRev / this.bookings.length) : 0;
+
+        document.getElementById('reportTodayRevenue').textContent = `$${todayRev.toLocaleString()}`;
+        document.getElementById('reportTodayCount').textContent = `今日累計 ${todayBookings.length} 人次`;
+        document.getElementById('reportMonthRevenue').textContent = `$${monthRev.toLocaleString()}`;
+        document.getElementById('reportMonthCount').textContent = `總檔期累計 ${this.bookings.length} 人次`;
+        document.getElementById('reportAov').textContent = `$${aov.toLocaleString()}`;
+
+        const tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = this.bookings.map(b => `
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="py-3 px-2 font-medium text-slate-800">${b.start.replace('T', ' ').slice(0, 16)}</td>
+            <td class="px-2 font-bold text-slate-900">${b.customerName}</td>
+            <td class="px-2 text-slate-500">${b.phone}</td>
+            <td class="px-2 text-slate-700 font-medium">${b.serviceItem}</td>
+            <td class="px-2 font-bold text-slate-900">$${b.price || 1200}</td>
+            <td class="px-2 text-slate-600">${b.paymentMethod || '現金'}</td>
+            <td class="px-2"><span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200 font-medium">${b.status}</span></td>
+          </tr>
+        `).join('');
+      }
+
+      // ==========================================
+      // 10. 預約詳情彈窗與狀態更新
+      // ==========================================
+      showBookingDetail(id) {
+        this.activeDetailId = id;
+        const b = this.bookings.find(x => x.id === id);
+        if (!b) return;
+
+        document.getElementById('detailCustomerName').textContent = b.customerName;
+        document.getElementById('detailPhone').textContent = b.phone;
+        document.getElementById('detailService').textContent = b.serviceItem;
+        document.getElementById('detailSymptoms').textContent = b.symptoms || '無特殊主訴';
+        document.getElementById('detailTimeRange').textContent = `${b.start.replace('T', ' ')} ~ ${b.end.slice(11, 16)}`;
+        document.getElementById('detailStatusBadge').textContent = b.status;
+        const count = this.getVisitCount(b.phone);
+        document.getElementById('detailVisitBadge').innerHTML = this.formatVisitBadge(count);
+
+        const notesEl = document.getElementById('detailNotesDisplay') || document.getElementById('detailNotes');
+        if (notesEl) notesEl.textContent = b.notes || '無特殊備註說明';
+        const notesInput = document.getElementById('detailNotesInput');
+        if (notesInput) notesInput.value = b.notes || '';
+        document.getElementById('detailSyncStatus').textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
+
+        this.openModal('detailModal');
+      }
+
+      updateBookingStatus(newStatus) {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (b) {
+          b.status = newStatus;
+          if (this.simulateOffline) {
+            b.syncStatus = 'pending';
+            this.syncQueue.push({ id: b.id, type: 'update_status', newStatus: newStatus });
+          }
+          this.saveState();
+          this.renderTimeline();
+          this.renderReports();
+          this.closeModal('detailModal');
+          this.showToast(`已將【${b.customerName}】預約狀態更新為「${newStatus}」`, 'info');
+        }
+      }
+
+      // ==========================================
+      // 11. Staging QA 測試腳本
+      // ==========================================
+      runQATest(type) {
+        if (type === 'conflict') {
+          this.openModal('bookingModal');
+          document.getElementById('formDate').value = '2026-09-29';
+          document.getElementById('formTime').value = '14:00';
+          document.getElementById('formName').value = '測試撞期顧客';
+          document.getElementById('formPhone').value = '0900-999-999';
+          this.checkTimeConflict();
+          this.showToast('⚡ 已填入 14:00 撞期時段，請觀察下方紅字警告與按鈕鎖定！', 'warning');
+        } else if (type === 'crm') {
+          this.openModal('bookingModal');
+          document.getElementById('formPhone').value = '0912-345-678';
+          this.handlePhoneInput('0912-345-678');
+          document.getElementById('formDate').value = '2026-09-29';
+          document.getElementById('formTime').value = '15:00';
+          this.checkTimeConflict();
+          this.showToast('💡 已帶入王大偉老顧客手機，健康舊傷備忘已自動浮現！', 'success');
+        }
+      }
+
+      resetTestData() {
+        if (confirm('確定重設測試資料回原始 Seed 狀態嗎？')) {
+          localStorage.removeItem('jiangxia_bookings_v2');
+          localStorage.removeItem('jiangxia_customers_v2');
+          localStorage.removeItem('jiangxia_sync_queue_v2');
+          this.initStorage();
+          this.renderTimeline();
+          this.renderCustomers();
+          this.renderReports();
+          this.showToast('已重設為標準測試種子資料！', 'info');
+        }
+      }
+
+      // ==========================================
+      // UI Utilities
+      // ==========================================
+      openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        if (id === 'bookingModal') {
+          if (!document.getElementById('formDate').value) {
+            document.getElementById('formDate').value = this.currentDateStr;
+          }
+          if (!document.getElementById('formTime').value) {
+            document.getElementById('formTime').value = '14:00';
+          }
+          this.checkTimeConflict();
+        }
+        if (id === 'cloudSettingsModal') {
+          const urlInput = document.getElementById('settingGasUrl');
+          const secretInput = document.getElementById('settingGasSecret');
+          if (urlInput) urlInput.value = this.gasUrl || '';
+          if (secretInput) secretInput.value = this.gasSecret || 'jiangxia_banqiao_2026';
+        }
+        lucide.createIcons();
+      }
+
+      closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        if (id === 'bookingModal') {
+          // 清空欄位
+          document.getElementById('formName').value = '';
+          document.getElementById('formPhone').value = '';
+          if (document.getElementById('formSymptoms')) document.getElementById('formSymptoms').value = '';
+          document.getElementById('formNotes').value = '';
+          document.getElementById('phoneContextHint').classList.add('hidden');
+          document.getElementById('customerContextCard').classList.add('hidden');
+        }
+      }
+
+      showToast(msg, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        const borderColors = {
+          success: 'border-emerald-300 bg-emerald-50 text-emerald-900',
+          warning: 'border-amber-300 bg-amber-50 text-amber-900',
+          info: 'border-slate-300 bg-white text-slate-800'
+        };
+        toast.className = `p-3 px-4 rounded-xl border shadow-card text-xs font-semibold flex items-center gap-2 pointer-events-auto transition transform duration-200 translate-y-2 opacity-0 ${borderColors[type] || borderColors.info}`;
+        toast.innerHTML = `<span>${msg}</span>`;
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
+        });
+
+        setTimeout(() => {
+          toast.classList.add('opacity-0');
+          setTimeout(() => toast.remove(), 250);
+        }, 3200);
+      }
+    }
+
+    // Launch App
+    const app = new JiangxiaBookingApp();
+  </script>
+</body>
+</html>
