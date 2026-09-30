@@ -500,22 +500,16 @@
           <p class="text-[11px] text-slate-400 mt-1">※ 每次預約固定占用 1 小時（含深度鬆筋、結構評估與調理），營業時間 14:00~22:00 最晚預約 21:00</p>
         </div>
 
-        <!-- Symptoms / Chief Complaints (主訴症狀獨立分欄) -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">主訴症狀 / 痠痛部位 <span class="text-slate-400 font-normal">(例: 久坐腰背痠痛、落枕、五十肩)</span></label>
-          <input type="text" id="formSymptoms" placeholder="請簡述顧客不適狀況或想特別調理的症狀..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
-        </div>
-
         <!-- Anti-Collision Indicator (Light Theme) -->
         <div id="conflictStatusBox" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800">
           <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
           <span id="conflictStatusText" class="font-medium">時段檢測中...</span>
         </div>
 
-        <!-- Notes -->
+        <!-- Notes (主訴症狀與調理備註整合) -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">本次調理備註 / 特殊狀況說明</label>
-          <textarea id="formNotes" rows="2" placeholder="例如：客人反應最近搬重物左下背微痠、需要加強熱敷..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">主訴症狀 ＆ 本次調理備註說明</label>
+          <textarea id="formNotes" rows="2" placeholder="可在此填寫顧客主訴症狀（例如：久坐腰痠、落枕、膏肓緊繃）或特殊狀況說明，若到店現場評估亦可留白..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
         </div>
 
         <!-- Modal Footer -->
@@ -571,29 +565,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="detailServiceBtnGrid"></div>
           </div>
 
-          <!-- 2. 主訴症狀快捷標籤與自訂編輯 -->
-          <div class="pt-2 border-t border-slate-200/60">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-slate-700 font-bold flex items-center gap-1">
-                <i data-lucide="activity" class="w-3.5 h-3.5 text-blue-600"></i>
-                <span>主訴症狀 / 痠痛部位（點擊標籤快速選取或輸入）：</span>
-              </span>
-            </div>
-            <!-- 快捷標籤按鈕群 -->
-            <div class="flex flex-wrap gap-1 mb-1.5" id="detailSymptomTags">
-              <button type="button" onclick="app.appendDetailSymptom('久坐腰背痠痛')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋久坐腰痠</button>
-              <button type="button" onclick="app.appendDetailSymptom('膏肓痛/斜方肌緊繃')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋膏肓/斜方肌緊繃</button>
-              <button type="button" onclick="app.appendDetailSymptom('落枕/頸部活動受限')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋落枕/頸部卡卡</button>
-              <button type="button" onclick="app.appendDetailSymptom('手腕痠脹/媽媽手')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋手腕/媽媽手</button>
-              <button type="button" onclick="app.appendDetailSymptom('骨盆歪斜/受力不均')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋骨盆歪斜</button>
-              <button type="button" onclick="app.appendDetailSymptom('五十肩/活動受限')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋五十肩</button>
-              <button type="button" onclick="app.appendDetailSymptom('膝蓋緊繃/腳踝舊傷')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋膝蓋/腳踝舊傷</button>
-            </div>
-            <!-- 輸入自訂框 -->
-            <input type="text" id="detailSymptomsInput" oninput="app.onDetailSymptomsChanged(this.value)" placeholder="點擊上方快捷標籤或在此輸入自訂主訴症狀..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition">
-          </div>
-
-          <!-- 3. 對應金額連動與確認 -->
+          <!-- 2. 對應金額連動與確認 -->
           <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="text-slate-700 font-bold">預約應收金額：</span>
@@ -604,11 +576,11 @@
             </div>
             <button type="button" onclick="app.saveDetailChanges()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1.5">
               <i data-lucide="save" class="w-3.5 h-3.5"></i>
-              <span>儲存修改</span>
+              <span>儲存金額修改</span>
             </button>
           </div>
 
-          <!-- 4. 時段與師傅固定資訊 -->
+          <!-- 3. 時段與師傅固定資訊 -->
           <div class="pt-2 border-t border-slate-200/60 space-y-1.5 text-slate-600">
             <div class="flex justify-between">
               <span class="text-slate-500">預約時段：</span>
@@ -629,21 +601,22 @@
           </div>
         </div>
 
+        <!-- 主訴症狀與健康備忘整合欄位 -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
               <i data-lucide="file-edit" class="w-3.5 h-3.5 text-brand-600"></i>
-              <span>健康備忘 / 上下文歷史註記：</span>
+              <span>主訴症狀 ＆ 調理備忘 / 健康紀錄：</span>
             </span>
             <button onclick="app.toggleEditDetailNotes()" id="btnToggleEditNotes" class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold hover:underline">
-              編輯備忘
+              編輯主訴與備忘
             </button>
           </div>
           <div id="detailNotesDisplay" class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed font-normal">
             無備註
           </div>
           <div id="detailNotesEditArea" class="hidden space-y-2">
-            <textarea id="detailNotesInput" rows="3" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs text-slate-900 focus:outline-none focus:border-brand-500 transition"></textarea>
+            <textarea id="detailNotesInput" rows="3" placeholder="在此記錄顧客主訴症狀、調理過程備忘或身體注意事項（例如：久坐腰背痠痛、膏肓緊繃，習慣中重力道...）" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition"></textarea>
             <div class="flex justify-end gap-2">
               <button onclick="app.toggleEditDetailNotes(false)" class="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700">取消</button>
               <button onclick="app.saveDetailNotes()" class="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">儲存並同步至 CRM</button>
@@ -1113,6 +1086,7 @@
         const newNotes = document.getElementById('detailNotesInput').value.trim();
         if (b) {
           b.notes = newNotes;
+          b.symptoms = newNotes;
           // 同步更新至顧客 CRM 記憶庫
           const c = this.customers.find(cust => cust.phone.replace(/[^0-9]/g, '') === b.phone.replace(/[^0-9]/g, ''));
           if (c) c.health_notes = newNotes;
@@ -1124,7 +1098,8 @@
           this.toggleEditDetailNotes(false);
           this.renderTimeline();
           this.renderCustomers();
-          this.showToast('✅ 已儲存備忘並同步至顧客 CRM 記憶庫！', 'success');
+          this.renderReports();
+          this.showToast('✅ 已儲存主訴備忘並同步至顧客 CRM 記憶庫！', 'success');
         }
       }
 
@@ -1803,8 +1778,8 @@
         const service = serviceSelect.value;
         const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
         const price = parseInt(serviceSelect.selectedOptions[0]?.dataset.price || 1200, 10);
-        const symptoms = document.getElementById('formSymptoms')?.value.trim() || '';
         const notes = document.getElementById('formNotes').value.trim();
+        const symptoms = notes;
 
         const start = new Date(`${date}T${time}:00`);
         const end = new Date(start.getTime() + duration * 60 * 1000);
@@ -1830,7 +1805,7 @@
         this.bookings.push(newBooking);
 
         // 2. 更新顧客 CRM
-        const crmNotes = symptoms ? `[主訴] ${symptoms}${notes ? ' ｜ ' + notes : ''}` : notes;
+        const crmNotes = notes;
         let customer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === phone.replace(/[^0-9]/g, ''));
         if (customer) {
           customer.visit_count = (customer.visit_count || 1) + 1;
@@ -2678,7 +2653,7 @@
         this.saveState();
         this.renderTimeline();
         this.renderReports();
-        this.showToast(`✅ 已成功儲存【${b.customerName}】的調理部位（$${b.price}）與主訴症狀！`, 'success');
+        this.showToast(`✅ 已成功儲存【${b.customerName}】的調理部位與金額（$${b.price}）！`, 'success');
       }
 
       updateBookingStatus(newStatus) {
