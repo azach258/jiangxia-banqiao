@@ -125,6 +125,35 @@ function doGet(e) {
       });
     }
 
+    if (action === 'deleteEvent' || action === 'delete') {
+      var eventId = params.eventId || params.id;
+      if (!eventId) {
+        return createJsonResponse({ success: false, message: '缺少 eventId' });
+      }
+      try {
+        var evt = cal.getEventById(eventId);
+        if (evt) {
+          evt.deleteEvent();
+          return createJsonResponse({
+            success: true,
+            message: '已成功從 Google 日曆刪除行程！',
+            eventId: eventId
+          });
+        } else {
+          return createJsonResponse({
+            success: true,
+            message: '日曆上已無該行程 (可能已手動刪除)',
+            eventId: eventId
+          });
+        }
+      } catch (delErr) {
+        return createJsonResponse({
+          success: false,
+          error: '刪除日曆事件失敗: ' + delErr.toString()
+        });
+      }
+    }
+
     return createJsonResponse({ success: false, message: '未知的 GET 操作指令' });
 
   } catch (error) {
@@ -223,6 +252,36 @@ function doPost(e) {
         eventId: event.getId(),
         start: formattedStart
       });
+    }
+
+    if (action === 'deleteEvent' || action === 'delete') {
+      var eventId = payload.eventId || payload.id;
+      var cal = getTargetCalendar();
+      if (!eventId) {
+        return createJsonResponse({ success: false, message: '缺少 eventId' });
+      }
+      try {
+        var evt = cal.getEventById(eventId);
+        if (evt) {
+          evt.deleteEvent();
+          return createJsonResponse({
+            success: true,
+            message: '已成功從 Google 日曆刪除行程！',
+            eventId: eventId
+          });
+        } else {
+          return createJsonResponse({
+            success: true,
+            message: '日曆上已無該行程 (可能已手動刪除)',
+            eventId: eventId
+          });
+        }
+      } catch (err) {
+        return createJsonResponse({
+          success: false,
+          error: '刪除日曆事件失敗: ' + err.toString()
+        });
+      }
     }
 
     return createJsonResponse({ success: false, message: '未知的 POST 操作指令' });
