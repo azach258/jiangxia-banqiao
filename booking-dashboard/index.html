@@ -505,30 +505,75 @@
           </span>
         </div>
 
-        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
-          <div class="flex justify-between">
-            <span class="text-slate-500">調理部位：</span>
-            <span id="detailService" class="font-bold text-slate-900">頸、背、腰 (含整體結構調整)</span>
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3 text-xs">
+          <!-- 1. 調理部位按鈕選擇 (依部位計價) -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-slate-700 font-bold flex items-center gap-1">
+                <i data-lucide="tag" class="w-3.5 h-3.5 text-brand-600"></i>
+                <span>調理部位（點擊按鈕切換，金額自動帶入）：</span>
+              </span>
+              <span id="detailServiceSelected" class="font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200 text-[11px]"></span>
+            </div>
+            <!-- 按鈕網格 (由 JS 動態生成並標註高亮) -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="detailServiceBtnGrid"></div>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">主訴症狀：</span>
-            <span id="detailSymptoms" class="font-bold text-slate-800">無特殊主訴</span>
+
+          <!-- 2. 主訴症狀快捷標籤與自訂編輯 -->
+          <div class="pt-2 border-t border-slate-200/60">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-slate-700 font-bold flex items-center gap-1">
+                <i data-lucide="activity" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span>主訴症狀 / 痠痛部位（點擊標籤快速選取或輸入）：</span>
+              </span>
+            </div>
+            <!-- 快捷標籤按鈕群 -->
+            <div class="flex flex-wrap gap-1 mb-1.5" id="detailSymptomTags">
+              <button type="button" onclick="app.appendDetailSymptom('久坐腰背痠痛')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋久坐腰痠</button>
+              <button type="button" onclick="app.appendDetailSymptom('膏肓痛/斜方肌緊繃')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋膏肓/斜方肌緊繃</button>
+              <button type="button" onclick="app.appendDetailSymptom('落枕/頸部活動受限')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋落枕/頸部卡卡</button>
+              <button type="button" onclick="app.appendDetailSymptom('手腕痠脹/媽媽手')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋手腕/媽媽手</button>
+              <button type="button" onclick="app.appendDetailSymptom('骨盆歪斜/受力不均')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋骨盆歪斜</button>
+              <button type="button" onclick="app.appendDetailSymptom('五十肩/活動受限')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋五十肩</button>
+              <button type="button" onclick="app.appendDetailSymptom('膝蓋緊繃/腳踝舊傷')" class="px-2 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[11px] transition active:scale-95 shadow-subtle">＋膝蓋/腳踝舊傷</button>
+            </div>
+            <!-- 輸入自訂框 -->
+            <input type="text" id="detailSymptomsInput" oninput="app.onDetailSymptomsChanged(this.value)" placeholder="點擊上方快捷標籤或在此輸入自訂主訴症狀..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition">
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">預約時段：</span>
-            <span id="detailTimeRange" class="font-semibold text-slate-800">2026-09-29 14:00 ~ 15:00</span>
+
+          <!-- 3. 對應金額連動與確認 -->
+          <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-slate-700 font-bold">預約應收金額：</span>
+              <div class="relative flex items-center">
+                <span class="text-xs text-slate-400 mr-1">NT$</span>
+                <input type="number" id="detailPriceInput" onchange="app.onDetailPriceChanged(this.value)" class="w-24 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 transition" value="1500" step="100">
+              </div>
+            </div>
+            <button type="button" onclick="app.saveDetailChanges()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1.5">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span>儲存修改</span>
+            </button>
           </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">來訪歷程：</span>
-            <span id="detailVisitBadge"></span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">服務師傅：</span>
-            <span class="font-semibold text-brand-700">江夏板橋館・賴師傅 (每次1小時)</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-slate-500">日曆同步：</span>
-            <span id="detailSyncStatus" class="font-semibold text-emerald-700">🟢 本地優先 / 已同步 Google 日曆</span>
+
+          <!-- 4. 時段與師傅固定資訊 -->
+          <div class="pt-2 border-t border-slate-200/60 space-y-1.5 text-slate-600">
+            <div class="flex justify-between">
+              <span class="text-slate-500">預約時段：</span>
+              <span id="detailTimeRange" class="font-semibold text-slate-800">2026-09-29 14:00 ~ 15:00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">來訪歷程：</span>
+              <span id="detailVisitBadge"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">服務師傅：</span>
+              <span class="font-semibold text-brand-700">江夏板橋館・賴師傅 (每次1小時)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">日曆同步：</span>
+              <span id="detailSyncStatus" class="font-semibold text-emerald-700">🟢 本地優先 / 已同步 Google 日曆</span>
+            </div>
           </div>
         </div>
 
@@ -859,6 +904,14 @@
         start: "2026-10-01T20:30:00",
         end: "2026-10-01T21:00:00"
       }
+    ];
+
+    const SERVICE_PRICE_OPTIONS = [
+      { name: "頸、背、腰 (含整體結構調整)", shortName: "頸、背、腰", price: 1500 },
+      { name: "骨盆調理", shortName: "骨盆調理", price: 1200 },
+      { name: "四肢 (肩膀/手肘/膝蓋/腳)", shortName: "四肢調理", price: 800 },
+      { name: "手指、手腕、腳踝", shortName: "手腕腳踝", price: 600 },
+      { name: "【免費】檢查評估諮詢", shortName: "【免費】評估", price: 0 }
     ];
 
     class JiangxiaBookingApp {
@@ -2211,8 +2264,22 @@
 
         document.getElementById('detailCustomerName').textContent = b.customerName;
         document.getElementById('detailPhone').textContent = b.phone;
-        document.getElementById('detailService').textContent = b.serviceItem;
-        document.getElementById('detailSymptoms').textContent = b.symptoms || '無特殊主訴';
+        
+        // 渲染部位按鈕與選中狀態 (金額自動帶入)
+        this.renderDetailServiceButtons(b.serviceItem, b.price);
+
+        // 主訴症狀輸入框
+        const symptomsInput = document.getElementById('detailSymptomsInput');
+        if (symptomsInput) {
+          symptomsInput.value = (b.symptoms && b.symptoms !== '無特殊主訴') ? b.symptoms : '';
+        }
+
+        // 金額輸入框
+        const priceInput = document.getElementById('detailPriceInput');
+        if (priceInput) {
+          priceInput.value = (b.price !== undefined && b.price !== null) ? b.price : 1500;
+        }
+
         document.getElementById('detailTimeRange').textContent = `${b.start.replace('T', ' ')} ~ ${b.end.slice(11, 16)}`;
         document.getElementById('detailStatusBadge').textContent = b.status;
         const count = this.getVisitCount(b.phone);
@@ -2225,6 +2292,112 @@
         document.getElementById('detailSyncStatus').textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
 
         this.openModal('detailModal');
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+      }
+
+      renderDetailServiceButtons(currentService, currentPrice) {
+        const grid = document.getElementById('detailServiceBtnGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const selectedLabel = document.getElementById('detailServiceSelected');
+        let matched = false;
+
+        SERVICE_PRICE_OPTIONS.forEach(opt => {
+          const isSelected = (currentService === opt.name) || (!matched && currentService && (currentService.includes(opt.shortName) || currentService.includes(opt.name.slice(0, 4))));
+          if (isSelected) matched = true;
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = isSelected
+            ? 'px-2 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-subtle border border-brand-700 transition flex flex-col items-center justify-center text-center ring-2 ring-brand-400 ring-offset-1 scale-[1.02]'
+            : 'px-2 py-2 rounded-xl text-xs font-medium bg-white text-slate-700 hover:bg-brand-50 hover:text-brand-700 border border-slate-200 transition flex flex-col items-center justify-center text-center active:scale-95 shadow-subtle';
+          
+          btn.innerHTML = `<span class="leading-tight">${opt.shortName}</span><span class="text-[10px] ${isSelected ? 'text-brand-100 font-normal' : 'text-slate-400 font-semibold'} mt-0.5">$${opt.price}</span>`;
+          btn.onclick = () => this.selectDetailService(opt.name, opt.price);
+          grid.appendChild(btn);
+        });
+
+        if (selectedLabel) {
+          selectedLabel.textContent = currentService || '傳統整復調理';
+        }
+      }
+
+      selectDetailService(serviceName, price) {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (!b) return;
+
+        b.serviceItem = serviceName;
+        b.price = price;
+
+        const priceInput = document.getElementById('detailPriceInput');
+        if (priceInput) priceInput.value = price;
+
+        this.renderDetailServiceButtons(serviceName, price);
+        this.saveState();
+        this.renderTimeline();
+        this.renderReports();
+        this.showToast(`✅ 已切換為【${serviceName}】，金額自動帶入 NT$ ${price}`, 'success');
+      }
+
+      appendDetailSymptom(tag) {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (!b) return;
+
+        const input = document.getElementById('detailSymptomsInput');
+        let current = (input.value || '').trim();
+        if (!current || current === '無特殊主訴') {
+          current = tag;
+        } else if (current.includes(tag)) {
+          // toggle off
+          current = current.split('、').map(s => s.trim()).filter(s => s !== tag && s.length > 0).join('、');
+        } else {
+          current += '、' + tag;
+        }
+
+        input.value = current;
+        b.symptoms = current;
+        this.saveState();
+        this.renderTimeline();
+      }
+
+      onDetailSymptomsChanged(val) {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (b) {
+          b.symptoms = val.trim();
+          this.saveState();
+          this.renderTimeline();
+        }
+      }
+
+      onDetailPriceChanged(val) {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (b) {
+          b.price = parseInt(val, 10) || 0;
+          this.saveState();
+          this.renderReports();
+        }
+      }
+
+      saveDetailChanges() {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (!b) return;
+
+        const input = document.getElementById('detailSymptomsInput');
+        if (input) b.symptoms = input.value.trim() || '無特殊主訴';
+
+        const priceInput = document.getElementById('detailPriceInput');
+        if (priceInput) b.price = parseInt(priceInput.value, 10) || 0;
+
+        this.saveState();
+        this.renderTimeline();
+        this.renderReports();
+        this.showToast(`✅ 已成功儲存【${b.customerName}】的調理部位（$${b.price}）與主訴症狀！`, 'success');
       }
 
       updateBookingStatus(newStatus) {
