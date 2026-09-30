@@ -670,6 +670,24 @@
           </div>
         </div>
 
+        <!-- 5. 該顧客過往到店病歷歷程 (Past Visit History Preview) -->
+        <div id="detailPastHistorySection" class="pt-3 border-t border-slate-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-700 font-bold flex items-center gap-1.5">
+              <i data-lucide="history" class="w-3.5 h-3.5 text-amber-600"></i>
+              <span>過往到店病歷紀錄：</span>
+              <span id="detailPastHistoryCountBadge" class="px-2 py-0.2 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">0 筆</span>
+            </span>
+            <button type="button" id="btnDetailOpenFullHistory" class="text-[11px] text-brand-600 hover:text-brand-700 font-bold hover:underline flex items-center gap-1">
+              <span>展開完整病歷卡</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <div id="detailPastHistoryList" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+            <!-- 動態插入過往就診卡片 -->
+          </div>
+        </div>
+
         <!-- Quick Status Update & Actions -->
         <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
           <button type="button" onclick="app.rebookFromDetail()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-subtle active:scale-95">
@@ -694,6 +712,85 @@
         </div>
       </div>
     </div></div>
+  </div>
+
+  <!-- MODAL: 客戶專屬到店病歷時間軸 (Customer Visit History Modal) -->
+  <div id="customerHistoryModal" onclick="if(event.target === this) app.closeModal('customerHistoryModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-lg">
+      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+              <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span id="histCustomerName">顧客姓名</span>
+                <span id="histVisitCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">來訪 1 次</span>
+              </h3>
+              <p id="histCustomerPhone" class="text-[11px] text-slate-500 font-mono">0912-345-678</p>
+            </div>
+          </div>
+          <button onclick="app.closeModal('customerHistoryModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+          <!-- 統計與健康備忘總覽 -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <span class="text-[10px] text-slate-400 block font-medium">首次到店 / 最近來訪</span>
+              <span id="histDateSpan" class="text-xs font-bold text-slate-800 mt-0.5 block">2026/09/10 ~ 2026/09/30</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <span class="text-[10px] text-slate-400 block font-medium">累計消費總額</span>
+              <span id="histTotalSpent" class="text-xs font-bold text-brand-700 mt-0.5 block">$3,200</span>
+            </div>
+          </div>
+
+          <!-- 長期健康備忘 -->
+          <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1">
+            <span class="text-[11px] font-bold text-amber-900 flex items-center gap-1">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>長期健康與習慣備忘：</span>
+            </span>
+            <p id="histHealthNotes" class="text-amber-800 leading-relaxed font-normal">
+              無特殊備忘
+            </p>
+          </div>
+
+          <!-- 時間軸標題 -->
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <span class="font-bold text-slate-900 flex items-center gap-1.5">
+              <i data-lucide="history" class="w-3.5 h-3.5 text-brand-600"></i>
+              <span>歷次到店調理明細時間軸</span>
+            </span>
+            <span id="histListCount" class="text-[11px] text-slate-400">共 0 筆紀錄</span>
+          </div>
+
+          <!-- 時間軸列表 -->
+          <div id="histTimelineContainer" class="relative pl-5 space-y-4 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+            <!-- 動態插入每一筆到店記錄 -->
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <button type="button" onclick="app.closeModal('customerHistoryModal')" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+            關閉
+          </button>
+          <button type="button" id="btnHistQuickBook" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-subtle transition active:scale-95 flex items-center gap-1">
+            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+            <span>為此顧客排程預約</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
 
@@ -2558,11 +2655,163 @@
             </div>
             <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
               <span>上次來訪: ${c.last_visited_at || '未記錄'}</span>
-              <button onclick="app.quickBookForCustomer('${c.name}', '${c.phone}')" class="text-brand-600 hover:text-brand-700 font-semibold hover:underline">排程預約</button>
+              <div class="flex items-center gap-1.5">
+                <button onclick="app.showCustomerHistory('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1">
+                  <i data-lucide="clipboard-list" class="w-3 h-3 text-amber-700"></i>
+                  <span>到店病歷</span>
+                </button>
+                <button onclick="app.quickBookForCustomer('${c.name}', '${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-lg transition active:scale-95 shadow-subtle">
+                  排程
+                </button>
+              </div>
             </div>
           `;
           container.appendChild(card);
         });
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+      }
+
+      // ==========================================
+      // 客戶專屬到店病歷時間軸 (Customer Visit History Core)
+      // ==========================================
+      getCustomerHistory(phone) {
+        if (!phone) return [];
+        const clean = phone.replace(/[^0-9]/g, '');
+        if (!clean) return [];
+        return this.bookings
+          .filter(b => b.phone && b.phone.replace(/[^0-9]/g, '') === clean && b.status !== '已取消')
+          .sort((a, b) => new Date(b.start) - new Date(a.start));
+      }
+
+      showCustomerHistory(phone) {
+        if (!phone) return;
+        const clean = phone.replace(/[^0-9]/g, '');
+        const cust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === clean) || {
+          name: '訪客',
+          phone: phone,
+          visit_count: 1,
+          health_notes: ''
+        };
+        const historyList = this.getCustomerHistory(phone);
+        const totalVisitCount = Math.max(cust.visit_count || 1, historyList.length, 1);
+
+        document.getElementById('histCustomerName').textContent = cust.name;
+        document.getElementById('histCustomerPhone').textContent = cust.phone;
+        const badgeEl = document.getElementById('histVisitCountBadge');
+        if (badgeEl) {
+          badgeEl.textContent = `來訪 ${totalVisitCount} 次`;
+          badgeEl.className = totalVisitCount >= 5
+            ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200'
+            : (totalVisitCount > 1
+                ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200'
+                : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200');
+        }
+
+        // 計算累計金額
+        let totalSpent = 0;
+        historyList.forEach(b => {
+          totalSpent += (Number(b.price) || 0);
+        });
+        const spentEl = document.getElementById('histTotalSpent');
+        if (spentEl) {
+          spentEl.textContent = this.hidePrice ? '***' : `$${totalSpent.toLocaleString()}`;
+        }
+
+        // 首訪與最近訪
+        const spanEl = document.getElementById('histDateSpan');
+        if (spanEl) {
+          if (historyList.length > 0) {
+            const latest = historyList[0].start.slice(0, 10);
+            const oldest = historyList[historyList.length - 1].start.slice(0, 10);
+            spanEl.textContent = oldest === latest ? latest : `${oldest} ~ ${latest}`;
+          } else {
+            spanEl.textContent = cust.last_visited_at || '無明確排程紀錄';
+          }
+        }
+
+        // 長期備忘
+        const notesEl = document.getElementById('histHealthNotes');
+        if (notesEl) {
+          notesEl.innerHTML = cust.health_notes
+            ? cust.health_notes
+            : '<span class="text-slate-400 italic">尚無長期體質備忘，可在預約詳情內編輯記錄</span>';
+        }
+
+        // 歷史時間軸渲染
+        const container = document.getElementById('histTimelineContainer');
+        const countEl = document.getElementById('histListCount');
+        if (countEl) countEl.textContent = `共 ${historyList.length} 筆排程紀錄`;
+
+        if (container) {
+          if (historyList.length === 0) {
+            container.innerHTML = `
+              <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-slate-400">
+                目前尚無該顧客的預約排程明細紀錄（或僅有歷史名冊資料）
+              </div>
+            `;
+          } else {
+            container.innerHTML = historyList.map((b, idx) => {
+              const startT = b.start.slice(0, 16).replace('T', ' ');
+              const endT = b.end ? b.end.slice(11, 16) : '';
+              const timeDisplay = `${startT}${endT ? ` ~ ${endT}` : ''}`;
+              const isLatest = idx === 0;
+              const dotColor = isLatest ? 'bg-amber-500 ring-4 ring-amber-100' : 'bg-slate-300';
+              const priceText = this.hidePrice
+                ? '<span class="text-slate-400 font-mono font-bold">***</span>'
+                : `<span class="font-bold text-slate-900">$${(Number(b.price) || 0).toLocaleString()}</span>`;
+
+              const statusColor = {
+                '已完成': 'bg-purple-50 text-purple-700 border-purple-200',
+                '已到店': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                '已確認': 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              }[b.status] || 'bg-slate-100 text-slate-600 border-slate-200';
+
+              const cleanNotes = b.notes || b.symptoms || '';
+              const partsBadge = (Array.isArray(b.bodyParts) && b.bodyParts.length > 0)
+                ? b.bodyParts.map(p => `<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">${p}</span>`).join(' ')
+                : '';
+
+              return `
+                <div class="relative group">
+                  <div class="absolute -left-[17px] top-1.5 w-3 h-3 rounded-full ${dotColor} transition"></div>
+                  <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-amber-50/30 border-amber-200 shadow-subtle' : 'bg-slate-50/70 border-slate-200/80'} space-y-1.5">
+                    <div class="flex items-center justify-between flex-wrap gap-1">
+                      <div class="flex items-center gap-1.5 font-bold text-slate-800">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <span>${timeDisplay}</span>
+                        ${isLatest ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500 text-white">最新一次</span>' : ''}
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusColor}">${b.status}</span>
+                        ${priceText}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap text-slate-700">
+                      <span class="font-semibold text-brand-700">${b.serviceItem || '調理整復'}</span>
+                      ${partsBadge ? `<span class="text-slate-300">|</span> ${partsBadge}` : ''}
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white border border-slate-200/70 text-[11px] text-slate-700 leading-relaxed font-normal">
+                      <span class="font-bold text-slate-800">調理筆記/主訴：</span>
+                      ${cleanNotes ? cleanNotes : '<span class="text-slate-400 italic">（當時未記錄特殊主訴）</span>'}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+
+        // 綁定排程按鈕
+        const btnBook = document.getElementById('btnHistQuickBook');
+        if (btnBook) {
+          btnBook.onclick = () => {
+            this.closeModal('customerHistoryModal');
+            this.quickBookForCustomer(cust.name, cust.phone);
+          };
+        }
+
+        this.openModal('customerHistoryModal');
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
       }
 
       searchCustomers(val) {
@@ -2878,6 +3127,56 @@
         }
         const notesInput = document.getElementById('detailNotesInput');
         if (notesInput) notesInput.value = cleanNotes;
+
+        // 5. 渲染過往到店病歷預覽 (Past Visit History Preview)
+        const histContainer = document.getElementById('detailPastHistoryList');
+        const histBadge = document.getElementById('detailPastHistoryCountBadge');
+        const btnOpenFull = document.getElementById('btnDetailOpenFullHistory');
+        
+        if (histContainer && b.phone) {
+          const allHistory = this.getCustomerHistory(b.phone);
+          // 排除當前正在查看的這筆預約
+          const pastHistory = allHistory.filter(h => h.id !== b.id);
+          
+          if (histBadge) histBadge.textContent = `${pastHistory.length} 筆過往紀錄`;
+
+          if (btnOpenFull) {
+            btnOpenFull.onclick = () => {
+              this.showCustomerHistory(b.phone);
+            };
+          }
+
+          if (pastHistory.length === 0) {
+            histContainer.innerHTML = `
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 text-[11px] text-center">
+                🌱 首次到店新顧客（目前無過往到店歷史紀錄）
+              </div>
+            `;
+          } else {
+            histContainer.innerHTML = pastHistory.slice(0, 3).map(h => {
+              const dateStr = h.start.slice(0, 16).replace('T', ' ');
+              const priceStr = this.hidePrice ? '***' : `$${(Number(h.price) || 0).toLocaleString()}`;
+              const noteStr = h.notes || h.symptoms || '當時未記錄特殊備忘';
+              const partsStr = (Array.isArray(h.bodyParts) && h.bodyParts.length > 0)
+                ? ` [部位: ${h.bodyParts.join('、')}]`
+                : '';
+              return `
+                <div class="p-2.5 rounded-xl bg-amber-50/50 border border-amber-200/80 text-xs space-y-1">
+                  <div class="flex items-center justify-between font-bold text-slate-800">
+                    <span class="flex items-center gap-1 text-[11px] text-amber-900">
+                      <i data-lucide="calendar" class="w-3 h-3 text-amber-700"></i>
+                      <span>${dateStr}</span>
+                    </span>
+                    <span class="text-[11px] text-brand-700">${h.serviceItem || '調理整復'}${partsStr} (${priceStr})</span>
+                  </div>
+                  <p class="text-[11px] text-slate-600 truncate leading-relaxed">
+                    <span class="font-semibold text-slate-700">主訴/備忘:</span> ${noteStr}
+                  </p>
+                </div>
+              `;
+            }).join('') + (pastHistory.length > 3 ? `<div class="text-[10px] text-center text-slate-400">（尚有 ${pastHistory.length - 3} 筆更早紀錄，點擊右上角「展開完整病歷卡」可看全部）</div>` : '');
+          }
+        }
 
         this.openModal('detailModal');
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
