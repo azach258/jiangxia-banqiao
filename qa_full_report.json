@@ -180,13 +180,13 @@
       "id": "BTN-D12",
       "name": "空白時段「＋新增」按鈕",
       "status": "PASS",
-      "msg": "空白時段一鍵新增觸發正常 (時段: 16:00)"
+      "msg": "空白時段一鍵新增觸發正常 (時段: 17:00)"
     },
     {
       "id": "BTN-D13",
       "name": "已預約時段「預約下次」按鈕",
       "status": "PASS",
-      "msg": "預約下次自動代入正常 (顧客: 李小姐, 建議日期: 2026-10-05)"
+      "msg": "預約下次自動代入正常 (顧客: 王大偉, 建議日期: 2026-10-05)"
     },
     {
       "id": "DATE-D01",
@@ -198,7 +198,7 @@
       "id": "FORM-D01",
       "name": "後台預約「衝突防呆檢測」",
       "status": "PASS",
-      "msg": "時段衝突檢測反饋正常 (⛔ 排程衝突警告！ 該時段已與【李小姐】的預約 (...)"
+      "msg": "時段衝突檢測反饋正常 (⛔ 排程衝突警告！ 該時段已與【王大偉】的預約 (...)"
     },
     {
       "id": "CRM-D01",
@@ -214,7 +214,7 @@
         "level": "SEVERE",
         "message": "http://localhost:8090/favicon.ico - Failed to load resource: the server responded with a status of 404 (File not found)",
         "source": "network",
-        "timestamp": 1790686086213
+        "timestamp": 1790688853196
       }
     }
   ],

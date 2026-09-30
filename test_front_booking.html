@@ -1239,7 +1239,11 @@
 
     class JiangxiaFrontBooking {
       constructor() {
-        this.selectedDateStr = "2026-09-29";
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        this.selectedDateStr = `${y}-${m}-${d}`;
         this.selectedTimeStr = "14:00";
         this.selectedService = "頸、背、腰 (含整體結構調整)";
         this.selectedDuration = 60;
@@ -1258,6 +1262,12 @@
         this.listenStorageChanges();
         if (this.gasUrl) {
           this.fetchCloudBookings();
+          // 每 20 秒自動無感輪詢 Google 日曆，確保時段佔用即時反映
+          if (!this._pollTimer) {
+            this._pollTimer = setInterval(() => {
+              this.fetchCloudBookings();
+            }, 20000);
+          }
         }
       }
 
@@ -1332,7 +1342,8 @@
         if (!container) return;
         container.innerHTML = '';
 
-        const baseDate = new Date("2026-09-29T00:00:00");
+        const baseDate = new Date();
+        baseDate.setHours(0, 0, 0, 0);
         const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
         for (let i = 0; i < 7; i++) {
@@ -1367,7 +1378,7 @@
         const picker = document.getElementById('frontCustomDatePicker');
         if (picker) {
           picker.value = this.selectedDateStr;
-          picker.min = new Date("2026-09-29T00:00:00").toISOString().split('T')[0];
+          picker.min = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
         }
 
         this.renderSlots();
@@ -1562,6 +1573,17 @@
           });
         }
         this.saveCustomersToStorage(customers);
+
+        // 即刻在前端快取鎖定該時段，防止重複點選
+        this.cloudBookings.push({
+          id: newBooking.id,
+          customerName: name,
+          phone: phone,
+          serviceItem: this.selectedService,
+          start: `${this.selectedDateStr}T${this.selectedTimeStr}:00`,
+          status: '已確認'
+        });
+        this.renderSlots();
 
         // 3. 同步推送至 Google Apps Script 雲端日曆 ＆ 試算表
         if (this.gasUrl) {
