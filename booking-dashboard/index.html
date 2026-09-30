@@ -1016,11 +1016,54 @@
           localStorage.setItem('jiangxia_sync_queue_v2', JSON.stringify([]));
         }
 
-        this.bookings = storedBookings;
-        this.customers = storedCustomers;
+        // 全面深度清洗舊資料中殘留的系統日曆中繼字串（如「顧客姓名：方鼎文 聯絡電話：... 建立時間：...」）
+        this.bookings = (storedBookings || []).map(b => {
+          b.notes = this.cleanNoteText(b.notes);
+          b.symptoms = this.cleanNoteText(b.symptoms);
+          return b;
+        });
+
+        this.customers = (storedCustomers || []).map(c => {
+          c.health_notes = this.cleanNoteText(c.health_notes);
+          return c;
+        });
+
+        localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
+        localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
+
         this.syncQueue = JSON.parse(localStorage.getItem('jiangxia_sync_queue_v2') || '[]');
         this.gasUrl = localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
         this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
+      }
+
+      cleanNoteText(text) {
+        if (!text || typeof text !== 'string') return '';
+        let t = text.trim();
+        if (!t) return '';
+
+        // 1. 若包含 Google 日曆系統自動生成的整段中繼資料（姓名、電話、預約時長、建立時間等）
+        if (t.includes('顧客姓名：') || t.includes('聯絡電話：') || t.includes('建立時間：') || t.includes('預約時長：') || t.includes('服務師傅：')) {
+          // 嘗試提取裡面的「備註說明：」
+          const match = t.match(/備註說明：\s*([^\n\r]+)/);
+          if (match) {
+            let notePart = match[1].trim();
+            notePart = notePart.replace(/建立時間：[\s\S]*$/, '').trim();
+            // 若只是系統通用字串，直接清空
+            if (notePart === '電話預約' || notePart === '線上預約' || notePart === '現場預約' || notePart === '無備註' || notePart === '無' || notePart === '無特殊主訴') {
+              return '';
+            }
+            return notePart;
+          }
+          return '';
+        }
+
+        // 2. 過濾單純系統字串
+        if (t.includes('日曆同步') || t.includes('來自 Google') || t.includes('雲端同步') ||
+            t === '電話預約' || t === '線上預約' || t === '現場預約' || t === '無備註' || t === '無' || t === '無特殊主訴') {
+          return '';
+        }
+
+        return t;
       }
 
       saveState() {
@@ -2110,6 +2153,7 @@
               else if (sItem.includes('1200') || sItem.includes('1,200')) price = 1200;
               else if (sItem.includes('免費')) price = 0;
 
+              const cleanNotes = this.cleanNoteText(evt.notes);
               if (!exists) {
                 this.bookings.push({
                   id: evt.id,
@@ -2122,7 +2166,8 @@
                   status: evt.status || '已確認',
                   syncStatus: 'synced',
                   cloudSyncedId: evt.id,
-                  notes: (evt.notes && !evt.notes.includes('日曆同步') && !evt.notes.includes('無備註')) ? evt.notes : '',
+                  notes: cleanNotes,
+                  symptoms: cleanNotes,
                   start: evt.start.slice(0, 19),
                   end: evt.end.slice(0, 19)
                 });
@@ -2134,6 +2179,7 @@
                   if (cust) {
                     cust.visit_count += 1;
                     cust.last_visited_at = evt.start.slice(0, 10);
+                    if (cleanNotes) cust.health_notes = cleanNotes;
                   } else {
                     this.customers.push({
                       id: 'c-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -2141,7 +2187,7 @@
                       phone: evt.phone,
                       visit_count: 1,
                       last_visited_at: evt.start.slice(0, 10),
-                      health_notes: (evt.notes && !evt.notes.includes('日曆') && !evt.notes.includes('雲端') && !evt.notes.includes('無備註')) ? evt.notes : ''
+                      health_notes: cleanNotes
                     });
                   }
                 }
@@ -2149,7 +2195,8 @@
                 exists.customerName = evt.customerName || exists.customerName;
                 exists.serviceItem = evt.serviceItem || exists.serviceItem;
                 exists.status = evt.status || exists.status;
-                exists.notes = evt.notes || exists.notes;
+                exists.notes = cleanNotes || this.cleanNoteText(exists.notes);
+                exists.symptoms = exists.notes;
                 exists.start = evt.start.slice(0, 19);
                 exists.end = evt.end.slice(0, 19);
                 exists.cloudSyncedId = evt.id;
@@ -2560,14 +2607,17 @@
         if (syncStatusEl) syncStatusEl.textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
 
         // 4. 主訴症狀 ＆ 調理備忘保持空白給師父填寫紀錄
+        const cleanNotes = this.cleanNoteText(b.notes);
+        b.notes = cleanNotes;
+        b.symptoms = cleanNotes;
         const notesEl = document.getElementById('detailNotesDisplay');
         if (notesEl) {
-          notesEl.innerHTML = b.notes 
-            ? b.notes 
+          notesEl.innerHTML = cleanNotes 
+            ? cleanNotes 
             : '<span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>';
         }
         const notesInput = document.getElementById('detailNotesInput');
-        if (notesInput) notesInput.value = b.notes || '';
+        if (notesInput) notesInput.value = cleanNotes;
 
         this.openModal('detailModal');
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
