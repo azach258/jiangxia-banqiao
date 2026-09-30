@@ -125,13 +125,19 @@ function doGet(e) {
       });
     }
 
-    if (action === 'deleteEvent' || action === 'delete') {
+    if (action === 'deleteEvent' || action === 'delete' || action === 'cancel') {
       var eventId = params.eventId || params.id;
       if (!eventId) {
         return createJsonResponse({ success: false, message: '缺少 eventId' });
       }
       try {
         var evt = cal.getEventById(eventId);
+        if (!evt && eventId.indexOf('@google.com') === -1) {
+          evt = cal.getEventById(eventId + '@google.com');
+        }
+        if (!evt && eventId.indexOf('@google.com') !== -1) {
+          evt = cal.getEventById(eventId.replace('@google.com', ''));
+        }
         if (evt) {
           evt.deleteEvent();
           return createJsonResponse({
@@ -154,7 +160,7 @@ function doGet(e) {
       }
     }
 
-    return createJsonResponse({ success: false, message: '未知的 GET 操作指令' });
+    return createJsonResponse({ success: false, message: '未知的 GET 操作指令: ' + action });
 
   } catch (error) {
     return createJsonResponse({ success: false, error: error.toString() });
@@ -254,7 +260,7 @@ function doPost(e) {
       });
     }
 
-    if (action === 'deleteEvent' || action === 'delete') {
+    if (action === 'deleteEvent' || action === 'delete' || action === 'cancel') {
       var eventId = payload.eventId || payload.id;
       var cal = getTargetCalendar();
       if (!eventId) {
@@ -262,6 +268,12 @@ function doPost(e) {
       }
       try {
         var evt = cal.getEventById(eventId);
+        if (!evt && eventId.indexOf('@google.com') === -1) {
+          evt = cal.getEventById(eventId + '@google.com');
+        }
+        if (!evt && eventId.indexOf('@google.com') !== -1) {
+          evt = cal.getEventById(eventId.replace('@google.com', ''));
+        }
         if (evt) {
           evt.deleteEvent();
           return createJsonResponse({
@@ -284,7 +296,7 @@ function doPost(e) {
       }
     }
 
-    return createJsonResponse({ success: false, message: '未知的 POST 操作指令' });
+    return createJsonResponse({ success: false, message: '未知的 POST 操作指令: ' + action });
 
   } catch (error) {
     return createJsonResponse({ success: false, error: error.toString() });

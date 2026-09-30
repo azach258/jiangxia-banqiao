@@ -111,6 +111,24 @@ function doGet(e) {
       });
     }
     
+    if (action === 'delete' || action === 'deleteEvent' || action === 'cancel') {
+      const eventId = params.eventId || params.id;
+      if (!eventId) return createJsonResponse({ success: false, message: '缺少預約 ID (id 或 eventId)' }, 400);
+
+      const cal = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
+      let event = cal.getEventById(eventId);
+      if (!event && eventId.indexOf('@google.com') === -1) {
+        event = cal.getEventById(eventId + '@google.com');
+      }
+      if (!event && eventId.indexOf('@google.com') !== -1) {
+        event = cal.getEventById(eventId.replace('@google.com', ''));
+      }
+      if (!event) return createJsonResponse({ success: true, message: '日曆上已無該行程 (可能已刪除)', eventId: eventId });
+
+      event.deleteEvent();
+      return createJsonResponse({ success: true, message: '預約已從 Google 日曆刪除', eventId: eventId });
+    }
+
     return createJsonResponse({ success: false, message: '不支援的 GET 動作: ' + action }, 400);
   } catch (err) {
     return createJsonResponse({ success: false, error: err.toString() }, 500);

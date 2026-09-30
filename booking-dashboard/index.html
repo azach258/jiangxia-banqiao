@@ -647,6 +647,10 @@
             <button onclick="app.updateBookingStatus('已取消')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition">
               取消此預約
             </button>
+            <button onclick="app.deleteBookingFromDetail()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>刪除排程</span>
+            </button>
           </div>
         </div>
       </div>
@@ -977,8 +981,23 @@
           storedBookings = JSON.parse(localStorage.getItem('jiangxia_bookings_v2') || '[]');
         } catch(e) { storedBookings = []; }
 
-        // 清理殘留之測試假資料 (王大偉/李小姐/張經理/QA測試員等)
+        // 讀取永久刪除墓碑名冊 (Tombstone)
+        this.deletedEventIds = [];
+        try {
+          this.deletedEventIds = JSON.parse(localStorage.getItem('jiangxia_deleted_events_v2') || '[]');
+        } catch(e) { this.deletedEventIds = []; }
+
+        // 清理殘留之測試假資料 (王大偉/李小姐/張經理/QA測試員等) 以及已刪除的行程
         storedBookings = (storedBookings || []).filter(b => {
+          const id = b.id || '';
+          const cId = b.cloudSyncedId || '';
+          if (this.deletedEventIds.includes(id) || (cId && this.deletedEventIds.includes(cId))) {
+            return false;
+          }
+          const pureId = id.replace('@google.com', '');
+          if (pureId && this.deletedEventIds.includes(pureId)) {
+            return false;
+          }
           const name = b.customerName || '';
           if (name.includes('QA') || name.includes('測試') || name === '王大偉' || name === '李小姐' || name === '張經理') {
             return false;
@@ -989,8 +1008,10 @@
           return true;
         });
 
-        if (!storedBookings || storedBookings.length === 0) {
+        const initializedBefore = localStorage.getItem('jiangxia_bookings_initialized_v2');
+        if (!storedBookings || (storedBookings.length === 0 && !initializedBefore)) {
           storedBookings = [...SEED_BOOKINGS];
+          localStorage.setItem('jiangxia_bookings_initialized_v2', 'true');
         }
         localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(storedBookings));
 
@@ -1484,29 +1505,66 @@
         this.rebookNext(id);
       }
 
+      deleteBookingFromDetail() {
+        if (!this.activeDetailId) return;
+        const id = this.activeDetailId;
+        this.closeModal('detailModal');
+        this.deleteBooking(id);
+      }
+
       // ==========================================
       // 刪除 / 取消預約 (Delete Booking)
       // ==========================================
       async deleteBooking(bookingId) {
         const b = this.bookings.find(x => x.id === bookingId);
         if (!b) return;
-        if (!confirm(`確定要刪除【${b.customerName}】於 ${b.start.slice(0, 16).replace('T', ' ')} 的預約排程嗎？\n（若已連線，將同步自 Google 日曆刪除）`)) {
+        if (!confirm(`確定要刪除【${b.customerName}】於 ${b.start.slice(0, 16).replace('T', ' ')} 的預約排程嗎？\n（刪除後將同步自 Google 日曆移除，且絕不再被重複抓回）`)) {
           return;
         }
 
-        // 1. 本地立即徹底移除 (避免下次輪詢又被覆蓋)
+        // 1. 取得關聯 Event ID
+        const targetEventId = b.cloudSyncedId || b.id;
+        const bId = b.id;
+
+        // 2. 登記至永久墓碑名冊 (Tombstone)，徹底杜絕輪詢重新拉回
+        if (!this.deletedEventIds) this.deletedEventIds = [];
+        if (bId && !this.deletedEventIds.includes(bId)) this.deletedEventIds.push(bId);
+        if (targetEventId && !this.deletedEventIds.includes(targetEventId)) this.deletedEventIds.push(targetEventId);
+        if (targetEventId && targetEventId.includes('@google.com')) {
+          const pureId = targetEventId.replace('@google.com', '');
+          if (!this.deletedEventIds.includes(pureId)) this.deletedEventIds.push(pureId);
+        } else if (targetEventId && !targetEventId.includes('@google.com')) {
+          const fullId = targetEventId + '@google.com';
+          if (!this.deletedEventIds.includes(fullId)) this.deletedEventIds.push(fullId);
+        }
+        localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
+
+        // 3. 本地立即徹底移除並存檔渲染
         this.bookings = this.bookings.filter(x => x.id !== bookingId);
         this.saveState();
         this.renderTimeline();
         this.renderReports();
         this.showToast(`🗑️ 已刪除【${b.customerName}】的預約排程`, 'info');
 
-        // 2. 若為雲端同步行程，發送刪除請求給 GAS
-        const targetEventId = (b.id && b.id.includes('@google.com')) ? b.id : b.cloudSyncedId;
+        // 4. 發送刪除請求給 GAS (同步刪除 Google 日曆事件)
         if (this.gasUrl && !this.simulateOffline && targetEventId) {
           try {
-            const delUrl = `${this.gasUrl}?action=deleteEvent&eventId=${encodeURIComponent(targetEventId)}&secret=${encodeURIComponent(this.gasSecret)}`;
-            fetch(delUrl).catch(e => console.warn('雲端日曆刪除通知發送:', e));
+            // GET 請求 (action=deleteEvent & action=delete)
+            const delUrl = `${this.gasUrl}?action=deleteEvent&eventId=${encodeURIComponent(targetEventId)}&id=${encodeURIComponent(targetEventId)}&secret=${encodeURIComponent(this.gasSecret)}`;
+            fetch(delUrl).catch(e => console.warn('雲端日曆 GET 刪除發送:', e));
+
+            // POST 備援 (使用 text/plain 防止 CORS preflight OPTIONS 阻擋)
+            fetch(this.gasUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'deleteEvent',
+                id: targetEventId,
+                eventId: targetEventId,
+                secret: this.gasSecret
+              })
+            }).catch(e => console.warn('雲端日曆 POST 刪除發送:', e));
+
             console.log('✅ Google 日曆刪除指令已發送:', targetEventId);
           } catch (delErr) {
             console.warn('⚠️ Google 日曆刪除請求失敗:', delErr);
@@ -2118,6 +2176,13 @@
             const prevLen = this.bookings.length;
 
             this.bookings = this.bookings.filter(b => {
+              // 0. 墓碑機制檢查：若此事件已在後台被刪除，徹底排除
+              if (this.deletedEventIds) {
+                if (b.id && this.deletedEventIds.includes(b.id)) return false;
+                if (b.cloudSyncedId && this.deletedEventIds.includes(b.cloudSyncedId)) return false;
+                const pureId = (b.id || '').replace('@google.com', '');
+                if (pureId && this.deletedEventIds.includes(pureId)) return false;
+              }
               // 來自 Google 日曆的行程 (以 @google.com 結尾)
               if (b.id && b.id.includes('@google.com')) {
                 return cloudIds.has(b.id);
@@ -2146,9 +2211,17 @@
             let addedCount = 0;
             let updatedCount = 0;
             result.data.forEach(evt => {
+              // 0. 墓碑名冊防禦：凡是在後台刪除過的事件，絕對不重新加回！
+              if (this.deletedEventIds) {
+                if (evt.id && this.deletedEventIds.includes(evt.id)) return;
+                const pureId = (evt.id || '').replace('@google.com', '');
+                if (pureId && this.deletedEventIds.includes(pureId)) return;
+              }
+
               const cleanPhone = (evt.phone || '').replace(/[^0-9]/g, '');
               const exists = this.bookings.find(b => b.id === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
               
+              const sItem = evt.serviceItem || '';
               let price = 800;
               if (sItem.includes('600')) price = 600;
               else if (sItem.includes('700')) price = 700;
