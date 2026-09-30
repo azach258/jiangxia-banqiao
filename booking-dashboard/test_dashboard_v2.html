@@ -1719,11 +1719,19 @@
           const slotStart = new Date(`${this.currentDateStr}T${hourStr}:00`);
           const slotEnd = new Date(`${this.currentDateStr}T${nextHourStr}:00`);
 
+          // 1. 查找開始時間落在該小時時段內的預約 (單一呈現原則：絕不重複跨格顯示)
           const matches = dayBookings.filter(b => {
             if (b.status === '已取消') return false;
             const bStart = new Date(b.start);
+            return (bStart >= slotStart && bStart < slotEnd);
+          });
+
+          // 2. 查找是否有上一時段延續過來的進行中預約
+          const ongoing = dayBookings.find(b => {
+            if (b.status === '已取消') return false;
+            const bStart = new Date(b.start);
             const bEnd = new Date(b.end);
-            return (bStart < slotEnd && bEnd > slotStart);
+            return (bStart < slotStart && bEnd > slotStart);
           });
 
           if (matches.length > 0) {
@@ -1793,6 +1801,46 @@
                 </tr>
               `;
             });
+          } else if (ongoing) {
+            // 接續前段進行中預約 (避免重複畫人名，清楚標記調理至幾點，並提供空檔預約)
+            const ongoingEndT = ongoing.end.slice(11, 16);
+            const canBookNext = ongoingEndT < '22:00';
+            rowsHtml += `
+              <tr class="bg-amber-50/20 hover:bg-amber-50/40 transition duration-150 border-b border-amber-100/60">
+                <td class="py-3 px-3 font-bold text-slate-600 whitespace-nowrap">
+                  <div class="flex items-center gap-1.5">
+                    <i data-lucide="hourglass" class="w-3.5 h-3.5 text-amber-600"></i>
+                    <span>${hourStr}</span>
+                    <span class="text-[10px] text-amber-600 font-normal">~${ongoingEndT}</span>
+                  </div>
+                </td>
+                <td class="py-3 px-3 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">⏳ 接續調理中</span>
+                </td>
+                <td class="py-3 px-3 whitespace-nowrap text-slate-600">
+                  <span class="font-medium text-slate-700">延續【${ongoing.customerName}】</span>
+                </td>
+                <td class="py-3 px-3 text-slate-400 whitespace-nowrap font-mono text-[11px]">${ongoing.phone}</td>
+                <td class="py-3 px-3 text-slate-300 whitespace-nowrap">─</td>
+                <td class="py-3 px-3 text-amber-800 font-medium text-xs whitespace-nowrap">
+                  調理至 ${ongoingEndT} 結束
+                </td>
+                <td class="py-3 px-3 text-slate-400 text-xs italic whitespace-nowrap">
+                  ${canBookNext ? `（${ongoingEndT} 後可排預約）` : '（營業即將結束）'}
+                </td>
+                <td class="py-3 px-3 text-right text-slate-300 whitespace-nowrap">─</td>
+                <td class="py-3 px-3 text-right whitespace-nowrap">
+                  ${canBookNext ? `
+                    <button type="button" onclick="app.quickBookSlot('${ongoingEndT}')" class="px-2.5 py-1 text-[11px] font-bold bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle inline-flex items-center gap-1" title="排入 ${ongoingEndT} 預約">
+                      <i data-lucide="plus" class="w-3 h-3 text-amber-700"></i>
+                      <span>可約 ${ongoingEndT}</span>
+                    </button>
+                  ` : `
+                    <span class="text-[11px] text-slate-400">已客滿</span>
+                  `}
+                </td>
+              </tr>
+            `;
           } else {
             // Free slot row
             rowsHtml += `
