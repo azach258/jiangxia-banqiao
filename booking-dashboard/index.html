@@ -552,12 +552,12 @@
         </div>
 
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3 text-xs">
-          <!-- 1. 調理部位按鈕選擇 (依部位計價) -->
+          <!-- 1. 調理方案按鈕選擇 (收費方案) -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <span class="text-slate-700 font-bold flex items-center gap-1">
                 <i data-lucide="tag" class="w-3.5 h-3.5 text-brand-600"></i>
-                <span>調理部位（點擊按鈕切換，金額自動帶入）：</span>
+                <span>調理方案（收費方案，點擊自動帶入金額）：</span>
               </span>
               <span id="detailServiceSelected" class="font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200 text-[11px]"></span>
             </div>
@@ -565,7 +565,32 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="detailServiceBtnGrid"></div>
           </div>
 
-          <!-- 2. 對應金額連動與確認 -->
+          <!-- 2. 調理部位選項 (點選完自動總結) -->
+          <div class="pt-2.5 border-t border-slate-200/60">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-slate-700 font-bold flex items-center gap-1">
+                <i data-lucide="crosshair" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>調理部位（點選完自動總結部位）：</span>
+              </span>
+              <button type="button" onclick="app.clearDetailBodyParts()" class="text-[11px] text-slate-400 hover:text-slate-600 underline">
+                清空重選
+              </button>
+            </div>
+            <!-- 14 個調理部位按鈕群 (響應式排列) -->
+            <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5" id="detailBodyPartsGrid">
+              <!-- Dynamically populated via JS -->
+            </div>
+            <!-- 自動總結卡片 -->
+            <div class="mt-2.5 p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200/90 text-xs flex items-center justify-between shadow-subtle">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0"></i>
+                <span class="font-bold text-emerald-950 whitespace-nowrap">已選調理部位：</span>
+                <span id="detailBodyPartsSummaryText" class="text-slate-400 font-normal italic">尚未選擇部位</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. 對應金額連動與確認 -->
           <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="text-slate-700 font-bold">預約應收金額：</span>
@@ -576,32 +601,12 @@
             </div>
             <button type="button" onclick="app.saveDetailChanges()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1.5">
               <i data-lucide="save" class="w-3.5 h-3.5"></i>
-              <span>儲存金額修改</span>
+              <span>儲存方案與金額</span>
             </button>
-          </div>
-
-          <!-- 3. 時段與師傅固定資訊 -->
-          <div class="pt-2 border-t border-slate-200/60 space-y-1.5 text-slate-600">
-            <div class="flex justify-between">
-              <span class="text-slate-500">預約時段：</span>
-              <span id="detailTimeRange" class="font-semibold text-slate-800">2026-09-29 14:00 ~ 15:00</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-500">來訪歷程：</span>
-              <span id="detailVisitBadge"></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-500">服務師傅：</span>
-              <span class="font-semibold text-brand-700">江夏板橋館・賴師傅 (每次1小時)</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-500">日曆同步：</span>
-              <span id="detailSyncStatus" class="font-semibold text-emerald-700">🟢 本地優先 / 已同步 Google 日曆</span>
-            </div>
           </div>
         </div>
 
-        <!-- 主訴症狀與健康備忘整合欄位 -->
+        <!-- 4. 主訴症狀 ＆ 調理備忘 / 健康紀錄 (保持空白給師父填寫紀錄) -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
@@ -609,14 +614,14 @@
               <span>主訴症狀 ＆ 調理備忘 / 健康紀錄：</span>
             </span>
             <button onclick="app.toggleEditDetailNotes()" id="btnToggleEditNotes" class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold hover:underline">
-              編輯主訴與備忘
+              填寫備忘紀錄
             </button>
           </div>
-          <div id="detailNotesDisplay" class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed font-normal">
-            無備註
+          <div id="detailNotesDisplay" class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed font-normal min-h-[44px]">
+            <span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>
           </div>
           <div id="detailNotesEditArea" class="hidden space-y-2">
-            <textarea id="detailNotesInput" rows="3" placeholder="在此記錄顧客主訴症狀、調理過程備忘或身體注意事項（例如：久坐腰背痠痛、膏肓緊繃，習慣中重力道...）" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition"></textarea>
+            <textarea id="detailNotesInput" rows="3" placeholder="請在此記錄顧客主訴症狀、調理過程備忘或身體注意事項（例如：習慣中重力道、斜方肌放鬆後頸部活動度改善...）" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition"></textarea>
             <div class="flex justify-end gap-2">
               <button onclick="app.toggleEditDetailNotes(false)" class="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700">取消</button>
               <button onclick="app.saveDetailNotes()" class="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">儲存並同步至 CRM</button>
@@ -937,6 +942,14 @@
       { name: "四肢 (肩膀/手肘/膝蓋/腳)", shortName: "四肢調理", price: 800 },
       { name: "手指、手腕、腳踝", shortName: "手腕腳踝", price: 600 },
       { name: "【免費】檢查評估諮詢", shortName: "【免費】評估", price: 0 }
+    ];
+
+    const BODY_PART_OPTIONS = [
+      "頸背腰", "左肩", "左肘", "左腕",
+      "右肩", "右肘", "右腕",
+      "左髖", "左膝", "左踝",
+      "右髖", "右膝", "右踝",
+      "骨盆"
     ];
 
     class JiangxiaBookingApp {
@@ -2517,40 +2530,52 @@
         document.getElementById('detailCustomerName').textContent = b.customerName;
         document.getElementById('detailPhone').textContent = b.phone;
         
-        // 渲染部位按鈕與選中狀態 (金額自動帶入)
+        // 1. 渲染調理方案按鈕 (金額自動帶入)
         this.renderDetailServiceButtons(b.serviceItem, b.price);
 
-        // 主訴症狀輸入框
-        const symptomsInput = document.getElementById('detailSymptomsInput');
-        if (symptomsInput) {
-          symptomsInput.value = (b.symptoms && b.symptoms !== '無特殊主訴') ? b.symptoms : '';
+        // 2. 渲染 14 個調理部位按鈕與自動總結
+        if (!Array.isArray(b.bodyParts)) {
+          b.bodyParts = [];
         }
+        this.renderDetailBodyPartButtons(b.bodyParts);
 
-        // 金額輸入框
+        // 3. 金額輸入框
         const priceInput = document.getElementById('detailPriceInput');
         if (priceInput) {
           priceInput.value = (b.price !== undefined && b.price !== null) ? b.price : 1500;
         }
 
-        document.getElementById('detailTimeRange').textContent = `${b.start.replace('T', ' ')} ~ ${b.end.slice(11, 16)}`;
-        document.getElementById('detailStatusBadge').textContent = b.status;
-        const count = this.getVisitCount(b.phone);
-        document.getElementById('detailVisitBadge').innerHTML = this.formatVisitBadge(count);
+        const statusBadge = document.getElementById('detailStatusBadge');
+        if (statusBadge) statusBadge.textContent = b.status;
 
-        const notesEl = document.getElementById('detailNotesDisplay') || document.getElementById('detailNotes');
+        // 安全保護：相容已刪除之時段/歷程/師傅/同步欄位
+        const timeRangeEl = document.getElementById('detailTimeRange');
+        if (timeRangeEl) timeRangeEl.textContent = `${b.start.replace('T', ' ')} ~ ${b.end.slice(11, 16)}`;
+        const visitBadgeEl = document.getElementById('detailVisitBadge');
+        if (visitBadgeEl) {
+          const count = this.getVisitCount(b.phone);
+          visitBadgeEl.innerHTML = this.formatVisitBadge(count);
+        }
+        const syncStatusEl = document.getElementById('detailSyncStatus');
+        if (syncStatusEl) syncStatusEl.textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
+
+        // 4. 主訴症狀 ＆ 調理備忘保持空白給師父填寫紀錄
+        const notesEl = document.getElementById('detailNotesDisplay');
         if (notesEl) {
           notesEl.innerHTML = b.notes 
             ? b.notes 
-            : '<span class="text-slate-400 italic">（尚未填寫，待調理完成後填寫紀錄）</span>';
+            : '<span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>';
         }
         const notesInput = document.getElementById('detailNotesInput');
         if (notesInput) notesInput.value = b.notes || '';
-        document.getElementById('detailSyncStatus').textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
 
         this.openModal('detailModal');
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
       }
 
+      // ==========================================
+      // 調理方案 (收費方案) 渲染與連動
+      // ==========================================
       renderDetailServiceButtons(currentService, currentPrice) {
         const grid = document.getElementById('detailServiceBtnGrid');
         if (!grid) return;
@@ -2594,38 +2619,67 @@
         this.saveState();
         this.renderTimeline();
         this.renderReports();
-        this.showToast(`✅ 已切換為【${serviceName}】，金額自動帶入 NT$ ${price}`, 'success');
+        this.showToast(`✅ 已切換為方案【${serviceName}】，金額自動帶入 NT$ ${price}`, 'success');
       }
 
-      appendDetailSymptom(tag) {
+      // ==========================================
+      // 調理部位 (14 部位) 多選與自動總結
+      // ==========================================
+      renderDetailBodyPartButtons(selectedParts = []) {
+        const grid = document.getElementById('detailBodyPartsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        BODY_PART_OPTIONS.forEach(part => {
+          const isSelected = selectedParts.includes(part);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = isSelected
+            ? 'px-2 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-subtle border border-emerald-700 transition active:scale-95 text-center flex items-center justify-center ring-2 ring-emerald-400 ring-offset-1 scale-[1.02]'
+            : 'px-2 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition active:scale-95 text-center flex items-center justify-center shadow-subtle';
+          btn.textContent = part;
+          btn.onclick = () => this.toggleDetailBodyPart(part);
+          grid.appendChild(btn);
+        });
+
+        this.updateDetailBodyPartsSummary(selectedParts);
+      }
+
+      toggleDetailBodyPart(part) {
         if (!this.activeDetailId) return;
         const b = this.bookings.find(x => x.id === this.activeDetailId);
         if (!b) return;
+        if (!Array.isArray(b.bodyParts)) b.bodyParts = [];
 
-        const input = document.getElementById('detailSymptomsInput');
-        let current = (input.value || '').trim();
-        if (!current || current === '無特殊主訴') {
-          current = tag;
-        } else if (current.includes(tag)) {
-          // toggle off
-          current = current.split('、').map(s => s.trim()).filter(s => s !== tag && s.length > 0).join('、');
+        const idx = b.bodyParts.indexOf(part);
+        if (idx >= 0) {
+          b.bodyParts.splice(idx, 1);
         } else {
-          current += '、' + tag;
+          b.bodyParts.push(part);
         }
 
-        input.value = current;
-        b.symptoms = current;
         this.saveState();
-        this.renderTimeline();
+        this.renderDetailBodyPartButtons(b.bodyParts);
       }
 
-      onDetailSymptomsChanged(val) {
+      clearDetailBodyParts() {
         if (!this.activeDetailId) return;
         const b = this.bookings.find(x => x.id === this.activeDetailId);
-        if (b) {
-          b.symptoms = val.trim();
-          this.saveState();
-          this.renderTimeline();
+        if (!b) return;
+        b.bodyParts = [];
+        this.saveState();
+        this.renderDetailBodyPartButtons([]);
+      }
+
+      updateDetailBodyPartsSummary(selectedParts) {
+        const summaryEl = document.getElementById('detailBodyPartsSummaryText');
+        if (!summaryEl) return;
+        if (!selectedParts || selectedParts.length === 0) {
+          summaryEl.textContent = '尚未選擇部位';
+          summaryEl.className = 'text-slate-400 font-normal italic';
+        } else {
+          summaryEl.textContent = `${selectedParts.join('、')} (共 ${selectedParts.length} 處)`;
+          summaryEl.className = 'text-emerald-950 font-bold';
         }
       }
 
@@ -2644,16 +2698,13 @@
         const b = this.bookings.find(x => x.id === this.activeDetailId);
         if (!b) return;
 
-        const input = document.getElementById('detailSymptomsInput');
-        if (input) b.symptoms = input.value.trim() || '無特殊主訴';
-
         const priceInput = document.getElementById('detailPriceInput');
         if (priceInput) b.price = parseInt(priceInput.value, 10) || 0;
 
         this.saveState();
         this.renderTimeline();
         this.renderReports();
-        this.showToast(`✅ 已成功儲存【${b.customerName}】的調理部位與金額（$${b.price}）！`, 'success');
+        this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與金額（NT$ ${b.price}）！`, 'success');
       }
 
       updateBookingStatus(newStatus) {
