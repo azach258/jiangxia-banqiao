@@ -487,17 +487,19 @@
           </div>
         </div>
 
-        <!-- Service Item (部位計價) -->
+        <!-- Service Item (方案計價) -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">調理部位（依部位計價） <span class="text-brand-600">*</span></label>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">調理方案（收費方案） <span class="text-brand-600">*</span></label>
           <select id="formService" onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
             <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0" selected>【免費】檢查評估諮詢 ｜ NT$ 0 (到店現場評估)</option>
             <option value="頸、背、腰 (含整體結構調整)" data-duration="60" data-price="1500">頸、背、腰 (含整體結構調整) ｜ NT$ 1,500 (旗艦推薦)</option>
             <option value="骨盆調理" data-duration="60" data-price="1200">骨盆調理 ｜ NT$ 1,200</option>
             <option value="四肢 (肩膀/手肘/膝蓋/腳)" data-duration="60" data-price="800">四肢 (肩膀/手肘/膝蓋/腳) ｜ NT$ 800</option>
             <option value="手指、手腕、腳踝" data-duration="60" data-price="600">手指、手腕、腳踝 ｜ NT$ 600</option>
+            <option value="鬆筋按摩 (60分鐘)" data-duration="60" data-price="1300">鬆筋按摩 (60分鐘) ｜ NT$ 1,300</option>
+            <option value="鬆筋按摩 (30分鐘)" data-duration="30" data-price="700">鬆筋按摩 (30分鐘) ｜ NT$ 700</option>
           </select>
-          <p class="text-[11px] text-slate-400 mt-1">※ 每次預約固定占用 1 小時（含深度鬆筋、結構評估與調理），營業時間 14:00~22:00 最晚預約 21:00</p>
+          <p class="text-[11px] text-slate-400 mt-1">※ 整復調理每次固定占用 1 小時；鬆筋按摩 30 分鐘為半小時時間槽</p>
         </div>
 
         <!-- Anti-Collision Indicator (Light Theme) -->
@@ -941,6 +943,8 @@
       { name: "骨盆調理", shortName: "骨盆調理", price: 1200 },
       { name: "四肢 (肩膀/手肘/膝蓋/腳)", shortName: "四肢調理", price: 800 },
       { name: "手指、手腕、腳踝", shortName: "手腕腳踝", price: 600 },
+      { name: "鬆筋按摩 (60分鐘)", shortName: "鬆筋60分", price: 1300 },
+      { name: "鬆筋按摩 (30分鐘)", shortName: "鬆筋30分", price: 700 },
       { name: "【免費】檢查評估諮詢", shortName: "【免費】評估", price: 0 }
     ];
 
@@ -2146,11 +2150,12 @@
               const exists = this.bookings.find(b => b.id === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
               
               let price = 800;
-              const sItem = evt.serviceItem || '';
               if (sItem.includes('600')) price = 600;
+              else if (sItem.includes('700')) price = 700;
               else if (sItem.includes('800')) price = 800;
-              else if (sItem.includes('1500') || sItem.includes('1,500')) price = 1500;
               else if (sItem.includes('1200') || sItem.includes('1,200')) price = 1200;
+              else if (sItem.includes('1300') || sItem.includes('1,300')) price = 1300;
+              else if (sItem.includes('1500') || sItem.includes('1,500')) price = 1500;
               else if (sItem.includes('免費')) price = 0;
 
               const cleanNotes = this.cleanNoteText(evt.notes);
