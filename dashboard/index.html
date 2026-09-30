@@ -113,107 +113,105 @@
     </div>
   </div>
 
-  <!-- Staging QA Testing Banner (Clean Subtle Light) -->
-  <aside aria-label="測試沙盒工具列" class="bg-amber-50/90 border-b border-amber-200/80 px-4 py-2 text-xs text-amber-900">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2 font-medium">
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200/70 text-amber-900 border border-amber-300">
-          🧪 本地測試環境 (Staging Branch: staging/booking-system-v2)
-        </span>
-        <span class="text-amber-800">純白極簡審美重塑 ✕ 單一師傅 ✕ 防重複排程 ✕ 上下文記憶 CRM ✕ 離線容錯</span>
-      </div>
-      <div class="flex items-center gap-2">
-                <a href="http://localhost:8090/test_front_booking.html" target="_blank" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 rounded-lg border border-slate-300 font-semibold shadow-subtle transition flex items-center gap-1 text-[11px]">
-          <i data-lucide="external-link" class="w-3.5 h-3.5 text-brand-600"></i>
-          <span>開啟顧客前台 (實測下單)</span>
-        </a>
-        <button onclick="app.runQATest('conflict')" class="px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-700 rounded-lg border border-rose-200 text-[11px] font-semibold shadow-subtle transition">
-          ⚡ 模擬排程衝突
-        </button>
-        <button onclick="app.runQATest('crm')" class="px-2.5 py-1 bg-white hover:bg-cyan-50 text-cyan-800 rounded-lg border border-cyan-200 text-[11px] font-semibold shadow-subtle transition">
-          💡 模擬帶入老顧客記憶
-        </button>
-        <button id="btnToggleSimulateOffline" onclick="app.toggleSimulateOffline()" class="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-800 rounded-lg border border-amber-300 text-[11px] font-semibold shadow-subtle transition">
-          🌐 模擬 Google 斷網: 關閉
-        </button>
-        <button onclick="app.resetTestData()" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 text-[11px] font-medium shadow-subtle transition">
-          🔄 重設測試資料
-        </button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Clean Top Navigation Bar -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-subtle">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <!-- Clean Top Navigation Bar (Mobile-First & Ultra Clean) -->
+  <header class="sticky top-0 z-30 bg-white/98 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
       
-      <!-- Brand & Title -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-rose-700 p-0.5 shadow-sm shadow-rose-200 flex-shrink-0">
-          <div class="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-            <span class="text-brand-600 font-bold text-lg leading-none">江</span>
+      <!-- Brand & Title (簡潔大方，手機不折行) -->
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-brand-600 to-rose-700 p-0.5 shadow-sm shadow-rose-200 flex-shrink-0">
+          <div class="w-full h-full bg-white rounded-[9px] flex items-center justify-center">
+            <span class="text-brand-600 font-bold text-sm sm:text-base leading-none">江</span>
           </div>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900">江夏傳統整復推拿</h1>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-rose-50 text-brand-700 border border-brand-200 font-medium">板橋館</span>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-medium hidden sm:inline-block">單一師傅專屬</span>
-          </div>
-          <p class="text-xs text-slate-500 font-normal">門店排程大腦 ＆ 顧客健康歷程上下文記憶庫</p>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm sm:text-base font-bold tracking-tight text-slate-900">江夏排程</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-50 text-brand-700 border border-brand-200 font-medium">板橋館</span>
+          <span id="headerSyncDot" class="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-1" title="Google 雲端日曆連線正常"></span>
         </div>
       </div>
 
-      <!-- Sync Status & Action Controls -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        
-        <!-- Live Connection Status Badge -->
-        <div id="syncStatusBadge" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-          <div id="syncStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
-          <span id="syncStatusText" class="font-medium">本地優先 ＆ 日曆即時連線</span>
-          <span id="syncQueueBadge" class="hidden px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold"></span>
+      <!-- Desktop View Switcher Nav (桌機版顯示，手機版收納至選單) -->
+      <nav class="hidden md:flex bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600">
+        <button onclick="app.switchView('timeline')" id="viewBtn-timeline" class="px-3.5 py-1.5 rounded-lg transition bg-white text-slate-900 shadow-sm border border-slate-200/60 flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-600"></i>
+          <span>日曆排程</span>
+        </button>
+        <button onclick="app.switchView('customers')" id="viewBtn-customers" class="px-3.5 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="users" class="w-3.5 h-3.5"></i>
+          <span>顧客 CRM</span>
+        </button>
+        <button onclick="app.switchView('reports')" id="viewBtn-reports" class="px-3.5 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+          <span>營收統計</span>
+        </button>
+      </nav>
+
+      <!-- Action Controls (右側核心預約按鈕 ＆ 下拉選單) -->
+      <div class="flex items-center gap-2">
+        <!-- New Booking CTA -->
+        <button onclick="app.openModal('bookingModal')" class="flex items-center gap-1 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-brand-500/30 transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>預約</span>
+        </button>
+
+        <!-- Dropdown Menu Button -->
+        <div class="relative">
+          <button id="menuDropdownBtn" onclick="app.toggleMenuDropdown(event)" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-95 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="menu" class="w-4 h-4 text-slate-600"></i>
+            <span class="hidden sm:inline">選單</span>
+          </button>
+
+          <!-- Dropdown Popover Menu -->
+          <div id="menuDropdownPanel" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <!-- 手機版視圖切換 -->
+            <div class="md:hidden px-2 py-1.5 border-b border-slate-100 space-y-0.5">
+              <div class="text-[10px] font-bold text-slate-400 px-2 py-0.5">功能模組切換</div>
+              <button onclick="app.switchViewFromMenu('timeline')" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-semibold transition text-left">
+                <i data-lucide="calendar" class="w-4 h-4 text-brand-600"></i>
+                <span>日曆排程總表</span>
+              </button>
+              <button onclick="app.switchViewFromMenu('customers')" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-semibold transition text-left">
+                <i data-lucide="users" class="w-4 h-4 text-cyan-600"></i>
+                <span>顧客 CRM 記憶庫</span>
+              </button>
+              <button onclick="app.switchViewFromMenu('reports')" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-semibold transition text-left">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-purple-600"></i>
+                <span>營收統計報表</span>
+              </button>
+            </div>
+
+            <!-- 系統工具選項 -->
+            <div class="px-2 py-1 space-y-0.5">
+              <button onclick="app.syncFromCloudManual(); app.toggleMenuDropdown();" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition text-left">
+                <span class="flex items-center gap-2.5">
+                  <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600"></i>
+                  <span>即時同步日曆</span>
+                </span>
+                <span id="menuSyncTime" class="text-[10px] text-slate-400 font-mono">同步中</span>
+              </button>
+
+              <button onclick="app.openModal('cloudSettingsModal'); app.toggleMenuDropdown();" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition text-left">
+                <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>
+                <span>雲端 ＆ PIN 碼設定</span>
+              </button>
+
+              <a href="../" target="_blank" onclick="app.toggleMenuDropdown();" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition text-left">
+                <i data-lucide="external-link" class="w-4 h-4 text-emerald-600"></i>
+                <span>開啟顧客預約官網</span>
+              </a>
+            </div>
+
+            <!-- 安全鎖定 -->
+            <div class="px-2 pt-1 border-t border-slate-100">
+              <button onclick="app.lockDashboard(); app.toggleMenuDropdown();" class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-amber-700 hover:bg-amber-50 font-semibold transition text-left">
+                <i data-lucide="lock" class="w-4 h-4 text-amber-600"></i>
+                <span>安全鎖定系統</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Offline Retry Button -->
-        <button id="btnRetrySync" onclick="app.flushSyncQueue()" class="hidden px-2.5 py-1 text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg transition font-semibold flex items-center gap-1.5">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-          <span>補傳日曆</span>
-        </button>
-
-        <!-- Cloud Sync & Settings Button -->
-        <button onclick="app.syncFromCloudManual()" id="btnCloudSync" title="手動同步 Google 雲端預約" class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95">
-          <i data-lucide="cloud-download" id="cloudSyncIcon" class="w-3.5 h-3.5 text-blue-600"></i>
-          <span class="hidden sm:inline">雲端同步</span>
-        </button>
-
-        <button onclick="app.openModal('cloudSettingsModal')" title="Google 雲端 API 設定" class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95">
-          <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i>
-          <span class="hidden sm:inline">雲端設定</span>
-        </button>
-
-        <button onclick="app.lockDashboard()" title="隱私鎖定（防止他人查看顧客資料）" class="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95">
-          <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-600"></i>
-          <span class="hidden sm:inline">鎖定</span>
-        </button>
-
-        <!-- Elegant View Switcher Nav -->
-        <nav class="flex bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600">
-          <button onclick="app.switchView('timeline')" id="viewBtn-timeline" class="px-3 py-1.5 rounded-lg transition bg-white text-slate-900 shadow-sm border border-slate-200/60">
-            <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-600"></i>日曆排程</span>
-          </button>
-          <button onclick="app.switchView('customers')" id="viewBtn-customers" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
-            <span class="flex items-center gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5"></i>顧客 CRM 記憶庫</span>
-          </button>
-          <button onclick="app.switchView('reports')" id="viewBtn-reports" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
-            <span class="flex items-center gap-1.5"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>營收統計</span>
-          </button>
-        </nav>
-
-        <!-- New Booking CTA -->
-        <button onclick="app.openModal('bookingModal')" class="flex items-center gap-1.5 sm:gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm shadow-brand-500/30 transition transform active:scale-95">
-          <i data-lucide="plus" class="w-4 h-4"></i>
-          <span>新增預約</span>
-        </button>
       </div>
     </div>
   </header>
@@ -2135,31 +2133,45 @@
         this.updateSyncBadge();
       }
 
-      updateSyncBadge() {
-        const dot = document.getElementById('syncStatusDot');
-        const text = document.getElementById('syncStatusText');
-        const qBadge = document.getElementById('syncQueueBadge');
-        const retryBtn = document.getElementById('btnRetrySync');
+      toggleMenuDropdown(e) {
+        if (e) e.stopPropagation();
+        const panel = document.getElementById('menuDropdownPanel');
+        if (panel) {
+          panel.classList.toggle('hidden');
+          if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+        }
+      }
 
+      switchViewFromMenu(view) {
+        this.toggleMenuDropdown();
+        this.switchView(view);
+      }
+
+      updateSyncBadge() {
+        const headerDot = document.getElementById('headerSyncDot');
+        const menuSyncTime = document.getElementById('menuSyncTime');
         const queueCount = this.syncQueue.length;
 
         if (this.simulateOffline || queueCount > 0) {
-          dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
-          text.textContent = queueCount > 0 ? `離線暫存 (${queueCount} 筆待補傳)` : '離線模式中';
-          qBadge.classList.remove('hidden');
-          qBadge.textContent = `${queueCount} 筆待同步`;
-          retryBtn.classList.remove('hidden');
+          if (headerDot) {
+            headerDot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse inline-block ml-1';
+            headerDot.title = `離線暫存 (${queueCount} 筆待補傳)`;
+          }
+          if (menuSyncTime) menuSyncTime.textContent = `${queueCount} 筆待補傳`;
         } else if (this.gasUrl) {
-          dot.className = 'w-2 h-2 rounded-full bg-blue-500';
-          const timeStr = this.lastSyncTime ? ` (最後同步 ${this.lastSyncTime})` : ' (日曆＆試算表)';
-          text.textContent = `Google 雲端雙向連線中${timeStr}`;
-          qBadge.classList.add('hidden');
-          retryBtn.classList.add('hidden');
+          if (headerDot) {
+            headerDot.className = 'w-2 h-2 rounded-full bg-emerald-500 inline-block ml-1';
+            headerDot.title = 'Google 日曆雙向連線正常';
+          }
+          const now = new Date();
+          const timeShort = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          if (menuSyncTime) menuSyncTime.textContent = this.lastSyncTime ? this.lastSyncTime.slice(11, 16) : timeShort;
         } else {
-          dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-          text.textContent = '本地落庫 (無雲端網址)';
-          qBadge.classList.add('hidden');
-          retryBtn.classList.add('hidden');
+          if (headerDot) {
+            headerDot.className = 'w-2 h-2 rounded-full bg-slate-400 inline-block ml-1';
+            headerDot.title = '純本地模式';
+          }
+          if (menuSyncTime) menuSyncTime.textContent = '未連線';
         }
       }
 
@@ -3076,6 +3088,17 @@
     // Launch App
     window.app = new JiangxiaBookingApp();
     const app = window.app;
+
+    // 點擊選單外部自動收起下拉選單
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('menuDropdownPanel');
+      const btn = document.getElementById('menuDropdownBtn');
+      if (panel && !panel.classList.contains('hidden')) {
+        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+          panel.classList.add('hidden');
+        }
+      }
+    });
   </script>
 </body>
 </html>
