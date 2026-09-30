@@ -840,7 +840,9 @@
 
     class JiangxiaBookingApp {
       constructor() {
-        this.currentDate = new Date("2026-09-29T00:00:00");
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        this.currentDate = today;
         this.currentView = 'timeline';
         this.activeDetailId = null;
         this.simulateOffline = false;
@@ -908,9 +910,12 @@
 
       init() {
         // 限制預約日期不可早於今天
-        const todayStr = this.currentDate.toISOString().split('T')[0];
+        const todayStr = this.currentDateStr;
         const dateInput = document.getElementById('formDate');
-        if (dateInput) dateInput.min = todayStr;
+        if (dateInput) {
+          dateInput.min = todayStr;
+          dateInput.value = todayStr;
+        }
 
         // 初始化金額防窺開關狀態
         const toggle = document.getElementById('toggleHidePrice');
@@ -925,7 +930,18 @@
         this.renderCustomers();
         this.renderReports();
         this.updateSyncBadge();
-        lucide.createIcons();
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+
+        // 🌟 自動載入 Google Apps Script 雲端日曆最新排程 (靜默載入，不打擾操作)
+        if (this.gasUrl) {
+          this.fetchFromCloud(true);
+          // 每 20 秒自動無感背景輪詢，保持日曆雙向即時同步
+          if (!this._cloudPollTimer) {
+            this._cloudPollTimer = setInterval(() => {
+              this.fetchFromCloud(true);
+            }, 20000);
+          }
+        }
       }
 
       // ==========================================
@@ -1181,7 +1197,9 @@
       }
 
       goToToday() {
-        this.currentDate = new Date("2026-09-29T00:00:00");
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        this.currentDate = today;
         this.updateDateDisplay();
         this.renderTimeline();
       }
@@ -1763,7 +1781,8 @@
           retryBtn.classList.remove('hidden');
         } else if (this.gasUrl) {
           dot.className = 'w-2 h-2 rounded-full bg-blue-500';
-          text.textContent = 'Google 雲端雙向連線中 (日曆＆試算表)';
+          const timeStr = this.lastSyncTime ? ` (最後同步 ${this.lastSyncTime})` : ' (日曆＆試算表)';
+          text.textContent = `Google 雲端雙向連線中${timeStr}`;
           qBadge.classList.add('hidden');
           retryBtn.classList.add('hidden');
         } else {
@@ -1899,17 +1918,27 @@
 
           if (result && result.success && Array.isArray(result.data)) {
             let addedCount = 0;
+            let updatedCount = 0;
             result.data.forEach(evt => {
-              // 透過 ID 或相同開始時間判斷是否已有該事件
-              const exists = this.bookings.find(b => b.id === evt.id || (b.start === evt.start && b.phone === evt.phone));
+              const cleanPhone = (evt.phone || '').replace(/[^0-9]/g, '');
+              const exists = this.bookings.find(b => b.id === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
+              
+              let price = 1200;
+              const sItem = evt.serviceItem || '';
+              if (sItem.includes('600')) price = 600;
+              else if (sItem.includes('800')) price = 800;
+              else if (sItem.includes('1500') || sItem.includes('1,500')) price = 1500;
+              else if (sItem.includes('1200') || sItem.includes('1,200')) price = 1200;
+              else if (sItem.includes('免費')) price = 0;
+
               if (!exists) {
                 this.bookings.push({
                   id: evt.id,
                   customerName: evt.customerName || '線上預約顧客',
                   phone: evt.phone || '',
-                  serviceItem: evt.serviceItem || '傳統整復推拿放鬆',
+                  serviceItem: evt.serviceItem || '頸、背、腰 (含整體結構調整)',
                   durationMin: 60,
-                  price: evt.price || 1200,
+                  price: price,
                   paymentMethod: evt.paymentMethod || '現場支付',
                   status: evt.status || '已確認',
                   syncStatus: 'synced',
@@ -1920,15 +1949,14 @@
                 addedCount++;
 
                 // 同步至顧客 CRM
-                if (evt.phone) {
-                  const cleanPhone = evt.phone.replace(/[^0-9]/g, '');
+                if (cleanPhone) {
                   let cust = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
                   if (cust) {
                     cust.visit_count += 1;
                     cust.last_visited_at = evt.start.slice(0, 10);
                   } else {
                     this.customers.push({
-                      id: 'c-' + Date.now(),
+                      id: 'c-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
                       name: evt.customerName || '新顧客',
                       phone: evt.phone,
                       visit_count: 1,
@@ -1937,19 +1965,29 @@
                     });
                   }
                 }
+              } else {
+                exists.customerName = evt.customerName || exists.customerName;
+                exists.serviceItem = evt.serviceItem || exists.serviceItem;
+                exists.status = evt.status || exists.status;
+                exists.notes = evt.notes || exists.notes;
+                exists.start = evt.start.slice(0, 19);
+                exists.end = evt.end.slice(0, 19);
+                updatedCount++;
               }
             });
 
+            this.lastSyncTime = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             this.saveState();
             this.renderTimeline();
             this.renderCustomers();
             this.renderReports();
+            this.updateSyncBadge();
 
             if (!silent) {
               if (addedCount > 0) {
                 this.showToast(`🎉 成功從 Google 日曆同步新增 ${addedCount} 筆最新預約！`, 'success');
               } else {
-                this.showToast('✅ 雲端資料庫已是最新狀態，無新預約', 'info');
+                this.showToast('✅ 雲端日曆已是最新狀態，已即時校準！', 'info');
               }
             }
           }
