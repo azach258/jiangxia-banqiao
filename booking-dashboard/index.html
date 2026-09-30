@@ -297,43 +297,95 @@
       </div>
     </div>
 
-    <!-- VIEW 3: REPORTS (Revenue Analytics) -->
+    <!-- VIEW 3: REPORTS (Revenue Analytics with Week/Month Selector) -->
     <div id="view-reports" class="hidden space-y-5">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
-          <p class="text-xs text-slate-500 font-medium">今日預估/實收金額</p>
-          <p id="reportTodayRevenue" class="text-2xl font-bold text-emerald-600 mt-1">$0</p>
-          <p id="reportTodayCount" class="text-xs text-slate-400 mt-1">調理 0 人次</p>
+      <!-- 1. 週期切換選單與時間區間 -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-subtle flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="filter" class="w-4 h-4 text-brand-600"></i>
+            <span>統計計算週期：</span>
+          </span>
+          <div class="inline-flex p-1 bg-slate-100 rounded-xl gap-1 text-xs font-semibold">
+            <button type="button" id="btnReportWeek" onclick="app.setReportPeriod('week')" class="px-3 py-1.5 rounded-lg transition bg-white text-brand-700 shadow-subtle">
+              📅 本週報表
+            </button>
+            <button type="button" id="btnReportMonth" onclick="app.setReportPeriod('month')" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
+              🗓️ 本月報表
+            </button>
+            <button type="button" id="btnReportToday" onclick="app.setReportPeriod('today')" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
+              ☀️ 今日報表
+            </button>
+            <button type="button" id="btnReportAll" onclick="app.setReportPeriod('all')" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
+              🌐 全部歷史
+            </button>
+          </div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
-          <p class="text-xs text-slate-500 font-medium">本月累計營收</p>
-          <p id="reportMonthRevenue" class="text-2xl font-bold text-brand-600 mt-1">$0</p>
-          <p id="reportMonthCount" class="text-xs text-slate-400 mt-1">本月共 0 人次</p>
-        </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
-          <p class="text-xs text-slate-500 font-medium">客單價平均 (AOV)</p>
-          <p id="reportAov" class="text-2xl font-bold text-purple-600 mt-1">$0</p>
-          <p class="text-xs text-slate-400 mt-1">單一師傅服務產能</p>
+        <div class="text-xs font-medium text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200">
+          <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span id="reportPeriodRangeText">載入週期中...</span>
         </div>
       </div>
 
-      <!-- Detailed Booking History Table -->
+      <!-- 2. 統計數字指標卡 (4張卡片) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+          <p class="text-xs text-slate-500 font-medium" id="kpiRevLabel">本週實收金額</p>
+          <p id="reportPeriodRevenue" class="text-2xl font-bold text-emerald-600 mt-1">$0</p>
+          <p id="reportPeriodSubtext" class="text-xs text-slate-400 mt-1">計算中...</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+          <p class="text-xs text-slate-500 font-medium" id="kpiCountLabel">本週調理人次</p>
+          <p id="reportPeriodCount" class="text-2xl font-bold text-brand-600 mt-1">0 人</p>
+          <p id="reportPeriodCountSubtext" class="text-xs text-slate-400 mt-1">含付費調理與評估</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+          <p class="text-xs text-slate-500 font-medium">客單價平均 (AOV)</p>
+          <p id="reportPeriodAov" class="text-2xl font-bold text-purple-600 mt-1">$0</p>
+          <p class="text-xs text-slate-400 mt-1">平均每人實收產能</p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle">
+          <p class="text-xs text-slate-500 font-medium">【免費評估】諮詢數</p>
+          <p id="reportPeriodFreeCount" class="text-2xl font-bold text-blue-600 mt-1">0 人</p>
+          <p class="text-xs text-slate-400 mt-1">到店轉化潛在客源</p>
+        </div>
+      </div>
+
+      <!-- 3. 調理部位佔比與排行卡 -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-subtle p-5">
-                <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-bold text-slate-900">近期預約與付款清單</h3>
-          <button onclick="app.exportCSV()" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
+        <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+          <i data-lucide="pie-chart" class="w-4 h-4 text-brand-600"></i>
+          <span id="serviceBreakdownTitle">各部位項目營收與人次分佈</span>
+        </h3>
+        <div id="serviceBreakdownContainer" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- 4. 明細列表 (依週期過濾) -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-subtle p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="list" class="w-4 h-4 text-brand-600"></i>
+              <span id="reportTableTitle">預約與付款清單明細</span>
+            </h3>
+            <p id="reportTableSubtitle" class="text-xs text-slate-400 mt-0.5">顯示目前所選週期內的預約</p>
+          </div>
+          <button onclick="app.exportCSV()" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle active:scale-95">
             <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
-            <span>匯出 CSV 報表</span>
+            <span>匯出本週期 CSV 報表</span>
           </button>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-600">
-            <thead class="text-slate-500 border-b border-slate-100 font-semibold">
+            <thead class="text-slate-500 border-b border-slate-100 font-semibold bg-slate-50/50">
               <tr>
                 <th class="py-3 px-2">預約時間</th>
                 <th class="px-2">顧客姓名</th>
                 <th class="px-2">手機號碼</th>
                 <th class="px-2">調理項目</th>
+                <th class="px-2">主訴症狀</th>
                 <th class="px-2">費用</th>
                 <th class="px-2">支付方式</th>
                 <th class="px-2">狀態</th>
@@ -439,11 +491,11 @@
         <div>
           <label class="block text-xs font-semibold text-slate-700 mb-1">調理部位（依部位計價） <span class="text-brand-600">*</span></label>
           <select id="formService" onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
-            <option value="頸、背、腰 (含整體結構調整)" data-duration="60" data-price="1500" selected>頸、背、腰 (含整體結構調整) ｜ NT$ 1,500 (旗艦推薦)</option>
+            <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0" selected>【免費】檢查評估諮詢 ｜ NT$ 0 (到店現場評估)</option>
+            <option value="頸、背、腰 (含整體結構調整)" data-duration="60" data-price="1500">頸、背、腰 (含整體結構調整) ｜ NT$ 1,500 (旗艦推薦)</option>
             <option value="骨盆調理" data-duration="60" data-price="1200">骨盆調理 ｜ NT$ 1,200</option>
             <option value="四肢 (肩膀/手肘/膝蓋/腳)" data-duration="60" data-price="800">四肢 (肩膀/手肘/膝蓋/腳) ｜ NT$ 800</option>
             <option value="手指、手腕、腳踝" data-duration="60" data-price="600">手指、手腕、腳踝 ｜ NT$ 600</option>
-            <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0">【免費】檢查評估諮詢 ｜ NT$ 0 (親自評估)</option>
           </select>
           <p class="text-[11px] text-slate-400 mt-1">※ 每次預約固定占用 1 小時（含深度鬆筋、結構評估與調理），營業時間 14:00~22:00 最晚預約 21:00</p>
         </div>
@@ -807,7 +859,7 @@
 
   <!-- Core JavaScript Application Logic -->
   <script>
-    // Initial Seed Data (僅保留真實預約與顧客名冊，杜絕假資料干擾)
+    // Initial Seed Data (僅保留真實預約與顧客名冊，上下文備忘留白待調理後填寫)
     const SEED_CUSTOMERS = [
       {
         id: "c-4",
@@ -815,7 +867,7 @@
         phone: "0982061546",
         visit_count: 1,
         last_visited_at: "2026-09-30",
-        health_notes: "電話預約，肩頸與背部調理。"
+        health_notes: ""
       },
       {
         id: "c-5",
@@ -823,7 +875,7 @@
         phone: "0975229293",
         visit_count: 1,
         last_visited_at: "2026-10-01",
-        health_notes: "預約排程，常規體態調理。"
+        health_notes: ""
       },
       {
         id: "c-6",
@@ -831,7 +883,7 @@
         phone: "0911810159",
         visit_count: 1,
         last_visited_at: "2026-10-01",
-        health_notes: "晚間預約排程。"
+        health_notes: ""
       },
       {
         id: "c-7",
@@ -839,7 +891,7 @@
         phone: "0933889293",
         visit_count: 1,
         last_visited_at: "2026-10-01",
-        health_notes: "晚間預約排程。"
+        health_notes: ""
       }
     ];
 
@@ -848,14 +900,14 @@
         id: "b-4",
         customerName: "方鼎文",
         phone: "0982061546",
-        serviceItem: "傳統整復調理",
-        symptoms: "肩頸與背部舒緩放鬆",
+        serviceItem: "【免費】檢查評估諮詢",
+        symptoms: "",
         durationMin: 30,
-        price: 800,
+        price: 0,
         paymentMethod: "現金",
         status: "已完成",
         syncStatus: "synced",
-        notes: "電話預約，肩頸與背部舒緩。",
+        notes: "",
         start: "2026-09-30T14:30:00",
         end: "2026-09-30T15:00:00"
       },
@@ -863,14 +915,14 @@
         id: "b-5",
         customerName: "林宜萱",
         phone: "0975229293",
-        serviceItem: "傳統整復調理",
-        symptoms: "常規體態調理放鬆",
+        serviceItem: "【免費】檢查評估諮詢",
+        symptoms: "",
         durationMin: 30,
-        price: 800,
+        price: 0,
         paymentMethod: "現金",
         status: "已確認",
         syncStatus: "synced",
-        notes: "預約排程，常規體態調理。",
+        notes: "",
         start: "2026-10-01T15:00:00",
         end: "2026-10-01T15:30:00"
       },
@@ -878,14 +930,14 @@
         id: "b-6",
         customerName: "曾鵲燕",
         phone: "0911810159",
-        serviceItem: "傳統整復調理",
-        symptoms: "晚間筋骨舒緩",
+        serviceItem: "【免費】檢查評估諮詢",
+        symptoms: "",
         durationMin: 30,
-        price: 800,
+        price: 0,
         paymentMethod: "LINE Pay",
         status: "已確認",
         syncStatus: "synced",
-        notes: "晚間預約排程。",
+        notes: "",
         start: "2026-10-01T20:00:00",
         end: "2026-10-01T20:30:00"
       },
@@ -893,14 +945,14 @@
         id: "b-7",
         customerName: "卓越順",
         phone: "0933889293",
-        serviceItem: "傳統整復調理",
-        symptoms: "晚間筋骨舒緩",
+        serviceItem: "【免費】檢查評估諮詢",
+        symptoms: "",
         durationMin: 30,
-        price: 800,
+        price: 0,
         paymentMethod: "現金",
         status: "已確認",
         syncStatus: "synced",
-        notes: "晚間預約排程。",
+        notes: "",
         start: "2026-10-01T20:30:00",
         end: "2026-10-01T21:00:00"
       }
@@ -923,6 +975,7 @@
         this.activeDetailId = null;
         this.simulateOffline = false;
         this.hidePrice = localStorage.getItem('jiangxia_hide_price') === 'true';
+        this.reportPeriod = 'week';
 
         this.initStorage();
         this.init();
@@ -1044,7 +1097,8 @@
         if (enable && editArea.classList.contains('hidden')) {
           editArea.classList.remove('hidden');
           display.classList.add('hidden');
-          input.value = display.textContent.trim();
+          const b = this.bookings.find(x => x.id === this.activeDetailId);
+          input.value = (b && b.notes) ? b.notes : '';
           btn.textContent = '關閉編輯';
         } else {
           editArea.classList.add('hidden');
@@ -1064,7 +1118,9 @@
           if (c) c.health_notes = newNotes;
 
           this.saveState();
-          document.getElementById('detailNotesDisplay').textContent = newNotes || '無特殊備註說明';
+          document.getElementById('detailNotesDisplay').innerHTML = newNotes 
+            ? newNotes 
+            : '<span class="text-slate-400 italic">（尚未填寫，待調理完成後填寫紀錄）</span>';
           this.toggleEditDetailNotes(false);
           this.renderTimeline();
           this.renderCustomers();
@@ -1661,11 +1717,13 @@
 
           if (!nameInput.value) nameInput.value = matchedCustomer.name;
           document.getElementById('ctxVisitCountBadge').textContent = `來訪 ${matchedCustomer.visit_count} 次`;
-          document.getElementById('ctxHealthNotes').textContent = matchedCustomer.health_notes || '尚無特殊禁忌備忘';
+          document.getElementById('ctxHealthNotes').innerHTML = matchedCustomer.health_notes 
+            ? matchedCustomer.health_notes 
+            : '<span class="text-slate-400 italic">尚無備忘紀錄（待調理完成後填寫）</span>';
           document.getElementById('ctxLastVisit').textContent = `上次來訪：${matchedCustomer.last_visited_at || '無紀錄'}`;
 
-          if (!notesInput.value) {
-            notesInput.value = `[顧客習慣備忘] ${matchedCustomer.health_notes || ''}`;
+          if (!notesInput.value && matchedCustomer.health_notes) {
+            notesInput.value = matchedCustomer.health_notes;
           }
         } else {
           hint.classList.add('hidden');
@@ -1785,7 +1843,7 @@
             phone: phone,
             visit_count: 1,
             last_visited_at: date,
-            health_notes: crmNotes || '首次來訪'
+            health_notes: crmNotes || ''
           });
         }
 
@@ -2076,7 +2134,7 @@
                   status: evt.status || '已確認',
                   syncStatus: 'synced',
                   cloudSyncedId: evt.id,
-                  notes: evt.notes || '來自 Google 日曆同步',
+                  notes: (evt.notes && !evt.notes.includes('日曆同步') && !evt.notes.includes('無備註')) ? evt.notes : '',
                   start: evt.start.slice(0, 19),
                   end: evt.end.slice(0, 19)
                 });
@@ -2095,7 +2153,7 @@
                       phone: evt.phone,
                       visit_count: 1,
                       last_visited_at: evt.start.slice(0, 10),
-                      health_notes: evt.notes || '來自 Google 雲端'
+                      health_notes: (evt.notes && !evt.notes.includes('日曆') && !evt.notes.includes('雲端') && !evt.notes.includes('無備註')) ? evt.notes : ''
                     });
                   }
                 }
@@ -2201,7 +2259,7 @@
             </div>
             <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1">
               <span class="text-[11px] text-amber-800 font-bold block">💡 身體狀況 ＆ 習慣上下文備忘：</span>
-              <p class="leading-relaxed font-normal">${c.health_notes || '尚無紀錄'}</p>
+              <p class="leading-relaxed font-normal">${c.health_notes ? c.health_notes : '<span class="text-slate-400 italic">（留空白，待調理後填寫）</span>'}</p>
             </div>
             <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
               <span>上次來訪: ${c.last_visited_at || '未記錄'}</span>
@@ -2225,33 +2283,252 @@
       }
 
       // ==========================================
-      // 9. 營收統計渲染 (Reports View)
+      // 9. 營收統計與報表引擎 (週/月/日/全歷史切換)
       // ==========================================
+      setReportPeriod(period) {
+        this.reportPeriod = period;
+        this.renderReports();
+      }
+
+      getReportPeriodRange() {
+        const period = this.reportPeriod || 'week';
+        const now = new Date();
+        let startDate, endDate, rangeText, labelPrefix;
+
+        if (period === 'week') {
+          labelPrefix = '本週';
+          const day = now.getDay();
+          const diffToMon = (day === 0 ? -6 : 1) - day;
+          const mon = new Date(now);
+          mon.setDate(now.getDate() + diffToMon);
+          mon.setHours(0, 0, 0, 0);
+
+          const sun = new Date(mon);
+          sun.setDate(mon.getDate() + 6);
+          sun.setHours(23, 59, 59, 999);
+
+          startDate = mon;
+          endDate = sun;
+          const monStr = `${mon.getFullYear()}/${String(mon.getMonth() + 1).padStart(2, '0')}/${String(mon.getDate()).padStart(2, '0')}`;
+          const sunStr = `${sun.getFullYear()}/${String(sun.getMonth() + 1).padStart(2, '0')}/${String(sun.getDate()).padStart(2, '0')}`;
+          rangeText = `📅 統計週期：${monStr} (週一) ~ ${sunStr} (週日)`;
+        } else if (period === 'month') {
+          labelPrefix = '本月';
+          const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+          startDate = firstDay;
+          endDate = lastDay;
+          const mStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+          rangeText = `🗓️ 統計週期：${mStr}/01 ~ ${mStr}/${String(lastDay.getDate()).padStart(2, '0')} (${now.getFullYear()}年${now.getMonth() + 1}月份)`;
+        } else if (period === 'today') {
+          labelPrefix = '今日';
+          const startDay = new Date(now);
+          startDay.setHours(0, 0, 0, 0);
+          const endDay = new Date(now);
+          endDay.setHours(23, 59, 59, 999);
+          startDate = startDay;
+          endDate = endDay;
+          const dStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+          rangeText = `☀️ 統計週期：${dStr} (今日營業日)`;
+        } else {
+          labelPrefix = '全檔期';
+          startDate = new Date(0);
+          endDate = new Date(8640000000000000);
+          rangeText = '🌐 統計週期：全檔期歷史累積報表';
+        }
+
+        return { startDate, endDate, rangeText, labelPrefix };
+      }
+
       renderReports() {
-        const todayBookings = this.bookings.filter(b => b.start.startsWith(this.currentDateStr));
+        const { startDate, endDate, rangeText, labelPrefix } = this.getReportPeriodRange();
+        const period = this.reportPeriod || 'week';
 
-        const todayRev = todayBookings.reduce((sum, b) => sum + (b.price || 1200), 0);
-        const monthRev = this.bookings.reduce((sum, b) => sum + (b.price || 1200), 0);
-        const aov = this.bookings.length > 0 ? Math.round(monthRev / this.bookings.length) : 0;
+        // 1. 更新週期字樣與按鈕選中樣式
+        const rangeEl = document.getElementById('reportPeriodRangeText');
+        if (rangeEl) rangeEl.textContent = rangeText;
 
-        document.getElementById('reportTodayRevenue').textContent = `$${todayRev.toLocaleString()}`;
-        document.getElementById('reportTodayCount').textContent = `今日累計 ${todayBookings.length} 人次`;
-        document.getElementById('reportMonthRevenue').textContent = `$${monthRev.toLocaleString()}`;
-        document.getElementById('reportMonthCount').textContent = `總檔期累計 ${this.bookings.length} 人次`;
-        document.getElementById('reportAov').textContent = `$${aov.toLocaleString()}`;
+        ['week', 'month', 'today', 'all'].forEach(p => {
+          const btn = document.getElementById('btnReport' + p.charAt(0).toUpperCase() + p.slice(1));
+          if (btn) {
+            if (p === period) {
+              btn.className = 'px-3 py-1.5 rounded-lg transition bg-white text-brand-700 shadow-subtle font-bold';
+            } else {
+              btn.className = 'px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 font-medium';
+            }
+          }
+        });
+
+        // 2. 篩選當期有效預約 (排除已取消)
+        const periodBookings = this.bookings.filter(b => {
+          if (b.status === '已取消') return false;
+          if (period === 'all') return true;
+          const bStart = new Date(b.start);
+          return bStart >= startDate && bStart <= endDate;
+        });
+
+        // 3. 計算統計數據
+        let totalRev = 0;
+        let freeCount = 0;
+        let paidCount = 0;
+
+        periodBookings.forEach(b => {
+          const price = (b.price !== undefined && b.price !== null) ? Number(b.price) : 0;
+          if (price === 0 || (b.serviceItem && b.serviceItem.includes('免費'))) {
+            freeCount++;
+          } else {
+            paidCount++;
+            totalRev += price;
+          }
+        });
+
+        const totalCount = periodBookings.length;
+        const aov = paidCount > 0 ? Math.round(totalRev / paidCount) : 0;
+
+        // 4. 更新 4 張 KPI 指標卡
+        const kpiRevLabel = document.getElementById('kpiRevLabel');
+        if (kpiRevLabel) kpiRevLabel.textContent = `${labelPrefix}實收金額`;
+        const kpiCountLabel = document.getElementById('kpiCountLabel');
+        if (kpiCountLabel) kpiCountLabel.textContent = `${labelPrefix}調理人次`;
+
+        const revEl = document.getElementById('reportPeriodRevenue');
+        if (revEl) {
+          revEl.textContent = this.hidePrice ? '***' : `$${totalRev.toLocaleString()}`;
+        }
+        const revSub = document.getElementById('reportPeriodSubtext');
+        if (revSub) revSub.textContent = `實收付費共 ${paidCount} 筆`;
+
+        const countEl = document.getElementById('reportPeriodCount');
+        if (countEl) countEl.textContent = `${totalCount} 人`;
+        const countSub = document.getElementById('reportPeriodCountSubtext');
+        if (countSub) countSub.textContent = `含 ${freeCount} 筆免費評估`;
+
+        const aovEl = document.getElementById('reportPeriodAov');
+        if (aovEl) {
+          aovEl.textContent = this.hidePrice ? '***' : `$${aov.toLocaleString()}`;
+        }
+
+        const freeEl = document.getElementById('reportPeriodFreeCount');
+        if (freeEl) freeEl.textContent = `${freeCount} 人`;
+
+        // 5. 調理部位分佈卡 (5大項目)
+        const breakdownContainer = document.getElementById('serviceBreakdownContainer');
+        if (breakdownContainer) {
+          breakdownContainer.innerHTML = '';
+          SERVICE_PRICE_OPTIONS.forEach(opt => {
+            const matched = periodBookings.filter(b => {
+              const sName = b.serviceItem || '';
+              if (opt.price === 0) {
+                return sName.includes('免費') || b.price === 0;
+              }
+              return sName.includes(opt.shortName) || sName === opt.name || b.price === opt.price;
+            });
+            const cnt = matched.length;
+            const rev = matched.reduce((sum, b) => sum + (Number(b.price) || 0), 0);
+            const pct = totalCount > 0 ? Math.round((cnt / totalCount) * 100) : 0;
+
+            const card = document.createElement('div');
+            card.className = 'p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/60 flex flex-col justify-between hover:bg-slate-50 transition shadow-subtle';
+            card.innerHTML = `
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-800">${opt.shortName}</span>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-700">${pct}%</span>
+              </div>
+              <div>
+                <div class="text-lg font-bold text-slate-900">${cnt} <span class="text-xs font-normal text-slate-500">人次</span></div>
+                <div class="text-xs text-brand-700 font-semibold mt-0.5">
+                  ${this.hidePrice ? '***' : (opt.price === 0 ? '免費推廣' : `$${rev.toLocaleString()}`)}
+                </div>
+              </div>
+            `;
+            breakdownContainer.appendChild(card);
+          });
+        }
+
+        // 6. 更新明細表格
+        const tableSub = document.getElementById('reportTableSubtitle');
+        if (tableSub) tableSub.textContent = `顯示 ${labelPrefix} 區間內預約（共 ${totalCount} 筆紀錄）`;
 
         const tbody = document.getElementById('reportTableBody');
-        tbody.innerHTML = this.bookings.map(b => `
-          <tr class="hover:bg-slate-50/70 transition">
-            <td class="py-3 px-2 font-medium text-slate-800">${b.start.replace('T', ' ').slice(0, 16)}</td>
-            <td class="px-2 font-bold text-slate-900">${b.customerName}</td>
-            <td class="px-2 text-slate-500">${b.phone}</td>
-            <td class="px-2 text-slate-700 font-medium">${b.serviceItem}</td>
-            <td class="px-2 font-bold text-slate-900">$${b.price || 1200}</td>
-            <td class="px-2 text-slate-600">${b.paymentMethod || '現金'}</td>
-            <td class="px-2"><span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200 font-medium">${b.status}</span></td>
-          </tr>
-        `).join('');
+        if (tbody) {
+          if (periodBookings.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">目前 ${labelPrefix} 區間暫無任何預約紀錄</td></tr>`;
+          } else {
+            const sorted = [...periodBookings].sort((a, b) => new Date(b.start) - new Date(a.start));
+            tbody.innerHTML = sorted.map(b => {
+              const timeStr = b.start ? b.start.replace('T', ' ').slice(0, 16) : '時間未定';
+              const priceText = this.hidePrice 
+                ? '<span class="text-slate-400 font-mono tracking-widest font-bold">***</span>'
+                : `<span class="font-bold text-slate-900">$${(Number(b.price) || 0).toLocaleString()}</span>`;
+              const statusColors = {
+                '已確認': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                '已到店': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                '已完成': 'bg-purple-50 text-purple-700 border-purple-200'
+              };
+              const badgeClass = statusColors[b.status] || 'bg-slate-100 text-slate-600 border-slate-200';
+
+              return `
+                <tr class="hover:bg-slate-50/70 transition border-b border-slate-100">
+                  <td class="py-3 px-2 font-medium text-slate-800 whitespace-nowrap">${timeStr}</td>
+                  <td class="px-2 font-bold text-slate-900 whitespace-nowrap">
+                    <button type="button" onclick="app.showBookingDetail('${b.id}')" class="hover:text-brand-600 hover:underline">
+                      ${b.customerName}
+                    </button>
+                  </td>
+                  <td class="px-2 text-slate-500 font-mono text-xs whitespace-nowrap">${b.phone}</td>
+                  <td class="px-2 text-brand-700 font-medium whitespace-nowrap">${b.serviceItem}</td>
+                  <td class="px-2 text-slate-600 text-xs max-w-[180px] truncate" title="${b.symptoms || b.notes || '無特殊主訴'}">
+                    ${b.symptoms || b.notes || '<span class="text-slate-300">─</span>'}
+                  </td>
+                  <td class="px-2 whitespace-nowrap">${priceText}</td>
+                  <td class="px-2 text-slate-600 whitespace-nowrap">${b.paymentMethod || '現金'}</td>
+                  <td class="px-2 whitespace-nowrap">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] border ${badgeClass} font-semibold">${b.status}</span>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          }
+        }
+
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+      }
+
+      exportCSV() {
+        const { startDate, endDate, labelPrefix } = this.getReportPeriodRange();
+        const period = this.reportPeriod || 'week';
+        const filtered = this.bookings.filter(b => {
+          if (b.status === '已取消') return false;
+          if (period === 'all') return true;
+          const bStart = new Date(b.start);
+          return bStart >= startDate && bStart <= endDate;
+        });
+
+        const headers = '預約時間,顧客姓名,手機號碼,調理項目,主訴症狀,實收費用,支付方式,預約狀態,健康備忘';
+        const rows = filtered.map(b => {
+          const time = b.start.replace('T', ' ').slice(0, 16);
+          const name = `"${(b.customerName || '').replace(/"/g, '""')}"`;
+          const phone = `"${(b.phone || '').replace(/"/g, '""')}"`;
+          const service = `"${(b.serviceItem || '').replace(/"/g, '""')}"`;
+          const symptoms = `"${(b.symptoms || '').replace(/"/g, '""')}"`;
+          const price = b.price !== undefined ? b.price : 0;
+          const payment = `"${(b.paymentMethod || '現金').replace(/"/g, '""')}"`;
+          const status = `"${(b.status || '').replace(/"/g, '""')}"`;
+          const notes = `"${(b.notes || '').replace(/"/g, '""')}"`;
+          return `${time},${name},${phone},${service},${symptoms},${price},${payment},${status},${notes}`;
+        });
+
+        const csvContent = '\uFEFF' + headers + '\r\n' + rows.join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const nowStr = new Date().toISOString().slice(0, 10);
+        link.setAttribute('download', `江夏板橋館_${labelPrefix}營收明細報表_${nowStr}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showToast(`📊 已成功匯出【${labelPrefix}】營收報表 CSV！`, 'success');
       }
 
       // ==========================================
@@ -2286,7 +2563,11 @@
         document.getElementById('detailVisitBadge').innerHTML = this.formatVisitBadge(count);
 
         const notesEl = document.getElementById('detailNotesDisplay') || document.getElementById('detailNotes');
-        if (notesEl) notesEl.textContent = b.notes || '無特殊備註說明';
+        if (notesEl) {
+          notesEl.innerHTML = b.notes 
+            ? b.notes 
+            : '<span class="text-slate-400 italic">（尚未填寫，待調理完成後填寫紀錄）</span>';
+        }
         const notesInput = document.getElementById('detailNotesInput');
         if (notesInput) notesInput.value = b.notes || '';
         document.getElementById('detailSyncStatus').textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
@@ -2482,6 +2763,8 @@
           // 清空欄位
           document.getElementById('formName').value = '';
           document.getElementById('formPhone').value = '';
+          const serviceSelect = document.getElementById('formService');
+          if (serviceSelect) serviceSelect.value = '【免費】檢查評估諮詢';
           if (document.getElementById('formSymptoms')) document.getElementById('formSymptoms').value = '';
           document.getElementById('formNotes').value = '';
           document.getElementById('phoneContextHint').classList.add('hidden');

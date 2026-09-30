@@ -973,10 +973,25 @@
             </div>
             <div class="grid grid-cols-1 gap-2" id="serviceOptionsContainer">
               
-              <!-- Option 1: 頸、背、腰 (旗艦推薦) -->
-              <label class="flex items-center justify-between p-3 rounded-xl border-2 border-rose-500 bg-rose-50/40 cursor-pointer hover:bg-rose-50 transition service-option">
+              <!-- Option 5: 免費檢查評估 (預設首選) -->
+              <label class="flex items-center justify-between p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 cursor-pointer hover:bg-emerald-100/50 transition service-option">
                 <div class="flex items-center gap-2.5">
-                  <input type="radio" name="frontService" value="頸、背、腰 (含整體結構調整)" data-duration="30" data-price="1500" checked onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-rose-600 accent-rose-600">
+                  <input type="radio" name="frontService" value="【免費】檢查評估諮詢" data-duration="15" data-price="0" checked onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-emerald-600 accent-emerald-600">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-xs sm:text-sm text-emerald-950">【免費】檢查評估諮詢</span>
+                      <span class="text-[9px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-bold">預約首選</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-700">不清楚症狀是由什麼狀況引起的？由賴師傅親自評估說明 ｜ 約 15 分鐘</span>
+                  </div>
+                </div>
+                <span class="font-bold text-sm text-emerald-700">$0 免費</span>
+              </label>
+
+              <!-- Option 1: 頸、背、腰 (旗艦推薦) -->
+              <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition service-option">
+                <div class="flex items-center gap-2.5">
+                  <input type="radio" name="frontService" value="頸、背、腰 (含整體結構調整)" data-duration="30" data-price="1500" onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-rose-600 accent-rose-600">
                   <div>
                     <div class="flex items-center gap-1.5">
                       <span class="font-bold text-xs sm:text-sm text-slate-900">頸、背、腰 (含整體結構調整)</span>
@@ -1022,21 +1037,6 @@
                   </div>
                 </div>
                 <span class="font-bold text-sm text-slate-800">$600</span>
-              </label>
-
-              <!-- Option 5: 免費檢查評估 -->
-              <label class="flex items-center justify-between p-3 rounded-xl border border-emerald-300 bg-emerald-50/40 cursor-pointer hover:bg-emerald-50 transition service-option">
-                <div class="flex items-center gap-2.5">
-                  <input type="radio" name="frontService" value="【免費】檢查評估諮詢" data-duration="15" data-price="0" onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-emerald-600 accent-emerald-600">
-                  <div>
-                    <div class="flex items-center gap-1.5">
-                      <span class="font-bold text-xs sm:text-sm text-emerald-950">【免費】檢查評估諮詢</span>
-                      <span class="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold">免收費</span>
-                    </div>
-                    <span class="text-[10px] text-emerald-700">不清楚症狀是由什麼狀況引起的？由賴師傅親自評估說明 ｜ 約 15 分鐘</span>
-                  </div>
-                </div>
-                <span class="font-bold text-xs text-emerald-700">免費</span>
               </label>
 
             </div>
