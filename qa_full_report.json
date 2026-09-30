@@ -180,13 +180,13 @@
       "id": "BTN-D12",
       "name": "空白時段「＋新增」按鈕",
       "status": "PASS",
-      "msg": "空白時段一鍵新增觸發正常 (時段: 17:00)"
+      "msg": "空白時段一鍵新增觸發正常 (時段: 15:00)"
     },
     {
       "id": "BTN-D13",
       "name": "已預約時段「預約下次」按鈕",
       "status": "PASS",
-      "msg": "預約下次自動代入正常 (顧客: 王大偉, 建議日期: 2026-10-05)"
+      "msg": "預約下次自動代入正常 (顧客: QA測試員, 建議日期: 2026-10-06)"
     },
     {
       "id": "DATE-D01",
@@ -214,7 +214,7 @@
         "level": "SEVERE",
         "message": "http://localhost:8090/favicon.ico - Failed to load resource: the server responded with a status of 404 (File not found)",
         "source": "network",
-        "timestamp": 1790688853196
+        "timestamp": 1790739913954
       }
     }
   ],
