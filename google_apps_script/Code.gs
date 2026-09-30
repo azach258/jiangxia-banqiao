@@ -3,16 +3,22 @@
  * 江夏傳統整復推拿（板橋館）- Google 日曆與試算表雙向預約雲端橋樑 (GAS)
  * =========================================================================
  * 
- * 【使用步驟】：
- * 1. 在 Google Apps Script 編輯器中，按 Ctrl + A（全選）再按 Delete（全部清空）。
- * 2. 將本檔案內容完整複製並貼上。
- * 3. 點擊上方的 💾「儲存專案 (Save)」。
- * 4. 點擊右上角「部署 (Deploy)」➔「管理部署作業 (Manage deployments)」。
- * 5. 點擊鉛筆圖示「編輯 (Edit)」➔ 版本選擇「新版本 (New version)」➔ 點擊「部署 (Deploy)」。
+ * 【主要功能】：
+ * 1. 雙向同步：顧客線上預約即時寫入 Google 日曆，日曆行程即時反映至後台。
+ * 2. Telegram 即時推播：顧客送出預約，賴師傅手機 Telegram 立刻收到推播提醒。
+ * 3. 永久記帳：可自動同步將預約寫入 Google Sheets 試算表留存。
+ * 4. 遠端銷毀：後台點擊刪除，同步自 Google 日曆移除事件。
  */
 
 var API_SECRET = 'jiangxia_banqiao_2026';
 var TARGET_CALENDAR_NAME = '江夏傳統整復推拿_板橋館';
+
+// Telegram Bot 即時推播設定 (新預約立即叮咚通知師傅手機)
+var TG_BOT_TOKEN = '7789811491:AAG2c7qWuhB2yIacI6_KSsZrXjRCcvClWcI';
+var TG_CHAT_ID = '1890470289';
+
+// (選配) Google 試算表 ID：若有建立專屬試算表，填入試算表網址中的 ID，留空則自動使用當前試算表
+var SPREADSHEET_ID = '';
 
 // 取得目標日曆（自動尋找「江夏傳統整復推拿_板橋館」，找不到則模糊搜尋，最後退回主日曆）
 function getTargetCalendar() {
@@ -31,6 +37,28 @@ function getTargetCalendar() {
   return CalendarApp.getDefaultCalendar();
 }
 
+// 發送 Telegram 即時推播通知
+function sendTelegramNotification(text) {
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  try {
+    var url = 'https://api.telegram.org/bot' + TG_BOT_TOKEN + '/sendMessage';
+    var payload = {
+      chat_id: TG_CHAT_ID,
+      text: text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+    UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+  } catch (e) {
+    Logger.log('Telegram 通知發送失敗: ' + e.toString());
+  }
+}
+
 // ==========================================
 // 1. GET 請求處理 (Ping 診斷、拉取預約、刪除預約)
 // ==========================================
@@ -40,7 +68,6 @@ function doGet(e) {
     var secret = params.secret || '';
     var action = params.action || 'ping';
 
-    // 若手動在編輯器執行且未帶 secret，允許放行進行 ping 診斷
     if (secret !== API_SECRET && action !== 'ping') {
       return createJsonResponse({ success: false, message: '未授權的安全金鑰' });
     }
@@ -56,7 +83,7 @@ function doGet(e) {
 
       var hasSpreadsheet = false;
       try {
-        var ss = SpreadsheetApp.getActiveSpreadsheet();
+        var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
         if (ss) hasSpreadsheet = true;
       } catch (err) {
         hasSpreadsheet = false;
@@ -69,7 +96,8 @@ function doGet(e) {
           calendarName: cal ? cal.getName() : '主要日曆',
           serverTime: Utilities.formatDate(now, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss'),
           todayEventsCount: todayEvents.length,
-          hasSpreadsheet: hasSpreadsheet
+          hasSpreadsheet: hasSpreadsheet,
+          hasTelegram: !!(TG_BOT_TOKEN && TG_CHAT_ID)
         }
       });
     }
@@ -147,7 +175,21 @@ function doGet(e) {
           evt = cal.getEventById(eventId.replace('@google.com', ''));
         }
         if (evt) {
+          var delTitle = evt.getTitle();
+          var delStart = Utilities.formatDate(evt.getStartTime(), 'Asia/Taipei', 'yyyy/MM/dd (E) HH:mm');
           evt.deleteEvent();
+
+          // 刪除時亦推播提醒師傅
+          try {
+            var tgDelMsg = '🗑️ <b>【江夏板橋館・預約取消/刪除提醒】</b>\n' +
+              '━━━━━━━━━━━━━━━\n' +
+              '👤 <b>排程資訊</b>：' + delTitle + '\n' +
+              '📅 <b>原約時段</b>：' + delStart + '\n' +
+              '━━━━━━━━━━━━━━━\n' +
+              '<i>該時段已重新釋出為可預約空檔。</i>';
+            sendTelegramNotification(tgDelMsg);
+          } catch(e) {}
+
           return createJsonResponse({
             success: true,
             message: '已成功從 Google 日曆刪除行程！',
@@ -233,9 +275,9 @@ function doPost(e) {
         location: '新北市板橋區館前西路152號之1'
       });
 
-      // 自動備份寫入 Google 試算表
+      // 自動備份寫入 Google 試算表 (若有設定 SPREADSHEET_ID 或為試算表綁定專案)
       try {
-        var ss = SpreadsheetApp.getActiveSpreadsheet();
+        var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
         if (ss) {
           var sheet = ss.getSheetByName('預約紀錄名冊');
           if (!sheet) {
@@ -258,6 +300,24 @@ function doPost(e) {
         }
       } catch (sheetErr) {
         Logger.log('試算表非致命錯誤: ' + sheetErr.toString());
+      }
+
+      // 即時推播通知賴師傅的手機 Telegram
+      try {
+        var startFormatted = Utilities.formatDate(start, 'Asia/Taipei', 'yyyy/MM/dd (E) HH:mm');
+        var tgMsg = '🔔 <b>【江夏板橋館・新線上預約通報】</b>\n' +
+          '━━━━━━━━━━━━━━━\n' +
+          '👤 <b>顧客姓名</b>：' + customerName + '\n' +
+          '📱 <b>聯絡電話</b>：' + (phone || '未填寫') + '\n' +
+          '💆 <b>預約方案</b>：' + serviceItem + '\n' +
+          '⏱️ <b>預約時長</b>：' + durationMin + ' 分鐘\n' +
+          '📅 <b>預約時段</b>：' + startFormatted + '\n' +
+          '📝 <b>顧客備註</b>：' + (notes || '無') + '\n' +
+          '━━━━━━━━━━━━━━━\n' +
+          '👉 <a href="https://azach258.github.io/jiangxia-banqiao/dashboard/">點此開啟師傅排程看板</a>';
+        sendTelegramNotification(tgMsg);
+      } catch (tgErr) {
+        Logger.log('Telegram 通知非致命錯誤: ' + tgErr.toString());
       }
 
       var formattedStart = Utilities.formatDate(start, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
@@ -287,7 +347,20 @@ function doPost(e) {
           evt = cal.getEventById(eventId.replace('@google.com', ''));
         }
         if (evt) {
+          var pDelTitle = evt.getTitle();
+          var pDelStart = Utilities.formatDate(evt.getStartTime(), 'Asia/Taipei', 'yyyy/MM/dd (E) HH:mm');
           evt.deleteEvent();
+
+          try {
+            var tgPDelMsg = '🗑️ <b>【江夏板橋館・預約取消/刪除提醒】</b>\n' +
+              '━━━━━━━━━━━━━━━\n' +
+              '👤 <b>排程資訊</b>：' + pDelTitle + '\n' +
+              '📅 <b>原約時段</b>：' + pDelStart + '\n' +
+              '━━━━━━━━━━━━━━━\n' +
+              '<i>該時段已重新釋出為可預約空檔。</i>';
+            sendTelegramNotification(tgPDelMsg);
+          } catch(e) {}
+
           return createJsonResponse({
             success: true,
             message: '已成功從 Google 日曆刪除行程！',

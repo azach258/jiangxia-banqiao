@@ -1551,6 +1551,13 @@
           return;
         }
 
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (!/^09\d{8}$/.test(cleanPhone)) {
+          alert('⚠️ 手機號碼格式有誤！\n請填寫正確的 10 碼台灣手機號碼（格式如：0912345678），以利賴師傅為您確認保留時段。');
+          document.getElementById('frontCustPhone').focus();
+          return;
+        }
+
         const start = new Date(`${this.selectedDateStr}T${this.selectedTimeStr}:00`);
         const end = new Date(start.getTime() + this.selectedDuration * 60 * 1000);
 
