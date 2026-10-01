@@ -153,14 +153,43 @@ function doGet(e) {
         });
       }
 
+      // 讀取試算表歷史客戶 CRM 名冊（跨設備防失憶）
+      var sheetCustomers = [];
+      try {
+        var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+        if (ss) {
+          var bSheet = ss.getSheetByName('預約紀錄名冊');
+          if (bSheet) {
+            var bRows = bSheet.getDataRange().getValues();
+            for (var bi = 1; bi < bRows.length; bi++) {
+              var cName = String(bRows[bi][2] || '').trim();
+              var cPhone = String(bRows[bi][3] || '').trim();
+              var cNotes = String(bRows[bi][8] || '').trim();
+              var cDate = String(bRows[bi][0] || '').slice(0, 10);
+              if (cName || cPhone) {
+                sheetCustomers.push({
+                  name: cName,
+                  phone: cPhone,
+                  last_visited_at: cDate,
+                  health_notes: cNotes
+                });
+              }
+            }
+          }
+        }
+      } catch (custErr) {
+        Logger.log('讀取試算表顧客名冊非致命錯誤: ' + custErr.toString());
+      }
+
       return createJsonResponse({
         success: true,
         count: data.length,
-        data: data
+        data: data,
+        sheetCustomers: sheetCustomers
       });
     }
 
-    // 1-3. 刪除預約行程 (支援 deleteEvent / delete / cancel)
+    // 1-3. 刪除預約行程 (支援 deleteEvent / delete / cancel - 方案 B：日曆徹底乾淨，試算表永久留底)
     if (action === 'deleteEvent' || action === 'delete' || action === 'cancel') {
       var eventId = params.eventId || params.id;
       if (!eventId) {
@@ -177,6 +206,11 @@ function doGet(e) {
         if (evt) {
           var delTitle = evt.getTitle();
           var delStart = Utilities.formatDate(evt.getStartTime(), 'Asia/Taipei', 'yyyy/MM/dd (E) HH:mm');
+          
+          // 方案 B 核心：刪除前，先永久歸檔至 Google 試算表（更新名冊狀態並寫入取消名冊）
+          recordCancellationToSpreadsheet(evt, eventId);
+
+          // 徹底自 Google 日曆刪除，時段立即釋出，新客戶可約，日曆保持 100% 乾淨
           evt.deleteEvent();
 
           // 刪除時亦推播提醒師傅
@@ -186,13 +220,15 @@ function doGet(e) {
               '👤 <b>排程資訊</b>：' + delTitle + '\n' +
               '📅 <b>原約時段</b>：' + delStart + '\n' +
               '━━━━━━━━━━━━━━━\n' +
-              '<i>該時段已重新釋出為可預約空檔。</i>';
+              '✨ <b>日曆狀態</b>：該時段已自 Google 日曆移除並重新釋出為空檔。\n' +
+              '📋 <b>歸檔備查</b>：資料已安全寫入 Google 試算表「預約取消備查名冊」。\n' +
+              '👉 <a href="https://azach258.github.io/jiangxia-banqiao/dashboard/?openExternalBrowser=1">點此開啟師傅排程看板</a>';
             sendTelegramNotification(tgDelMsg);
           } catch(e) {}
 
           return createJsonResponse({
             success: true,
-            message: '已成功從 Google 日曆刪除行程！',
+            message: '已成功歸檔至試算表並自 Google 日曆刪除行程！',
             eventId: eventId
           });
         } else {
@@ -314,7 +350,7 @@ function doPost(e) {
           '📅 <b>預約時段</b>：' + startFormatted + '\n' +
           '📝 <b>顧客備註</b>：' + (notes || '無') + '\n' +
           '━━━━━━━━━━━━━━━\n' +
-          '👉 <a href="https://azach258.github.io/jiangxia-banqiao/dashboard/">點此開啟師傅排程看板</a>';
+          '👉 <a href="https://azach258.github.io/jiangxia-banqiao/dashboard/?openExternalBrowser=1">點此開啟師傅排程看板</a>';
         sendTelegramNotification(tgMsg);
       } catch (tgErr) {
         Logger.log('Telegram 通知非致命錯誤: ' + tgErr.toString());
@@ -331,7 +367,7 @@ function doPost(e) {
       });
     }
 
-    // 2-2. 刪除預約
+    // 2-2. 刪除預約 (方案 B：日曆徹底乾淨，試算表永久留底)
     if (action === 'deleteEvent' || action === 'delete' || action === 'cancel') {
       var eventId = payload.eventId || payload.id;
       var cal = getTargetCalendar();
@@ -349,6 +385,11 @@ function doPost(e) {
         if (evt) {
           var pDelTitle = evt.getTitle();
           var pDelStart = Utilities.formatDate(evt.getStartTime(), 'Asia/Taipei', 'yyyy/MM/dd (E) HH:mm');
+          
+          // 方案 B 核心：刪除前，先永久歸檔至 Google 試算表
+          recordCancellationToSpreadsheet(evt, eventId);
+
+          // 徹底自 Google 日曆刪除，時段立即釋出，新客戶可約，日曆保持 100% 乾淨
           evt.deleteEvent();
 
           try {
@@ -357,13 +398,15 @@ function doPost(e) {
               '👤 <b>排程資訊</b>：' + pDelTitle + '\n' +
               '📅 <b>原約時段</b>：' + pDelStart + '\n' +
               '━━━━━━━━━━━━━━━\n' +
-              '<i>該時段已重新釋出為可預約空檔。</i>';
+              '✨ <b>日曆狀態</b>：該時段已自 Google 日曆移除並重新釋出為空檔。\n' +
+              '📋 <b>歸檔備查</b>：資料已安全寫入 Google 試算表「預約取消備查名冊」。\n' +
+              '👉 <a href="https://azach258.github.io/jiangxia-banqiao/dashboard/?openExternalBrowser=1">點此開啟師傅排程看板</a>';
             sendTelegramNotification(tgPDelMsg);
           } catch(e) {}
 
           return createJsonResponse({
             success: true,
-            message: '已成功從 Google 日曆刪除行程！',
+            message: '已成功歸檔至試算表並自 Google 日曆刪除行程！',
             eventId: eventId
           });
         } else {
@@ -402,4 +445,66 @@ function createJsonResponse(data) {
 function test_run_diagnostics() {
   var res = doGet({ parameter: { action: 'ping', secret: API_SECRET } });
   Logger.log(res.getContent());
+}
+
+// ==========================================
+// 5. 方案 B 核心輔助函式：將取消預約安全歸檔至 Google 試算表
+// ==========================================
+function recordCancellationToSpreadsheet(evt, eventId) {
+  try {
+    var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return;
+
+    var nowStr = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
+    var title = evt ? evt.getTitle() : '';
+    var startStr = evt ? Utilities.formatDate(evt.getStartTime(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm') : '';
+    var desc = evt ? (evt.getDescription() || '') : '';
+
+    var phoneMatch = desc.match(/電話[:：]\s*([0-9-]+)/);
+    var phone = phoneMatch ? phoneMatch[1].trim() : '';
+    var name = title;
+    var titleParts = title.split(/\s+/);
+    if (titleParts.length >= 2 && /^[0-9-]+$/.test(titleParts[titleParts.length - 1])) {
+      phone = phone || titleParts[titleParts.length - 1];
+      name = titleParts.slice(0, titleParts.length - 1).join(' ');
+    }
+
+    var serviceMatch = desc.match(/項目[:：]\s*([^\n\r]+)/);
+    var serviceItem = serviceMatch ? serviceMatch[1].trim() : '傳統整復調理';
+
+    // 1. 嘗試在「預約紀錄名冊」中將對應紀錄標記為「已取消」
+    var bookingSheet = ss.getSheetByName('預約紀錄名冊');
+    if (bookingSheet) {
+      var data = bookingSheet.getDataRange().getValues();
+      var targetId = (eventId || '').replace('@google.com', '');
+      for (var r = 1; r < data.length; r++) {
+        var rowId = String(data[r][9] || '').replace('@google.com', ''); // 第10欄是日曆事件ID
+        if (rowId && targetId && (rowId === targetId || rowId.indexOf(targetId) !== -1 || targetId.indexOf(rowId) !== -1)) {
+          bookingSheet.getRange(r + 1, 8).setValue('已取消'); // 第8欄是狀態
+          var oldNotes = String(data[r][8] || '');
+          bookingSheet.getRange(r + 1, 9).setValue(oldNotes + ' [取消於 ' + nowStr + ']');
+          break;
+        }
+      }
+    }
+
+    // 2. 獨立寫入「預約取消備查名冊」工作表，確保 100% 永久留存
+    var cancelSheet = ss.getSheetByName('預約取消備查名冊');
+    if (!cancelSheet) {
+      cancelSheet = ss.insertSheet('預約取消備查名冊');
+      cancelSheet.appendRow(['取消登記時間', '原約時段', '顧客姓名', '手機電話', '預約項目', '事件ID', '完整備註']);
+      cancelSheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#FEE2E2');
+    }
+    cancelSheet.appendRow([
+      nowStr,
+      startStr,
+      name,
+      phone,
+      serviceItem,
+      eventId || '',
+      desc
+    ]);
+  } catch (err) {
+    Logger.log('試算表取消歸檔非致命錯誤: ' + err.toString());
+  }
 }

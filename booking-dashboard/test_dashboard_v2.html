@@ -18,6 +18,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   
   <script>
+    // 解決 LINE 內建瀏覽器沙盒導致資料與 Safari/Chrome 分裂問題：自動以外部預設瀏覽器開啟
+    (function() {
+      var ua = navigator.userAgent || '';
+      if (/Line\//i.test(ua) && window.location.search.indexOf('openExternalBrowser=1') === -1) {
+        var sep = window.location.search ? '&' : '?';
+        window.location.href = window.location.href + sep + 'openExternalBrowser=1';
+      }
+    })();
+  </script>
+
+  <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -2560,6 +2571,32 @@
                 updatedCount++;
               }
             });
+
+            // 2. 跨設備顧客 CRM 雲端合流（從試算表名冊自動補足，換手機/跨瀏覽器永不失憶）
+            if (Array.isArray(result.sheetCustomers) && result.sheetCustomers.length > 0) {
+              result.sheetCustomers.forEach(sc => {
+                const cleanPhone = (sc.phone || '').replace(/[^0-9]/g, '');
+                if (!cleanPhone && !sc.name) return;
+                let cust = this.customers.find(c => (cleanPhone && c.phone.replace(/[^0-9]/g, '') === cleanPhone) || (sc.name && c.name === sc.name));
+                if (cust) {
+                  if (sc.last_visited_at && (!cust.last_visited_at || sc.last_visited_at > cust.last_visited_at)) {
+                    cust.last_visited_at = sc.last_visited_at;
+                  }
+                  if (sc.health_notes && (!cust.health_notes || !cust.health_notes.includes(sc.health_notes))) {
+                    cust.health_notes = cust.health_notes ? `${cust.health_notes}；${sc.health_notes}` : sc.health_notes;
+                  }
+                } else {
+                  this.customers.push({
+                    id: 'c-cloud-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                    name: sc.name || '老顧客',
+                    phone: sc.phone || '',
+                    visit_count: 1,
+                    last_visited_at: sc.last_visited_at || '',
+                    health_notes: sc.health_notes || ''
+                  });
+                }
+              });
+            }
 
             this.lastSyncTime = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             this.saveState();
