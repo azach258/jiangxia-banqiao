@@ -539,6 +539,25 @@ function handleUpdateNotes(params) {
     if (!evt && eventId.indexOf('@google.com') !== -1) {
       evt = cal.getEventById(eventId.replace('@google.com', ''));
     }
+    // 備援搜尋：若以 ID 未尋獲，透過電話號碼、姓名與預約時間進行精確模糊搜尋
+    if (!evt && (params.startTime || params.phone || params.customerName)) {
+      var searchTime = params.startTime ? new Date(params.startTime) : new Date();
+      var startRange = new Date(searchTime.getTime() - 24 * 60 * 60 * 1000);
+      var endRange = new Date(searchTime.getTime() + 24 * 60 * 60 * 1000);
+      var nearbyEvents = cal.getEvents(startRange, endRange);
+      var cleanP = (params.phone || '').replace(/[^0-9]/g, '');
+      for (var k = 0; k < nearbyEvents.length; k++) {
+        var ne = nearbyEvents[k];
+        var nTitle = ne.getTitle() || '';
+        var nDesc = ne.getDescription() || '';
+        if ((cleanP && (nTitle.indexOf(cleanP) !== -1 || nDesc.indexOf(cleanP) !== -1)) || 
+            (params.customerName && nTitle.indexOf(params.customerName) !== -1)) {
+          evt = ne;
+          eventId = ne.getId();
+          break;
+        }
+      }
+    }
     if (evt) {
       var oldDesc = evt.getDescription() || '';
       var updatedDesc = '';
