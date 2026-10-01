@@ -1230,8 +1230,11 @@
           if (match) {
             let notePart = match[1].trim();
             notePart = notePart.replace(/建立時間：[\s\S]*$/, '').trim();
-            // 若只是系統通用字串，直接清空
-            if (notePart === '電話預約' || notePart === '線上預約' || notePart === '現場預約' || notePart === '無備註' || notePart === '無' || notePart === '無特殊主訴') {
+            // 若只是系統通用字串或預約來源標記，直接清空，留給師傅填寫真正病歷
+            if (notePart === '顧客預約' || notePart === '電話預約' || notePart === '線上預約' || notePart === '現場預約' || 
+                notePart === '無備註' || notePart === '無' || notePart === '無特殊主訴' || 
+                notePart === '[主訴] 顧客預約 ｜ 顧客預約' || notePart === '[主訴] 顧客預約' ||
+                notePart.indexOf('官網線上自主預約') !== -1 || notePart.indexOf('官網自主預約') !== -1) {
               return '';
             }
             return notePart;
@@ -1241,7 +1244,10 @@
 
         // 2. 過濾單純系統字串
         if (t.includes('日曆同步') || t.includes('來自 Google') || t.includes('雲端同步') ||
-            t === '電話預約' || t === '線上預約' || t === '現場預約' || t === '無備註' || t === '無' || t === '無特殊主訴') {
+            t === '顧客預約' || t === '電話預約' || t === '線上預約' || t === '現場預約' || 
+            t === '無備註' || t === '無' || t === '無特殊主訴' || 
+            t === '[主訴] 顧客預約 ｜ 顧客預約' || t === '[主訴] 顧客預約' ||
+            t.indexOf('官網線上自主預約') !== -1 || t.indexOf('官網自主預約') !== -1) {
           return '';
         }
 
@@ -1393,9 +1399,16 @@
           b.symptoms = newNotes;
           b._customEdited = true; // 標記為師傅手動編輯，杜絕被雲端輪詢強制沖洗
           
-          // 同步更新至顧客 CRM 記憶庫
-          const c = this.customers.find(cust => cust.phone.replace(/[^0-9]/g, '') === b.phone.replace(/[^0-9]/g, ''));
-          if (c) c.health_notes = newNotes;
+          // 同步更新至顧客 CRM 記憶庫（持續累積更新客戶長期健康病歷，杜絕覆蓋）
+          const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+          let c = this.customers.find(cust => (cleanPhone && cust.phone.replace(/[^0-9]/g, '') === cleanPhone) || (b.customerName && cust.name === b.customerName));
+          if (c) {
+            if (!c.health_notes || c.health_notes === '顧客預約' || c.health_notes === '無' || c.health_notes.includes('留空白') || c.health_notes.includes('尚未填寫')) {
+              c.health_notes = newNotes;
+            } else if (newNotes && !c.health_notes.includes(newNotes)) {
+              c.health_notes = `${c.health_notes} ｜ ${newNotes}`;
+            }
+          }
 
           this.saveState();
           document.getElementById('detailNotesDisplay').innerHTML = newNotes 
@@ -1405,13 +1418,13 @@
           this.renderTimeline();
           this.renderCustomers();
           this.renderReports();
-          this.showToast('✅ 已儲存主訴備忘並同步至顧客 CRM 記憶庫！', 'success');
+          this.showToast('✅ 已儲存主訴備忘並累積更新至顧客 CRM 記憶庫！', 'success');
 
           // 雲端同步更新 Google 日曆事件與試算表
           const targetEventId = b.cloudSyncedId || b.id;
-          if (this.gasUrl && targetEventId && !this.simulateOffline) {
+          if (this.gasUrl && !this.simulateOffline) {
             try {
-              const updateUrl = `${this.gasUrl}?action=updateNotes&eventId=${encodeURIComponent(targetEventId)}&notes=${encodeURIComponent(newNotes)}&secret=${encodeURIComponent(this.gasSecret)}`;
+              const updateUrl = `${this.gasUrl}?action=updateNotes&eventId=${encodeURIComponent(targetEventId || '')}&id=${encodeURIComponent(targetEventId || '')}&notes=${encodeURIComponent(newNotes)}&phone=${encodeURIComponent(b.phone || '')}&customerName=${encodeURIComponent(b.customerName || '')}&startTime=${encodeURIComponent(b.start || '')}&secret=${encodeURIComponent(this.gasSecret)}`;
               fetch(updateUrl).catch(e => console.warn('雲端備註非同步更新發送:', e));
             } catch(syncErr) {
               console.warn('雲端備註更新失敗:', syncErr);
@@ -2554,13 +2567,18 @@
                 });
                 addedCount++;
 
-                // 同步至顧客 CRM
+                // 同步至顧客 CRM（智慧累積成長，嚴禁被系統預約字串沖洗）
                 if (cleanPhone) {
                   let cust = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
                   if (cust) {
                     cust.visit_count += 1;
                     cust.last_visited_at = evt.start.slice(0, 10);
-                    if (cleanNotes) cust.health_notes = cleanNotes;
+                    // 核心保護：只有在顧客完全無備忘、且 cleanNotes 是具體內容時才填寫；若有新備忘則智慧累積
+                    if (!cust.health_notes && cleanNotes) {
+                      cust.health_notes = cleanNotes;
+                    } else if (cleanNotes && !cust.health_notes.includes(cleanNotes)) {
+                      cust.health_notes = `${cust.health_notes} ｜ ${cleanNotes}`;
+                    }
                   } else {
                     this.customers.push({
                       id: 'c-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -2568,7 +2586,7 @@
                       phone: evt.phone,
                       visit_count: 1,
                       last_visited_at: evt.start.slice(0, 10),
-                      health_notes: cleanNotes
+                      health_notes: cleanNotes || ''
                     });
                   }
                 }
@@ -2596,13 +2614,14 @@
               result.sheetCustomers.forEach(sc => {
                 const cleanPhone = (sc.phone || '').replace(/[^0-9]/g, '');
                 if (!cleanPhone && !sc.name) return;
+                const scNotes = this.cleanNoteText(sc.health_notes);
                 let cust = this.customers.find(c => (cleanPhone && c.phone.replace(/[^0-9]/g, '') === cleanPhone) || (sc.name && c.name === sc.name));
                 if (cust) {
                   if (sc.last_visited_at && (!cust.last_visited_at || sc.last_visited_at > cust.last_visited_at)) {
                     cust.last_visited_at = sc.last_visited_at;
                   }
-                  if (sc.health_notes && (!cust.health_notes || !cust.health_notes.includes(sc.health_notes))) {
-                    cust.health_notes = cust.health_notes ? `${cust.health_notes}；${sc.health_notes}` : sc.health_notes;
+                  if (scNotes && (!cust.health_notes || !cust.health_notes.includes(scNotes))) {
+                    cust.health_notes = cust.health_notes ? `${cust.health_notes} ｜ ${scNotes}` : scNotes;
                   }
                 } else {
                   this.customers.push({
@@ -2611,7 +2630,7 @@
                     phone: sc.phone || '',
                     visit_count: 1,
                     last_visited_at: sc.last_visited_at || '',
-                    health_notes: sc.health_notes || ''
+                    health_notes: scNotes || ''
                   });
                 }
               });
@@ -3171,18 +3190,21 @@
         const syncStatusEl = document.getElementById('detailSyncStatus');
         if (syncStatusEl) syncStatusEl.textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
 
-        // 4. 主訴症狀 ＆ 調理備忘保持空白給師父填寫紀錄
-        const cleanNotes = this.cleanNoteText(b.notes);
-        b.notes = cleanNotes;
-        b.symptoms = cleanNotes;
+        // 4. 主訴症狀 ＆ 調理備忘 (優先顯示師傅手動編輯紀錄，杜絕被強制洗白)
+        let displayNotes = (b.notes || b.symptoms || '').trim();
+        if (!b._customEdited) {
+          displayNotes = this.cleanNoteText(displayNotes);
+        }
+        b.notes = displayNotes;
+        b.symptoms = displayNotes;
         const notesEl = document.getElementById('detailNotesDisplay');
         if (notesEl) {
-          notesEl.innerHTML = cleanNotes 
-            ? cleanNotes 
+          notesEl.innerHTML = displayNotes 
+            ? displayNotes 
             : '<span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>';
         }
         const notesInput = document.getElementById('detailNotesInput');
-        if (notesInput) notesInput.value = cleanNotes;
+        if (notesInput) notesInput.value = displayNotes;
 
         // 5. 渲染過往到店病歷預覽 (Past Visit History Preview)
         const histContainer = document.getElementById('detailPastHistoryList');
