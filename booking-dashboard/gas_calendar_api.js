@@ -246,6 +246,12 @@ function doGet(e) {
       }
     }
 
+    // 1-4. 更新預約備註主訴 (支援 updateNotes)
+    if (action === 'updateNotes') {
+      var updateRes = handleUpdateNotes(params);
+      return createJsonResponse(updateRes);
+    }
+
     return createJsonResponse({ success: false, message: '未知的 GET 操作指令: ' + action });
 
   } catch (error) {
@@ -424,6 +430,12 @@ function doPost(e) {
       }
     }
 
+    // 2-3. 更新預約備註主訴
+    if (action === 'updateNotes') {
+      var updatePostRes = handleUpdateNotes(payload);
+      return createJsonResponse(updatePostRes);
+    }
+
     return createJsonResponse({ success: false, message: '未知的 POST 操作指令: ' + action });
 
   } catch (error) {
@@ -508,3 +520,67 @@ function recordCancellationToSpreadsheet(evt, eventId) {
     Logger.log('試算表取消歸檔非致命錯誤: ' + err.toString());
   }
 }
+
+// ==========================================
+// 6. 備註即時更新函式：同步更新 Google 日曆事件與試算表備註
+// ==========================================
+function handleUpdateNotes(params) {
+  var eventId = params.eventId || params.id;
+  var newNotes = params.notes || '';
+  if (!eventId) {
+    return { success: false, message: '缺少 eventId 或 id' };
+  }
+  try {
+    var cal = getTargetCalendar();
+    var evt = cal.getEventById(eventId);
+    if (!evt && eventId.indexOf('@google.com') === -1) {
+      evt = cal.getEventById(eventId + '@google.com');
+    }
+    if (!evt && eventId.indexOf('@google.com') !== -1) {
+      evt = cal.getEventById(eventId.replace('@google.com', ''));
+    }
+    if (evt) {
+      var oldDesc = evt.getDescription() || '';
+      var updatedDesc = '';
+      if (oldDesc.indexOf('備註說明：') !== -1) {
+        updatedDesc = oldDesc.replace(/備註說明：[^\n\r]*/, '備註說明：' + newNotes);
+      } else {
+        updatedDesc = oldDesc + '\n備註說明：' + newNotes;
+      }
+      evt.setDescription(updatedDesc);
+
+      // 同步更新 Google 試算表中的備註
+      try {
+        var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+        if (ss) {
+          var sheet = ss.getSheetByName('預約紀錄名冊');
+          if (sheet) {
+            var data = sheet.getDataRange().getValues();
+            var targetId = (eventId || '').replace('@google.com', '');
+            for (var r = 1; r < data.length; r++) {
+              var rowId = String(data[r][9] || '').replace('@google.com', '');
+              if (rowId && targetId && (rowId === targetId || rowId.indexOf(targetId) !== -1 || targetId.indexOf(rowId) !== -1)) {
+                sheet.getRange(r + 1, 9).setValue(newNotes);
+                break;
+              }
+            }
+          }
+        }
+      } catch (se) {
+        Logger.log('試算表備註更新非致命錯誤: ' + se.toString());
+      }
+
+      return {
+        success: true,
+        message: '已成功同步更新 Google 日曆與試算表備註！',
+        eventId: eventId,
+        notes: newNotes
+      };
+    } else {
+      return { success: false, message: '日曆上未找到該行程 (可能已手動刪除)' };
+    }
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+

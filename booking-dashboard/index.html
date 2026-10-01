@@ -1391,6 +1391,8 @@
         if (b) {
           b.notes = newNotes;
           b.symptoms = newNotes;
+          b._customEdited = true; // 標記為師傅手動編輯，杜絕被雲端輪詢強制沖洗
+          
           // 同步更新至顧客 CRM 記憶庫
           const c = this.customers.find(cust => cust.phone.replace(/[^0-9]/g, '') === b.phone.replace(/[^0-9]/g, ''));
           if (c) c.health_notes = newNotes;
@@ -1404,6 +1406,17 @@
           this.renderCustomers();
           this.renderReports();
           this.showToast('✅ 已儲存主訴備忘並同步至顧客 CRM 記憶庫！', 'success');
+
+          // 雲端同步更新 Google 日曆事件與試算表
+          const targetEventId = b.cloudSyncedId || b.id;
+          if (this.gasUrl && targetEventId && !this.simulateOffline) {
+            try {
+              const updateUrl = `${this.gasUrl}?action=updateNotes&eventId=${encodeURIComponent(targetEventId)}&notes=${encodeURIComponent(newNotes)}&secret=${encodeURIComponent(this.gasSecret)}`;
+              fetch(updateUrl).catch(e => console.warn('雲端備註非同步更新發送:', e));
+            } catch(syncErr) {
+              console.warn('雲端備註更新失敗:', syncErr);
+            }
+          }
         }
       }
 
@@ -2563,8 +2576,14 @@
                 exists.customerName = evt.customerName || exists.customerName;
                 exists.serviceItem = evt.serviceItem || exists.serviceItem;
                 exists.status = evt.status || exists.status;
-                exists.notes = cleanNotes || this.cleanNoteText(exists.notes);
-                exists.symptoms = exists.notes;
+                // 核心防沖洗保護：若師傅手動編輯過備忘，優先保留師傅最新編輯紀錄
+                if (!exists._customEdited) {
+                  exists.notes = cleanNotes || this.cleanNoteText(exists.notes);
+                  exists.symptoms = exists.notes;
+                } else if (!exists.notes && cleanNotes) {
+                  exists.notes = cleanNotes;
+                  exists.symptoms = cleanNotes;
+                }
                 exists.start = evt.start.slice(0, 19);
                 exists.end = evt.end.slice(0, 19);
                 exists.cloudSyncedId = evt.id;
