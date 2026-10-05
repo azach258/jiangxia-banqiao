@@ -317,37 +317,30 @@
 
     <!-- VIEW 2: CUSTOMERS (Context Memory CRM) -->
     <div id="view-customers" class="hidden space-y-5">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
+      <!-- 頂部功能列：搜尋與操作 -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <i data-lucide="book-open-check" class="w-5 h-5 text-brand-600"></i>
-            顧客健康歷程記憶庫 (CRM Context Database)
+            <i data-lucide="clipboard-list" class="w-5 h-5 text-brand-600"></i>
+            <span>顧客專屬調理病歷卡 (Medical Record Book)</span>
           </h2>
-          <p class="text-xs text-slate-500 mt-0.5">累計紀錄每位顧客的身體慣性、舊傷禁忌、偏好力道與回訪週期</p>
+          <p class="text-xs text-slate-500 mt-0.5">以電話號碼為單一真相源・每次到店記錄歷程累積・自動帶入歷史病況</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          <button onclick="app.downloadCsvTemplate()" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-            <span>下載 CSV 範本</span>
-          </button>
-          <button onclick="app.openModal('importModal')" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
-            <i data-lucide="upload" class="w-4 h-4 text-blue-600"></i>
-            <span>匯入歷史 (CSV)</span>
-          </button>
-          <button onclick="app.openNewCustomerModal()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 active:scale-95">
-            <i data-lucide="user-plus" class="w-4 h-4"></i>
-            <span>新增顧客</span>
-          </button>
-          <div class="w-full sm:w-60 relative">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex-1 md:w-64 relative">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" id="customerSearchInput" oninput="app.searchCustomers(this.value)" placeholder="搜尋顧客姓名或手機..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            <input type="text" id="customerSearchInput" oninput="app.searchCustomers(this.value)" placeholder="搜尋姓名、電話、主訴..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
           </div>
+          <button onclick="app.openNewCustomerModal()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 active:scale-95 whitespace-nowrap">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>建立新客戶</span>
+          </button>
         </div>
       </div>
 
-      <!-- Customers Grid -->
-      <div id="customersListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Dynamically rendered -->
+      <!-- 顧客病歷表卡片列表容器 (垂直結構化卡片) -->
+      <div id="customersListContainer" class="space-y-4">
+        <!-- Dynamically rendered as structured Medical Record Cards -->
       </div>
     </div>
 
@@ -508,16 +501,23 @@
           </div>
         </div>
 
-        <!-- Customer Name -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">顧客姓名 <span class="text-brand-600">*</span></label>
-          <input type="text" id="formName" required placeholder="請輸入姓名" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+        <!-- Customer Name with Autocomplete Search -->
+        <div class="relative">
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">顧客姓名 <span class="text-brand-600">*</span></label>
+            <span class="text-[10px] text-slate-400">可直接輸入姓名搜尋老客戶</span>
+          </div>
+          <input type="text" id="formName" required oninput="app.handleNameInput(this.value)" onfocus="app.handleNameInput(this.value)" placeholder="請輸入姓名（輸入時可自動搜尋反查電話）" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+          <!-- 姓名搜尋下拉選單 -->
+          <div id="nameSuggestDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-float z-30 max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs">
+            <!-- 動態插入顧客匹配項目 -->
+          </div>
         </div>
 
         <!-- Context CRM Memory Card (Auto-revealed for returning customers) -->
         <div id="customerContextCard" class="hidden p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs space-y-1.5">
           <div class="flex items-center justify-between text-amber-900 font-bold">
-            <span class="flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-amber-700"></i>健康歷程上下文記憶</span>
+            <span class="flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-amber-700"></i>病歷檔案上下文記憶</span>
             <span id="ctxVisitCountBadge" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-semibold">來訪 0 次</span>
           </div>
           <p id="ctxHealthNotes" class="text-amber-800 leading-relaxed font-normal">
@@ -525,7 +525,10 @@
           </p>
           <div class="text-[10px] text-amber-700 pt-1 flex items-center justify-between border-t border-amber-200/60">
             <span id="ctxLastVisit">上次來訪：--</span>
-            <span class="text-slate-500">已自動融入本次備忘</span>
+            <button type="button" onclick="app.appendPastNotesToForm()" class="text-amber-900 font-bold hover:underline flex items-center gap-0.5">
+              <i data-lucide="copy-plus" class="w-3 h-3 text-amber-700"></i>
+              <span>帶入病歷並向下新增 ⬇</span>
+            </button>
           </div>
         </div>
 
@@ -571,10 +574,16 @@
           <span id="conflictStatusText" class="font-medium">時段檢測中...</span>
         </div>
 
-        <!-- Notes (主訴症狀與調理備註整合) -->
+        <!-- Notes (主訴症狀與調理備註整合，支援向下新增病歷) -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">主訴症狀 ＆ 本次調理備註說明</label>
-          <textarea id="formNotes" rows="2" placeholder="可在此填寫顧客主訴症狀（例如：久坐腰痠、落枕、膏肓緊繃）或特殊狀況說明，若到店現場評估亦可留白..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">主訴症狀 ＆ 本次調理備註說明</label>
+            <button type="button" onclick="app.appendPastNotesToForm()" id="btnAppendPastNotes" class="hidden text-[11px] text-amber-700 font-bold hover:underline flex items-center gap-1">
+              <i data-lucide="history" class="w-3 h-3 text-amber-600"></i>
+              <span>帶入過去病歷向下新增</span>
+            </button>
+          </div>
+          <textarea id="formNotes" rows="3" placeholder="可在此填寫顧客主訴症狀（例如：久坐腰痠、落枕、膏肓緊繃）或特殊狀況說明，若到店現場評估亦可留白..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
         </div>
 
         <!-- Modal Footer -->
@@ -2370,15 +2379,16 @@
         const hint = document.getElementById('phoneContextHint');
         const card = document.getElementById('customerContextCard');
         const nameInput = document.getElementById('formName');
-        const notesInput = document.getElementById('formNotes');
+        const btnAppend = document.getElementById('btnAppendPastNotes');
 
         const matchedCustomer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone.replace(/[^0-9]/g, ''));
 
         if (matchedCustomer && cleanPhone.length >= 8) {
           hint.classList.remove('hidden');
           card.classList.remove('hidden');
+          if (btnAppend) btnAppend.classList.remove('hidden');
 
-          // 核心修復 1：若師傅已輸入姓名（可能為代約人或家人），絕不強制覆寫！
+          // 若師傅已輸入姓名（可能為代約人或家人），若未手動修改則自動帶入
           if (!nameInput.value || nameInput.dataset.autoFilled === 'true') {
             nameInput.value = matchedCustomer.name;
             nameInput.dataset.autoFilled = 'true';
@@ -2386,19 +2396,88 @@
           document.getElementById('ctxVisitCountBadge').textContent = `來訪 ${matchedCustomer.visit_count} 次`;
           document.getElementById('ctxHealthNotes').innerHTML = matchedCustomer.health_notes 
             ? matchedCustomer.health_notes 
-            : '<span class="text-slate-400 italic">尚無備忘紀錄（待調理完成後填寫）</span>';
+            : '<span class="text-slate-400 italic">尚無歷史病歷備忘（本次調理後可新增）</span>';
           document.getElementById('ctxLastVisit').textContent = `上次來訪：${matchedCustomer.last_visited_at || '無紀錄'}`;
 
-          if (!notesInput.value && matchedCustomer.health_notes) {
-            notesInput.value = matchedCustomer.health_notes;
-          }
+          // 快取前次病歷內容以供向下新增
+          this._lastMatchedNotes = matchedCustomer.health_notes || '';
         } else {
           hint.classList.add('hidden');
           card.classList.add('hidden');
+          if (btnAppend) btnAppend.classList.add('hidden');
           if (nameInput.dataset.autoFilled === 'true') {
             delete nameInput.dataset.autoFilled;
           }
+          this._lastMatchedNotes = '';
         }
+      }
+
+      handleNameInput(nameVal) {
+        const query = (nameVal || '').trim();
+        const dropdown = document.getElementById('nameSuggestDropdown');
+        if (!dropdown) return;
+
+        if (!query) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+          return;
+        }
+
+        const matches = this.customers.filter(c => c.name && c.name.toLowerCase().includes(query.toLowerCase()));
+        if (matches.length === 0) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+          return;
+        }
+
+        dropdown.innerHTML = matches.slice(0, 6).map(c => `
+          <div onclick="app.selectCustomerSuggestion('${c.name}', '${c.phone}')" class="p-2.5 hover:bg-amber-50 cursor-pointer flex items-center justify-between transition">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-800">${c.name}</span>
+              <span class="font-mono text-slate-500 text-[11px]">${c.phone}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">到店 ${c.visit_count} 次</span>
+              <span class="text-[10px] text-slate-400">${c.last_visited_at || ''}</span>
+            </div>
+          </div>
+        `).join('');
+        dropdown.classList.remove('hidden');
+      }
+
+      selectCustomerSuggestion(name, phone) {
+        document.getElementById('formName').value = name;
+        document.getElementById('formPhone').value = phone;
+        const dropdown = document.getElementById('nameSuggestDropdown');
+        if (dropdown) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+        }
+        this.handlePhoneInput(phone);
+      }
+
+      appendPastNotesToForm() {
+        const notesInput = document.getElementById('formNotes');
+        if (!notesInput) return;
+        const past = this._lastMatchedNotes || '';
+        if (!past) {
+          this.showToast('ℹ️ 該顧客尚無過去病歷紀錄可帶入', 'info');
+          return;
+        }
+        const currentVal = notesInput.value.trim();
+        if (currentVal.includes(past)) {
+          this.showToast('ℹ️ 過去病歷已存在於文字框中', 'info');
+          return;
+        }
+        
+        const template = `【過往病歷】：${past}\n【本次主訴/紀錄】：`;
+        if (!currentVal) {
+          notesInput.value = template;
+        } else {
+          notesInput.value = `${currentVal}\n${template}`;
+        }
+        notesInput.focus();
+        this.showToast('📋 已帶入過去病歷！請在下方繼續向下新增本次主訴紀錄。', 'success');
       }
 
 
@@ -2515,7 +2594,14 @@
         if (customer) {
           customer.visit_count = (customer.visit_count || 1) + 1;
           customer.last_visited_at = date;
-          if (crmNotes) customer.health_notes = crmNotes;
+          if (crmNotes) {
+            if (!customer.health_notes || customer.health_notes === '顧客預約' || customer.health_notes === '無' || customer.health_notes.includes('留空白')) {
+              customer.health_notes = crmNotes;
+            } else if (!customer.health_notes.includes(crmNotes)) {
+              // 依電話向下累積病歷
+              customer.health_notes = `${customer.health_notes} ｜ ${crmNotes}`;
+            }
+          }
         } else {
           this.customers.push({
             id: 'c-' + Date.now(),
@@ -3008,7 +3094,8 @@
       }
 
       // ==========================================
-      // 8. 顧客 CRM 記憶庫渲染 (Customers View)
+      // 8. 顧客專屬調理病歷簿渲染 (Medical Record Book View)
+      // 單一真相源固定為電話號碼，姓名與其他資訊可由搜尋反查，每次到店向下累積病歷
       // ==========================================
       renderCustomers(filterText = '') {
         const container = document.getElementById('customersListContainer');
@@ -3016,79 +3103,188 @@
 
         let list = this.customers;
         if (filterText) {
-          list = list.filter(c => c.name.includes(filterText) || c.phone.includes(filterText));
+          const query = filterText.toLowerCase();
+          list = list.filter(c => 
+            (c.name && c.name.toLowerCase().includes(query)) || 
+            (c.phone && c.phone.includes(query)) ||
+            (c.health_notes && c.health_notes.toLowerCase().includes(query))
+          );
         }
 
         if (list.length === 0) {
-          container.innerHTML = '<div class="col-span-3 text-center text-slate-400 py-12 bg-white rounded-2xl border border-slate-200">查無符合的顧客資料</div>';
+          container.innerHTML = `
+            <div class="text-center text-slate-400 py-16 bg-white rounded-2xl border border-slate-200 space-y-2">
+              <i data-lucide="clipboard-x" class="w-8 h-8 mx-auto text-slate-300"></i>
+              <p class="font-bold text-slate-600">查無符合的顧客病歷檔案</p>
+              <p class="text-xs text-slate-400">可嘗試輸入其他電話號碼、姓名關鍵字或點擊右上角「建立新客戶」</p>
+            </div>
+          `;
+          if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
           return;
         }
 
         list.forEach(c => {
           const cleanPhone = (c.phone || '').replace(/[^0-9]/g, '');
           const history = cleanPhone ? this.getCustomerHistory(c.phone) : [];
+          const totalVisits = Math.max(c.visit_count || 0, history.length, 1);
           
-          // 彙整該電話底下的歷史項目與主訴症狀
-          const serviceSet = new Set();
-          const symptomsList = [];
-          history.forEach(h => {
-            if (h.serviceItem) serviceSet.add(h.serviceItem);
-            const sym = h.symptoms || h.notes || '';
-            if (sym && !symptomsList.includes(sym)) symptomsList.push(sym);
-          });
-          const servicesStr = Array.from(serviceSet).join('、') || '尚未排程特定項目';
-          const symptomsStr = symptomsList.length > 0 ? symptomsList.join(' ｜ ') : '尚未記錄具體主訴';
+          // 初診與末診日期
+          let firstVisitDate = '--';
+          let latestVisitDate = c.last_visited_at || '--';
+          if (history.length > 0) {
+            latestVisitDate = history[0].start.slice(0, 10);
+            firstVisitDate = history[history.length - 1].start.slice(0, 10);
+          } else if (c.last_visited_at) {
+            firstVisitDate = c.last_visited_at;
+          }
+
+          // 累計消費
+          let totalSpent = 0;
+          history.forEach(h => { totalSpent += (Number(h.price) || 0); });
+          const spentDisplay = this.hidePrice ? '***' : `$${totalSpent.toLocaleString()}`;
+
+          // 最近 3 次就診明細（病歷表核心，由近到遠倒序）
+          const recentVisits = history.slice(0, 3);
+          const hasMoreVisits = history.length > 3;
+
+          let visitsRowsHtml = '';
+          if (recentVisits.length === 0) {
+            visitsRowsHtml = `
+              <div class="p-3 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                暫無詳細預約紀錄（可能為名冊匯入之歷史顧客）
+              </div>
+            `;
+          } else {
+            visitsRowsHtml = recentVisits.map((h, vIdx) => {
+              const visitNumber = history.length - vIdx;
+              const dateStr = h.start.slice(0, 10);
+              const timeStr = `${h.start.slice(11, 16)} ~ ${h.end ? h.end.slice(11, 16) : ''}`;
+              const partsBadge = (Array.isArray(h.bodyParts) && h.bodyParts.length > 0)
+                ? h.bodyParts.map(p => `<span class="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold">${p}</span>`).join(' ')
+                : '';
+              const noteText = h.notes || h.symptoms || '';
+              const priceText = this.hidePrice ? '***' : `$${(Number(h.price) || 0).toLocaleString()}`;
+
+              return `
+                <div class="p-3 rounded-xl bg-white border border-slate-200/90 shadow-subtle hover:border-amber-300 transition duration-150 space-y-1.5">
+                  <div class="flex items-center justify-between flex-wrap gap-1 text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px]">
+                        第 ${visitNumber} 次到店
+                      </span>
+                      <span class="font-bold text-slate-800 flex items-center gap-1">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <span>${dateStr}</span>
+                        <span class="text-slate-400 font-mono text-[11px] font-normal">(${timeStr})</span>
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                        h.status === '已完成' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                        (h.status === '已到店' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                      }">${h.status}</span>
+                      <span class="font-bold text-slate-900 text-xs">${priceText}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 text-xs flex-wrap">
+                    <span class="font-semibold text-brand-800">${h.serviceItem || '調理整復'}</span>
+                    ${partsBadge ? `<span class="text-slate-300">|</span> ${partsBadge}` : ''}
+                  </div>
+
+                  <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/70 text-[11px] text-slate-700 leading-relaxed font-normal">
+                    <strong class="text-slate-900 font-semibold">本次主訴/病歷：</strong>
+                    ${noteText ? noteText : '<span class="text-slate-400 italic">（當時未記錄特殊主訴）</span>'}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
 
           const card = document.createElement('div');
-          card.className = 'p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card hover:border-slate-300 space-y-3 transition duration-150';
+          card.className = 'bg-white rounded-2xl border border-slate-200/90 shadow-card hover:shadow-lg transition duration-200 overflow-hidden';
           card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="text-sm font-bold text-slate-900">${c.name}</span>
-                <span class="text-xs text-slate-500 block font-mono font-medium">${c.phone}</span>
+            <!-- 1. 病歷卡抬頭 (SSOT: 電話號碼為病歷編號) -->
+            <div class="px-5 py-4 bg-gradient-to-r from-amber-50/50 via-slate-50/80 to-white border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center font-bold text-base shadow-subtle">
+                  ${(c.name || '客').slice(0, 1)}
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-base font-bold text-slate-900">${c.name}</h3>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold ${
+                      totalVisits >= 5 ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                      (totalVisits > 1 ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200')
+                    }">
+                      累計來訪 ${totalVisits} 次
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                    <span class="font-mono font-bold text-brand-800 flex items-center gap-1 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">
+                      <i data-lucide="phone" class="w-3 h-3 text-brand-600"></i>
+                      <span>${c.phone}</span>
+                    </span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-[11px] text-slate-500">初診: ${firstVisitDate} ｜ 最近: ${latestVisitDate}</span>
+                  </div>
+                </div>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
-                來訪 ${c.visit_count} 次
-              </span>
-            </div>
-            
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1.5">
-              <div>
-                <span class="text-[11px] text-brand-800 font-bold block flex items-center gap-1">
-                  <i data-lucide="tag" class="w-3 h-3 text-brand-600"></i>
-                  <span>歷次調理方案彙總：</span>
-                </span>
-                <p class="text-slate-700 leading-relaxed font-normal">${servicesStr}</p>
-              </div>
-              
-              <div class="pt-1.5 border-t border-slate-200/60">
-                <span class="text-[11px] text-amber-800 font-bold block flex items-center gap-1">
-                  <i data-lucide="activity" class="w-3 h-3 text-amber-600"></i>
-                  <span>主訴症狀與健康備忘彙總：</span>
-                </span>
-                <p class="text-slate-700 leading-relaxed font-normal">${c.health_notes ? c.health_notes : (symptomsStr !== '尚未記錄具體主訴' ? symptomsStr : '<span class="text-slate-400 italic">（留空白，待調理後填寫）</span>')}</p>
+
+              <!-- 右側快速操作按鈕 -->
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="app.quickBookForCustomer('${c.name}', '${c.phone}')" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1.5">
+                  <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                  <span>➕ 新增本次排程/病歷</span>
+                </button>
+                <button type="button" onclick="app.openEditCustomerModal('${c.phone}')" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-subtle transition active:scale-95 flex items-center gap-1" title="編輯病歷基本資料">
+                  <i data-lucide="user-cog" class="w-3.5 h-3.5 text-slate-500"></i>
+                  <span>編輯檔案</span>
+                </button>
+                <button type="button" onclick="app.showCustomerHistory('${c.phone}')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1" title="展開所有歷次就診明細">
+                  <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-amber-700"></i>
+                  <span>歷程 (${history.length})</span>
+                </button>
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
-              <span class="font-mono text-[11px]">最近來訪: ${c.last_visited_at || '未記錄'}</span>
-              <div class="flex items-center gap-1.5">
-                <button onclick="app.openEditCustomerModal('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1" title="編輯客戶姓名、電話、到店次數與備忘">
-                  <i data-lucide="edit-3" class="w-3 h-3 text-slate-500"></i>
-                  <span>編輯</span>
-                </button>
-                <button onclick="app.showCustomerHistory('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1">
-                  <i data-lucide="clipboard-list" class="w-3 h-3 text-amber-700"></i>
-                  <span>到店病歷</span>
-                </button>
-                <button onclick="app.quickBookForCustomer('${c.name}', '${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-lg transition active:scale-95 shadow-subtle">
-                  排程
-                </button>
+            <!-- 2. 長期體質與禁忌備忘 (固定摘要區) -->
+            <div class="px-5 py-3 bg-amber-50/40 border-b border-amber-200/50 flex items-start gap-2.5 text-xs">
+              <div class="flex items-center gap-1 text-amber-900 font-bold whitespace-nowrap mt-0.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-700"></i>
+                <span>長期體質與健康備忘：</span>
+              </div>
+              <div class="text-amber-950 font-medium leading-relaxed flex-1">
+                ${c.health_notes ? c.health_notes : '<span class="text-slate-400 font-normal italic">尚無長期體質備忘，可在新增預約或編輯檔案時隨時補充</span>'}
+              </div>
+              <div class="text-[11px] text-slate-500 whitespace-nowrap">
+                實收產能：<strong class="text-slate-900 font-bold">${spentDisplay}</strong>
+              </div>
+            </div>
+
+            <!-- 3. 歷次到店病歷時間軸 (向下累積記錄) -->
+            <div class="p-5 bg-slate-50/50 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="history" class="w-3.5 h-3.5 text-brand-600"></i>
+                  <span>歷次到店調理明細（最近 3 次）：</span>
+                </span>
+                ${hasMoreVisits ? `
+                  <button type="button" onclick="app.showCustomerHistory('${c.phone}')" class="text-brand-700 font-bold hover:underline flex items-center gap-0.5 text-xs">
+                    <span>展開全部 ${history.length} 筆歷程</span>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                  </button>
+                ` : ''}
+              </div>
+
+              <div class="space-y-2">
+                ${visitsRowsHtml}
               </div>
             </div>
           `;
           container.appendChild(card);
         });
+
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
       }
 
@@ -4141,6 +4337,11 @@
           document.getElementById('formNotes').value = '';
           document.getElementById('phoneContextHint').classList.add('hidden');
           document.getElementById('customerContextCard').classList.add('hidden');
+          const suggestDropdown = document.getElementById('nameSuggestDropdown');
+          if (suggestDropdown) suggestDropdown.classList.add('hidden');
+          const btnAppend = document.getElementById('btnAppendPastNotes');
+          if (btnAppend) btnAppend.classList.add('hidden');
+          this._lastMatchedNotes = '';
         }
         if (id === 'detailModal') {
           this.toggleEditTimeMode(false);
