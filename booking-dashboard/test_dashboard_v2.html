@@ -330,9 +330,13 @@
             <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
             <span>下載 CSV 範本</span>
           </button>
-          <button onclick="app.openModal('importModal')" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-1.5">
-            <i data-lucide="upload" class="w-4 h-4"></i>
-            <span>匯入歷史資料 (CSV)</span>
+          <button onclick="app.openModal('importModal')" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
+            <i data-lucide="upload" class="w-4 h-4 text-blue-600"></i>
+            <span>匯入歷史 (CSV)</span>
+          </button>
+          <button onclick="app.openNewCustomerModal()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 active:scale-95">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>新增顧客</span>
           </button>
           <div class="w-full sm:w-60 relative">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
@@ -845,16 +849,101 @@
           <button type="button" onclick="app.closeModal('customerHistoryModal')" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
             關閉
           </button>
-          <button type="button" id="btnHistQuickBook" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-subtle transition active:scale-95 flex items-center gap-1">
-            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-            <span>為此顧客排程預約</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="app.editCustomerFromHistory()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 shadow-subtle transition active:scale-95 flex items-center gap-1">
+              <i data-lucide="user-cog" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>編輯客戶資料</span>
+            </button>
+            <button type="button" id="btnHistQuickBook" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-subtle transition active:scale-95 flex items-center gap-1">
+              <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+              <span>為此顧客排程預約</span>
+            </button>
+          </div>
         </div>
 
       </div>
     </div>
   </div>
 
+  <!-- MODAL: 編輯客戶 CRM 檔案資料庫 (Edit Customer Profile Modal) -->
+  <div id="customerEditModal" onclick="if(event.target === this) app.closeModal('customerEditModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-md">
+      <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-700">
+              <i data-lucide="user-cog" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">編輯顧客檔案 ＆ 健康記憶庫</h3>
+              <p class="text-[11px] text-slate-400">更新將同步至本機 CRM 資料庫與 Google 雲端試算表</p>
+            </div>
+          </div>
+          <button onclick="app.closeModal('customerEditModal')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Form -->
+        <form onsubmit="app.handleSaveCustomerProfile(event)" class="p-6 space-y-4 text-xs">
+          <input type="hidden" id="editCustOrigPhone">
+          <input type="hidden" id="editCustOrigName">
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">顧客姓名 <span class="text-brand-600">*</span></label>
+            <input type="text" id="editCustName" required placeholder="例如：陳大文" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">手機號碼 <span class="text-brand-600">*</span></label>
+            <input type="tel" id="editCustPhone" required placeholder="例如：0912-345-678" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-mono">
+            <p class="text-[10px] text-slate-400 mt-1">※ 若變更手機號碼，過往預約關聯將一併同步轉移至新號碼</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">累計到店次數</label>
+              <input type="number" id="editCustVisitCount" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">最近來訪日期</label>
+              <input type="date" id="editCustLastVisit" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span>身體狀況 ＆ 長期健康備忘：</span>
+              </label>
+            </div>
+            <textarea id="editCustHealthNotes" rows="4" placeholder="請記錄顧客的偏好力道、舊傷禁忌、生活習慣（例如：工程師久坐、習慣重手、右肩關節曾開刀脫臼需輕柔放鬆...）" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition leading-relaxed"></textarea>
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <button type="button" onclick="app.deleteCustomerConfirm()" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>刪除客戶</span>
+            </button>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="app.closeModal('customerEditModal')" class="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition">
+                取消
+              </button>
+              <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1.5">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>儲存客戶資訊</span>
+              </button>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL 3: 匯入歷史資料 (CSV / Excel 試算表) -->
   <div id="importModal" onclick="if(event.target === this) app.closeModal('importModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
@@ -2819,6 +2908,10 @@
             <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
               <span>上次來訪: ${c.last_visited_at || '未記錄'}</span>
               <div class="flex items-center gap-1.5">
+                <button onclick="app.openEditCustomerModal('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1" title="編輯客戶姓名、電話、到店次數與備忘">
+                  <i data-lucide="edit-3" class="w-3 h-3 text-slate-500"></i>
+                  <span>編輯</span>
+                </button>
                 <button onclick="app.showCustomerHistory('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1">
                   <i data-lucide="clipboard-list" class="w-3 h-3 text-amber-700"></i>
                   <span>到店病歷</span>
@@ -2987,6 +3080,154 @@
         document.getElementById('formName').value = name;
         this.handlePhoneInput(phone);
         this.checkTimeConflict();
+      }
+
+      // ==========================================
+      // 8.1 顧客 CRM 檔案編輯與資料庫更新 (Edit Customer Profile)
+      // ==========================================
+      openNewCustomerModal() {
+        document.getElementById('editCustOrigPhone').value = '';
+        document.getElementById('editCustOrigName').value = '';
+        document.getElementById('editCustName').value = '';
+        document.getElementById('editCustPhone').value = '';
+        document.getElementById('editCustVisitCount').value = 1;
+        document.getElementById('editCustLastVisit').value = this.currentDateStr;
+        document.getElementById('editCustHealthNotes').value = '';
+        this.openModal('customerEditModal');
+      }
+
+      openEditCustomerModal(phone) {
+        if (!phone) return;
+        const clean = phone.replace(/[^0-9]/g, '');
+        const cust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === clean);
+        if (!cust) return;
+
+        document.getElementById('editCustOrigPhone').value = cust.phone;
+        document.getElementById('editCustOrigName').value = cust.name;
+        document.getElementById('editCustName').value = cust.name;
+        document.getElementById('editCustPhone').value = cust.phone;
+        document.getElementById('editCustVisitCount').value = cust.visit_count || 1;
+        document.getElementById('editCustLastVisit').value = cust.last_visited_at || '';
+        document.getElementById('editCustHealthNotes').value = cust.health_notes || '';
+
+        this.openModal('customerEditModal');
+      }
+
+      editCustomerFromHistory() {
+        const phone = document.getElementById('histCustomerPhone')?.textContent?.trim();
+        this.closeModal('customerHistoryModal');
+        if (phone) {
+          this.openEditCustomerModal(phone);
+        }
+      }
+
+      async handleSaveCustomerProfile(e) {
+        if (e) e.preventDefault();
+        const origPhone = document.getElementById('editCustOrigPhone').value.trim();
+        const origName = document.getElementById('editCustOrigName').value.trim();
+        const newName = document.getElementById('editCustName').value.trim();
+        const newPhone = document.getElementById('editCustPhone').value.trim();
+        const visitCount = parseInt(document.getElementById('editCustVisitCount').value, 10) || 1;
+        const lastVisit = document.getElementById('editCustLastVisit').value.trim();
+        const healthNotes = document.getElementById('editCustHealthNotes').value.trim();
+
+        if (!newName || !newPhone) {
+          alert('請完整填寫顧客姓名與手機號碼！');
+          return;
+        }
+
+        const cleanOrig = origPhone.replace(/[^0-9]/g, '');
+        const cleanNew = newPhone.replace(/[^0-9]/g, '');
+
+        let target = null;
+        if (cleanOrig) {
+          target = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === cleanOrig);
+        }
+
+        if (target) {
+          // 更新既有顧客
+          target.name = newName;
+          target.phone = newPhone;
+          target.visit_count = visitCount;
+          target.last_visited_at = lastVisit;
+          target.health_notes = healthNotes;
+
+          // 同步更新相關預約排程中的顧客姓名與電話
+          this.bookings.forEach(b => {
+            if (b.phone && b.phone.replace(/[^0-9]/g, '') === cleanOrig) {
+              b.customerName = newName;
+              b.phone = newPhone;
+            }
+          });
+
+          this.showToast(`✅ 已成功更新【${newName}】的客戶檔案！`, 'success');
+        } else {
+          // 新增顧客至 CRM
+          const newCustomer = {
+            id: 'c-' + Date.now(),
+            name: newName,
+            phone: newPhone,
+            visit_count: visitCount,
+            last_visited_at: lastVisit || this.currentDateStr,
+            health_notes: healthNotes
+          };
+          this.customers.unshift(newCustomer);
+          this.showToast(`✨ 已成功新增顧客【${newName}】至 CRM 記憶庫！`, 'success');
+        }
+
+        this.saveState();
+        this.renderCustomers();
+        this.renderTimeline();
+        this.closeModal('customerEditModal');
+
+        // 同步推送至 Google 試算表資料庫 (若有連結 GAS)
+        if (this.gasUrl && !this.simulateOffline) {
+          try {
+            fetch(this.gasUrl, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'updateCustomer',
+                origPhone: origPhone,
+                origName: origName,
+                name: newName,
+                phone: newPhone,
+                health_notes: healthNotes,
+                secret: this.gasSecret
+              })
+            }).then(r => r.json()).then(res => {
+              if (res && res.success) {
+                console.log('Google 試算表顧客資料同步成功:', res);
+              }
+            }).catch(e => {
+              console.warn('Google 試算表更新非致命錯誤:', e);
+            });
+          } catch(e) {}
+        }
+      }
+
+      deleteCustomerConfirm() {
+        const origPhone = document.getElementById('editCustOrigPhone').value.trim();
+        const origName = document.getElementById('editCustOrigName').value.trim();
+        if (!origPhone && !origName) {
+          this.closeModal('customerEditModal');
+          return;
+        }
+
+        if (!confirm(`確定要將顧客【${origName || origPhone}】從 CRM 記憶庫中移除嗎？\n（移除後歷史排程記錄仍將保留）`)) {
+          return;
+        }
+
+        const cleanOrig = origPhone.replace(/[^0-9]/g, '');
+        this.customers = this.customers.filter(c => {
+          if (cleanOrig && c.phone && c.phone.replace(/[^0-9]/g, '') === cleanOrig) return false;
+          if (origName && c.name === origName) return false;
+          return true;
+        });
+
+        this.saveState();
+        this.renderCustomers();
+        this.closeModal('customerEditModal');
+        this.showToast(`🗑️ 已自 CRM 記憶庫移除顧客【${origName}】`, 'info');
       }
 
       // ==========================================

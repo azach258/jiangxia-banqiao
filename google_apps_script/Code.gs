@@ -258,6 +258,12 @@ function doGet(e) {
       return createJsonResponse(updateTimeRes);
     }
 
+    // 1-6. 更新顧客 CRM 檔案 (支援 updateCustomer)
+    if (action === 'updateCustomer') {
+      var updateCustRes = handleUpdateCustomer(params);
+      return createJsonResponse(updateCustRes);
+    }
+
     return createJsonResponse({ success: false, message: '未知的 GET 操作指令: ' + action });
 
   } catch (error) {
@@ -446,6 +452,12 @@ function doPost(e) {
     if (action === 'updateBookingTime') {
       var updateTimePostRes = handleUpdateBookingTime(payload);
       return createJsonResponse(updateTimePostRes);
+    }
+
+    // 2-5. 更新顧客 CRM 檔案 (支援 updateCustomer)
+    if (action === 'updateCustomer') {
+      var updateCustPostRes = handleUpdateCustomer(payload);
+      return createJsonResponse(updateCustPostRes);
     }
 
     return createJsonResponse({ success: false, message: '未知的 POST 操作指令: ' + action });
@@ -676,6 +688,68 @@ function handleUpdateBookingTime(params) {
       eventId: eventId,
       oldStart: oldStartStr,
       newStart: Utilities.formatDate(newStart, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss')
+    };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+// ==========================================
+// 8. 顧客 CRM 檔案變更函式：同步更新 Google 試算表顧客名冊
+// ==========================================
+function handleUpdateCustomer(params) {
+  var origPhone = (params.origPhone || params.phone || '').trim().replace(/[^0-9]/g, '');
+  var origName = (params.origName || params.name || '').trim();
+  var newName = (params.name || '').trim();
+  var newPhone = (params.phone || '').trim();
+  var newNotes = (params.health_notes !== undefined) ? String(params.health_notes).trim() : '';
+
+  if (!origPhone && !origName) {
+    return { success: false, message: '缺少比對的顧客電話或姓名' };
+  }
+  if (!newName && !newPhone) {
+    return { success: false, message: '缺少欲變更的顧客姓名或電話' };
+  }
+
+  try {
+    var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      return { success: false, message: '未連結 Google 試算表，請先設定試算表' };
+    }
+
+    var updatedRows = 0;
+    var bSheet = ss.getSheetByName('預約紀錄名冊');
+    if (bSheet) {
+      var data = bSheet.getDataRange().getValues();
+      for (var r = 1; r < data.length; r++) {
+        var rowName = String(data[r][2] || '').trim();
+        var rowPhone = String(data[r][3] || '').replace(/[^0-9]/g, '');
+
+        var matched = false;
+        if (origPhone && rowPhone && (origPhone === rowPhone || rowPhone.indexOf(origPhone) !== -1 || origPhone.indexOf(rowPhone) !== -1)) {
+          matched = true;
+        } else if (origName && rowName && (origName === rowName || rowName.indexOf(origName) !== -1)) {
+          matched = true;
+        }
+
+        if (matched) {
+          if (newName) bSheet.getRange(r + 1, 3).setValue(newName);
+          if (newPhone) bSheet.getRange(r + 1, 4).setValue(newPhone);
+          if (params.health_notes !== undefined) bSheet.getRange(r + 1, 9).setValue(newNotes);
+          updatedRows++;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      message: '已成功在 Google 試算表更新顧客資料 (共更新 ' + updatedRows + ' 筆紀錄)！',
+      updatedRows: updatedRows,
+      customer: {
+        name: newName,
+        phone: newPhone,
+        health_notes: newNotes
+      }
     };
   } catch (err) {
     return { success: false, error: err.toString() };
