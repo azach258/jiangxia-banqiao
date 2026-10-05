@@ -1298,6 +1298,11 @@
         try {
           this.deletedEventIds = JSON.parse(localStorage.getItem('jiangxia_deleted_events_v2') || '[]');
         } catch(e) { this.deletedEventIds = []; }
+        
+        this.deletedCustomerPhones = [];
+        try {
+          this.deletedCustomerPhones = JSON.parse(localStorage.getItem('jiangxia_deleted_customers_v2') || '[]');
+        } catch(e) { this.deletedCustomerPhones = []; }
 
         // 清理殘留之測試假資料 (王大偉/李小姐/張經理/QA測試員等) 以及已刪除的行程
         storedBookings = (storedBookings || []).filter(b => {
@@ -1484,6 +1489,7 @@
             return;
           }
           if (!phoneKey) return;
+          if (this.deletedCustomerPhones && this.deletedCustomerPhones.includes(phoneKey)) return;
 
           const standardPhone = this.formatStandardPhone(rawPhone);
 
@@ -1533,6 +1539,7 @@
             phoneKey = nameToPhoneMap.get(bName);
           }
           if (!phoneKey) return;
+          if (this.deletedCustomerPhones && this.deletedCustomerPhones.includes(phoneKey)) return;
 
           const standardPhone = this.formatStandardPhone(rawPhone || phoneKey);
 
@@ -3787,11 +3794,17 @@
           return;
         }
 
-        if (!confirm(`確定要將顧客【${origName || origPhone}】從 CRM 記憶庫中移除嗎？\n（移除後歷史排程記錄仍將保留）`)) {
+        if (!confirm(`確定要將顧客【${origName || origPhone}】從 CRM 記憶庫中永久隱藏嗎？\n（移除後將不再顯示於客戶名單中）`)) {
           return;
         }
 
         const cleanOrig = origPhone.replace(/[^0-9]/g, '');
+        
+        if (cleanOrig && !this.deletedCustomerPhones.includes(cleanOrig)) {
+          this.deletedCustomerPhones.push(cleanOrig);
+          localStorage.setItem('jiangxia_deleted_customers_v2', JSON.stringify(this.deletedCustomerPhones));
+        }
+
         this.customers = this.customers.filter(c => {
           if (cleanOrig && c.phone && c.phone.replace(/[^0-9]/g, '') === cleanOrig) return false;
           if (origName && c.name === origName) return false;

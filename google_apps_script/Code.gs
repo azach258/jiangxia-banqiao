@@ -814,3 +814,151 @@ function handleUpdateCustomer(params) {
     return { success: false, error: err.toString() };
   }
 }
+
+// ==========================================
+// 9. 歷史資料清洗與格式統一引擎 (Admin Cleanup Engine)
+// 執行方式：在 Google Apps Script 編輯器中選擇此函式並點擊「執行」
+// 功能：掃描所有試算表紀錄與日曆行程，套用電話單一真相源(SSOT)、統一 10 碼格式 (09xx-xxxxxx) 並合併分裂的姓名
+// ==========================================
+function adminCleanUpHistoricalData() {
+  Logger.log('【開始執行】歷史資料清洗與格式統一引擎...');
+  var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    Logger.log('找不到試算表，無法執行清理。');
+    return;
+  }
+
+  // 1. 輔助函式區
+  function formatStandardPhone(rawPhone) {
+    if (!rawPhone) return '';
+    var digits = String(rawPhone).replace(/[^0-9]/g, '');
+    if (digits.length === 10 && digits.startsWith('09')) {
+      return digits.slice(0, 4) + '-' + digits.slice(4, 7) + '-' + digits.slice(7);
+    }
+    return rawPhone;
+  }
+
+  function getCleanPhoneKey(rawPhone) {
+    if (!rawPhone) return '';
+    return String(rawPhone).replace(/[^0-9]/g, '');
+  }
+
+  function isDummyName(name) {
+    if (!name) return true;
+    var n = String(name).trim();
+    return n.indexOf('QA') !== -1 || n.indexOf('測試') !== -1 || n === '線上預約顧客' || n === '預約顧客' || n === '新顧客' || /^[0-9-]+$/.test(n) || n === '王大偉' || n === '李小姐' || n === '張經理';
+  }
+
+  // 2. 建立全域電話真相源地圖 (Phone SSOT Map)
+  var phoneMap = {};
+  var bSheet = ss.getSheetByName('預約紀錄名冊');
+  if (!bSheet) {
+    Logger.log('找不到「預約紀錄名冊」工作表。');
+    return;
+  }
+  
+  var data = bSheet.getDataRange().getValues();
+  // 第一次掃描：建立最佳姓名地圖
+  for (var r = 1; r < data.length; r++) {
+    var rawName = String(data[r][2] || '').trim();
+    var rawPhone = String(data[r][3] || '').trim();
+    var phoneKey = getCleanPhoneKey(rawPhone);
+    
+    if (phoneKey && !isDummyName(rawName)) {
+      if (!phoneMap[phoneKey]) {
+        phoneMap[phoneKey] = rawName;
+      } else {
+        // 保留字串較長或更像真實姓名的
+        if (rawName.length > phoneMap[phoneKey].length && rawName.indexOf('先生') === -1 && rawName.indexOf('小姐') === -1) {
+          phoneMap[phoneKey] = rawName;
+        }
+      }
+    }
+  }
+
+  // 3. 第二次掃描：清洗試算表
+  var updatedRows = 0;
+  for (var r = 1; r < data.length; r++) {
+    var rawName = String(data[r][2] || '').trim();
+    var rawPhone = String(data[r][3] || '').trim();
+    var phoneKey = getCleanPhoneKey(rawPhone);
+    
+    if (isDummyName(rawName) && !phoneKey) continue;
+
+    if (phoneKey) {
+      var standardPhone = formatStandardPhone(rawPhone);
+      var bestName = phoneMap[phoneKey] || rawName || '預約顧客';
+      
+      var changed = false;
+      if (rawName !== bestName) {
+        bSheet.getRange(r + 1, 3).setValue(bestName);
+        changed = true;
+      }
+      if (rawPhone !== standardPhone) {
+        bSheet.getRange(r + 1, 4).setValue(standardPhone);
+        changed = true;
+      }
+      if (changed) updatedRows++;
+    }
+  }
+  Logger.log('✅ 試算表清洗完成！共更新 ' + updatedRows + ' 筆名冊資料。');
+
+  // 4. 第三次掃描：清洗 Google 日曆 (過去 3 個月到未來 6 個月)
+  Logger.log('開始清洗 Google 日曆行程...');
+  var cal = getTargetCalendar();
+  if (!cal) {
+    Logger.log('找不到 Google 日曆。');
+    return;
+  }
+  
+  var now = new Date();
+  var startRange = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); 
+  var endRange = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000); 
+  var events = cal.getEvents(startRange, endRange);
+  var updatedEvents = 0;
+
+  for (var i = 0; i < events.length; i++) {
+    var evt = events[i];
+    var oldTitle = evt.getTitle() || '';
+    var oldDesc = evt.getDescription() || '';
+    
+    var phoneMatch = oldDesc.match(/(?:聯絡電話|電話|手機)[:：]\s*([0-9-]+)/);
+    var phone = phoneMatch ? phoneMatch[1].trim() : '';
+    
+    if (!phone) {
+      var titleParts = oldTitle.split(/\s+/);
+      if (titleParts.length >= 2 && /^[0-9-]+$/.test(titleParts[titleParts.length - 1])) {
+        phone = titleParts[titleParts.length - 1];
+      }
+    }
+
+    var phoneKey = getCleanPhoneKey(phone);
+    if (phoneKey) {
+      var bestName = phoneMap[phoneKey] || '預約顧客';
+      var standardPhone = formatStandardPhone(phoneKey);
+      var newTitle = bestName + ' ' + standardPhone;
+      
+      var newDesc = oldDesc;
+      if (newDesc.indexOf('顧客姓名：') !== -1) {
+         newDesc = newDesc.replace(/顧客姓名：[^\n\r]*/, '顧客姓名：' + bestName);
+      }
+      if (newDesc.indexOf('聯絡電話：') !== -1) {
+         newDesc = newDesc.replace(/聯絡電話：[^\n\r]*/, '聯絡電話：' + standardPhone);
+      }
+      
+      var changedCal = false;
+      if (oldTitle !== newTitle) {
+        evt.setTitle(newTitle);
+        changedCal = true;
+      }
+      if (oldDesc !== newDesc) {
+        evt.setDescription(newDesc);
+        changedCal = true;
+      }
+      if (changedCal) updatedEvents++;
+    }
+  }
+
+  Logger.log('✅ Google 日曆清洗完成！共修正 ' + updatedEvents + ' 筆行程格式。');
+  Logger.log('【執行完畢】歷史資料已全面統一格式與歸戶！');
+}
