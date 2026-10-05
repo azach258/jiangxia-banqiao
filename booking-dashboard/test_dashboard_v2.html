@@ -1155,12 +1155,12 @@
 
   <!-- Core JavaScript Application Logic -->
   <script>
-    // Initial Seed Data (僅保留真實預約與顧客名冊，上下文備忘留白待調理後填寫)
+    // Initial Seed Data (僅保留真實預約與顧客名冊，電話一律標準化為 10 碼 09xx-xxxxxx)
     const SEED_CUSTOMERS = [
       {
         id: "c-4",
         name: "方鼎文",
-        phone: "0982061546",
+        phone: "0982-061546",
         visit_count: 1,
         last_visited_at: "2026-09-30",
         health_notes: ""
@@ -1168,7 +1168,7 @@
       {
         id: "c-5",
         name: "林宜萱",
-        phone: "0975229293",
+        phone: "0975-229293",
         visit_count: 1,
         last_visited_at: "2026-10-01",
         health_notes: ""
@@ -1176,7 +1176,7 @@
       {
         id: "c-6",
         name: "曾鵲燕",
-        phone: "0911810159",
+        phone: "0911-810159",
         visit_count: 1,
         last_visited_at: "2026-10-01",
         health_notes: ""
@@ -1184,7 +1184,7 @@
       {
         id: "c-7",
         name: "卓越順",
-        phone: "0933889293",
+        phone: "0933-889293",
         visit_count: 1,
         last_visited_at: "2026-10-01",
         health_notes: ""
@@ -1195,7 +1195,7 @@
       {
         id: "b-4",
         customerName: "方鼎文",
-        phone: "0982061546",
+        phone: "0982-061546",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1210,7 +1210,7 @@
       {
         id: "b-5",
         customerName: "林宜萱",
-        phone: "0975229293",
+        phone: "0975-229293",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1225,7 +1225,7 @@
       {
         id: "b-6",
         customerName: "曾鵲燕",
-        phone: "0911810159",
+        phone: "0911-810159",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1240,7 +1240,7 @@
       {
         id: "b-7",
         customerName: "卓越順",
-        phone: "0933889293",
+        phone: "0933-889293",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1413,8 +1413,31 @@
       }
 
       // ==========================================
+      // 電話格式標準化 (台灣 10 碼 09xx-xxxxxx 標準格式)
+      // ==========================================
+      formatStandardPhone(rawPhone) {
+        if (!rawPhone || typeof rawPhone !== 'string') return '';
+        let digits = rawPhone.replace(/[^0-9]/g, '');
+        // 處理 +886 或 886 開頭
+        if (digits.startsWith('886') && digits.length >= 11) {
+          digits = '0' + digits.slice(3);
+        }
+        // 台灣手機 10 碼 09xxxxxxxx 格式化為 09xx-xxxxxx
+        if (digits.length === 10 && digits.startsWith('09')) {
+          return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+        }
+        // 若輸入已具備 09 開頭且長度為 9~10 碼
+        if (digits.startsWith('09') && digits.length >= 8) {
+          if (digits.length <= 4) return digits;
+          return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+        }
+        return rawPhone.trim();
+      }
+
+      // ==========================================
       // 電話為單一真相源 (Single Source of Truth, SSOT) 彙總引擎
       // 所有預約與客戶資訊，凡符合相同電話號碼，資料全部彙整至該電話底下！
+      // 並且全面固定電話格式為標準 10 碼 09xx-xxxxxx
       // ==========================================
       consolidateCustomersByPhone() {
         const phoneMap = new Map();
@@ -1425,11 +1448,13 @@
           const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
           if (!cleanPhone) return;
 
+          const standardPhone = this.formatStandardPhone(rawPhone);
+
           if (!phoneMap.has(cleanPhone)) {
             phoneMap.set(cleanPhone, {
               id: c.id || ('c-' + cleanPhone),
               name: (c.name || '').trim(),
-              phone: rawPhone,
+              phone: standardPhone,
               visit_count: parseInt(c.visit_count, 10) || 0,
               last_visited_at: c.last_visited_at || '',
               health_notes: (c.health_notes || '').trim()
@@ -1441,6 +1466,8 @@
             if (cName && !/^[0-9-]+$/.test(cName) && cName !== '新顧客' && cName !== '預約顧客') {
               existing.name = cName;
             }
+            // 統一格式化電話
+            existing.phone = standardPhone;
             // 到店次數累計
             existing.visit_count = Math.max(existing.visit_count, parseInt(c.visit_count, 10) || 0);
             // 最近來訪日期更新
@@ -1461,17 +1488,21 @@
           const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
           if (!cleanPhone) return;
 
+          const standardPhone = this.formatStandardPhone(rawPhone);
+
           let entry = phoneMap.get(cleanPhone);
           if (!entry) {
             entry = {
               id: 'c-' + cleanPhone,
               name: (b.customerName || '預約顧客').trim(),
-              phone: rawPhone,
+              phone: standardPhone,
               visit_count: 0,
               last_visited_at: '',
               health_notes: ''
             };
             phoneMap.set(cleanPhone, entry);
+          } else if (!entry.phone || entry.phone.length < 10) {
+            entry.phone = standardPhone;
           }
 
           // 統一姓名：若排程有有效姓名，更新進顧客檔案
@@ -1507,7 +1538,7 @@
         // 4. 重建 this.customers 清單（以電話為唯一 Key，徹底去重）
         this.customers = Array.from(phoneMap.values());
 
-        // 5. 反向同步：將所有預約排程中的顧客姓名與手機格式，全面統一為 CRM 中的標準姓名
+        // 5. 反向同步：將所有預約排程中的顧客姓名與手機格式，全面統一為 CRM 中的標準姓名與 09xx-xxxxxx 標準格式
         (this.bookings || []).forEach(b => {
           const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
           if (cleanPhone && phoneMap.has(cleanPhone)) {
@@ -1515,7 +1546,9 @@
             if (master.name && !/^[0-9-]+$/.test(master.name) && master.name !== '預約顧客') {
               b.customerName = master.name;
             }
-            b.phone = master.phone || b.phone;
+            b.phone = master.phone || this.formatStandardPhone(b.phone);
+          } else if (b.phone) {
+            b.phone = this.formatStandardPhone(b.phone);
           }
         });
       }
@@ -1757,7 +1790,8 @@
           const parts = row.split(',').map(s => s.trim().replace(/^["']|["']$/g, ''));
           if (parts.length >= 2) {
             const name = parts[0];
-            const phone = parts[1];
+            const rawPhone = parts[1];
+            const phone = this.formatStandardPhone(rawPhone);
             const visitCount = parseInt(parts[2] || '1', 10);
             const lastVisit = parts[3] || new Date().toISOString().split('T')[0];
             const healthNotes = parts.slice(4).join(', ') || '歷史資料匯入';
@@ -1811,6 +1845,7 @@
 
           if (existing) {
             existing.visit_count += incoming.visit_count;
+            existing.phone = this.formatStandardPhone(incoming.phone);
             if (incoming.health_notes && incoming.health_notes !== '歷史資料匯入') {
               existing.health_notes = existing.health_notes ? `${existing.health_notes}；${incoming.health_notes}` : incoming.health_notes;
             }
@@ -1820,7 +1855,7 @@
             this.customers.push({
               id: 'c-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
               name: incoming.name,
-              phone: incoming.phone,
+              phone: this.formatStandardPhone(incoming.phone),
               visit_count: incoming.visit_count,
               last_visited_at: incoming.last_visited_at,
               health_notes: incoming.health_notes
@@ -2372,16 +2407,23 @@
       handlePhoneInput(phone) {
         // 自動防呆過濾非數字與加減號
         let clean = phone.replace(/[^0-9-]/g, '');
-        if (clean !== phone) {
+        const digits = clean.replace(/[^0-9]/g, '');
+
+        // 當已輸入 10 碼且為 09 開頭，自動格式化為 09xx-xxxxxx 標準 10 碼格式
+        if (digits.length === 10 && digits.startsWith('09') && clean !== `${digits.slice(0, 4)}-${digits.slice(4)}`) {
+          clean = `${digits.slice(0, 4)}-${digits.slice(4)}`;
+          document.getElementById('formPhone').value = clean;
+        } else if (clean !== phone) {
           document.getElementById('formPhone').value = clean;
         }
-        const cleanPhone = clean.trim();
+
+        const cleanPhone = digits;
         const hint = document.getElementById('phoneContextHint');
         const card = document.getElementById('customerContextCard');
         const nameInput = document.getElementById('formName');
         const btnAppend = document.getElementById('btnAppendPastNotes');
 
-        const matchedCustomer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone.replace(/[^0-9]/g, ''));
+        const matchedCustomer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
 
         if (matchedCustomer && cleanPhone.length >= 8) {
           hint.classList.remove('hidden');
@@ -2545,7 +2587,8 @@
 
       executeSaveBooking() {
         const name = document.getElementById('formName').value.trim();
-        const phone = document.getElementById('formPhone').value.trim();
+        const rawPhone = document.getElementById('formPhone').value.trim();
+        const phone = this.formatStandardPhone(rawPhone);
         const date = document.getElementById('formDate').value;
         const time = document.getElementById('formTime').value;
         const serviceSelect = document.getElementById('formService');
@@ -2937,11 +2980,13 @@
                 cleanEvtName = '預約顧客';
               }
 
+              const standardPhone = this.formatStandardPhone(evt.phone || '');
+
               if (!exists) {
                 this.bookings.push({
                   id: evt.id,
                   customerName: cleanEvtName,
-                  phone: evt.phone || '',
+                  phone: standardPhone,
                   serviceItem: evt.serviceItem || '傳統整復調理',
                   durationMin: 30,
                   price: price,
@@ -2962,6 +3007,7 @@
                   if (cust) {
                     cust.visit_count += 1;
                     cust.last_visited_at = evt.start.slice(0, 10);
+                    cust.phone = standardPhone;
                     if (cleanEvtName !== '預約顧客' && (!cust.name || cust.name === '新顧客' || /^[0-9-]+$/.test(cust.name))) {
                       cust.name = cleanEvtName;
                     }
@@ -2975,7 +3021,7 @@
                     this.customers.push({
                       id: 'c-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
                       name: cleanEvtName,
-                      phone: evt.phone,
+                      phone: standardPhone,
                       visit_count: 1,
                       last_visited_at: evt.start.slice(0, 10),
                       health_notes: cleanNotes || ''
@@ -3512,8 +3558,9 @@
           return;
         }
 
+        const standardNewPhone = this.formatStandardPhone(newPhone);
         const cleanOrig = origPhone.replace(/[^0-9]/g, '');
-        const cleanNew = newPhone.replace(/[^0-9]/g, '');
+        const cleanNew = standardNewPhone.replace(/[^0-9]/g, '');
 
         let target = null;
         if (cleanOrig) {
@@ -3523,27 +3570,27 @@
         if (target) {
           // 更新既有顧客
           target.name = newName;
-          target.phone = newPhone;
+          target.phone = standardNewPhone;
           target.visit_count = visitCount;
           target.last_visited_at = lastVisit;
           target.health_notes = healthNotes;
 
-          // 以電話為單一真相源：將符合原電話或新電話之所有歷史與未來排程，全面統一顧客姓名與電話
+          // 以電話為單一真相源：將符合原電話或新電話之所有歷史與未來排程，全面統一顧客姓名與 09xx-xxxxxx 電話
           this.bookings.forEach(b => {
             const bp = (b.phone || '').replace(/[^0-9]/g, '');
             if ((cleanOrig && bp === cleanOrig) || (cleanNew && bp === cleanNew)) {
               b.customerName = newName;
-              b.phone = newPhone;
+              b.phone = standardNewPhone;
             }
           });
 
-          this.showToast(`✅ 已成功更新【${newName}】（${newPhone}）的客戶檔案，全排程已完成統一彙總！`, 'success');
+          this.showToast(`✅ 已成功更新【${newName}】（${standardNewPhone}）的客戶檔案，全排程已完成統一彙總！`, 'success');
         } else {
           // 新增顧客至 CRM
           const newCustomer = {
             id: 'c-' + Date.now(),
             name: newName,
-            phone: newPhone,
+            phone: standardNewPhone,
             visit_count: visitCount,
             last_visited_at: lastVisit || this.currentDateStr,
             health_notes: healthNotes
@@ -3555,7 +3602,7 @@
             const bp = (b.phone || '').replace(/[^0-9]/g, '');
             if (cleanNew && bp === cleanNew) {
               b.customerName = newName;
-              b.phone = newPhone;
+              b.phone = standardNewPhone;
             }
           });
 
