@@ -474,7 +474,7 @@
   </nav>
 
   <!-- MODAL 1: 新增 / 編輯預約 (純白高質感 ✕ 防撞期 ✕ 上下文自動帶出) -->
-  <div id="bookingModal" onclick="if(event.target === this) app.closeModal('bookingModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg">
+  <div id="bookingModal" onclick="if(event.target === this) app.closeModal('bookingModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg my-auto">
     <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Modal Header -->
@@ -592,7 +592,7 @@
   </div>
 
   <!-- MODAL 2: 預約詳情 ＆ 健康備忘 (Care Record) -->
-  <div id="detailModal" onclick="if(event.target === this) app.closeModal('detailModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg">
+  <div id="detailModal" onclick="if(event.target === this) app.closeModal('detailModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg my-auto">
     <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float">
       
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -606,13 +606,19 @@
       </div>
 
       <div class="p-6 space-y-4 text-sm">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
           <div>
-            <h4 id="detailCustomerName" class="text-lg font-bold text-slate-900">王大偉</h4>
-            <p id="detailPhone" class="text-xs text-slate-500">0912-345-678</p>
+            <div class="flex items-center gap-2">
+              <h4 id="detailCustomerName" class="text-base font-bold text-slate-900">顧客姓名</h4>
+              <span id="detailVisitBadge" class="text-xs"></span>
+            </div>
+            <p id="detailPhone" class="text-xs text-slate-500 font-mono mt-0.5">0912-345-678</p>
           </div>
           <div class="flex items-center gap-2">
-            <span id="detailVisitBadge" class="text-xs"></span>
+            <button type="button" onclick="app.editCustomerFromDetail()" id="btnDetailEditCustomer" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-subtle transition flex items-center gap-1 active:scale-95" title="編輯顧客檔案與健康備忘">
+              <i data-lucide="user-cog" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>客戶資料</span>
+            </button>
             <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               已確認
             </span>
@@ -781,8 +787,8 @@
   </div>
 
   <!-- MODAL: 客戶專屬到店病歷時間軸 (Customer Visit History Modal) -->
-  <div id="customerHistoryModal" onclick="if(event.target === this) app.closeModal('customerHistoryModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
-    <div class="cursor-default w-full max-w-lg">
+  <div id="customerHistoryModal" onclick="if(event.target === this) app.closeModal('customerHistoryModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-lg my-auto">
       <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
         
         <!-- Header -->
@@ -866,8 +872,8 @@
   </div>
 
   <!-- MODAL: 編輯客戶 CRM 檔案資料庫 (Edit Customer Profile Modal) -->
-  <div id="customerEditModal" onclick="if(event.target === this) app.closeModal('customerEditModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
-    <div class="cursor-default w-full max-w-md">
+  <div id="customerEditModal" onclick="if(event.target === this) app.closeModal('customerEditModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-md my-auto">
       <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
         
         <!-- Header -->
@@ -946,8 +952,8 @@
   </div>
 
   <!-- MODAL 3: 匯入歷史資料 (CSV / Excel 試算表) -->
-  <div id="importModal" onclick="if(event.target === this) app.closeModal('importModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
-    <div class="cursor-default w-full max-w-lg">
+  <div id="importModal" onclick="if(event.target === this) app.closeModal('importModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-lg my-auto">
       <div class="bg-white border border-slate-200 rounded-2xl w-full overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
         
         <!-- Modal Header -->
@@ -1024,8 +1030,8 @@
   </div>
 
   <!-- MODAL: GOOGLE CLOUD API SETTINGS -->
-  <div id="cloudSettingsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden transform transition-all">
+  <div id="cloudSettingsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 py-8 sm:py-12">
+    <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden transform transition-all my-auto">
       
       <!-- Modal Header -->
       <div class="bg-gradient-to-r from-blue-50 to-indigo-50/40 px-6 py-4 border-b border-blue-100 flex items-center justify-between">
@@ -2720,10 +2726,23 @@
               else if (sItem.includes('免費')) price = 0;
 
               const cleanNotes = this.cleanNoteText(evt.notes);
+              
+              // 顧客姓名淨化與 CRM 關聯強化
+              let cleanEvtName = (evt.customerName || '').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+              if (cleanPhone) {
+                const existingCust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === cleanPhone);
+                if ((!cleanEvtName || /^[0-9-]+$/.test(cleanEvtName) || cleanEvtName === '線上預約顧客') && existingCust && existingCust.name) {
+                  cleanEvtName = existingCust.name;
+                }
+              }
+              if (!cleanEvtName || /^[0-9-]+$/.test(cleanEvtName)) {
+                cleanEvtName = '預約顧客';
+              }
+
               if (!exists) {
                 this.bookings.push({
                   id: evt.id,
-                  customerName: evt.customerName || '線上預約顧客',
+                  customerName: cleanEvtName,
                   phone: evt.phone || '',
                   serviceItem: evt.serviceItem || '傳統整復調理',
                   durationMin: 30,
@@ -2745,6 +2764,9 @@
                   if (cust) {
                     cust.visit_count += 1;
                     cust.last_visited_at = evt.start.slice(0, 10);
+                    if (cleanEvtName !== '預約顧客' && (!cust.name || cust.name === '新顧客' || /^[0-9-]+$/.test(cust.name))) {
+                      cust.name = cleanEvtName;
+                    }
                     // 核心保護：只有在顧客完全無備忘、且 cleanNotes 是具體內容時才填寫；若有新備忘則智慧累積
                     if (!cust.health_notes && cleanNotes) {
                       cust.health_notes = cleanNotes;
@@ -2754,7 +2776,7 @@
                   } else {
                     this.customers.push({
                       id: 'c-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                      name: evt.customerName || '新顧客',
+                      name: cleanEvtName,
                       phone: evt.phone,
                       visit_count: 1,
                       last_visited_at: evt.start.slice(0, 10),
@@ -2763,7 +2785,9 @@
                   }
                 }
               } else {
-                exists.customerName = evt.customerName || exists.customerName;
+                if (cleanEvtName !== '預約顧客' && cleanEvtName) {
+                  exists.customerName = cleanEvtName;
+                }
                 exists.serviceItem = evt.serviceItem || exists.serviceItem;
                 exists.status = evt.status || exists.status;
                 // 核心修復 3：若師傅曾自訂金額，絕不以預設推算價格覆蓋
@@ -3118,6 +3142,21 @@
         this.closeModal('customerHistoryModal');
         if (phone) {
           this.openEditCustomerModal(phone);
+        }
+      }
+
+      editCustomerFromDetail() {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (!b) return;
+        this.closeModal('detailModal');
+        if (b.phone) {
+          this.openEditCustomerModal(b.phone);
+        } else if (b.customerName) {
+          const cust = this.customers.find(c => c.name === b.customerName);
+          if (cust && cust.phone) {
+            this.openEditCustomerModal(cust.phone);
+          }
         }
       }
 
@@ -3487,8 +3526,22 @@
         const b = this.bookings.find(x => x.id === id);
         if (!b) return;
 
-        document.getElementById('detailCustomerName').textContent = b.customerName;
-        document.getElementById('detailPhone').textContent = b.phone;
+        // 智慧顧客反查：若預約姓名為空、純符號或純電話，自動從 CRM 記憶庫匹配姓名
+        const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+        const matchedCust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === cleanPhone);
+
+        let resolvedName = (b.customerName || '').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+        // 若名字為純數字（誤將電話存為名字）或無效字串
+        if (!resolvedName || /^[0-9-]+$/.test(resolvedName) || resolvedName === '線上預約顧客' || resolvedName === '顧客') {
+          if (matchedCust && matchedCust.name && !/^[0-9-]+$/.test(matchedCust.name)) {
+            resolvedName = matchedCust.name;
+            b.customerName = matchedCust.name; // 自動補全修復預約物件
+          }
+        }
+        if (!resolvedName) resolvedName = '預約顧客';
+
+        document.getElementById('detailCustomerName').textContent = resolvedName;
+        document.getElementById('detailPhone').textContent = b.phone || (matchedCust ? matchedCust.phone : '未留電話');
         
         // 1. 渲染調理方案按鈕 (金額自動帶入)
         this.renderDetailServiceButtons(b.serviceItem, b.price);
@@ -3519,7 +3572,7 @@
         const syncStatusEl = document.getElementById('detailSyncStatus');
         if (syncStatusEl) syncStatusEl.textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
 
-        // 4. 主訴症狀 ＆ 調理備忘 (優先顯示師傅手動編輯紀錄，杜絕被強制洗白)
+        // 4. 主訴症狀 ＆ 調理備忘 (若無當次備忘，但 CRM 內有長期健康備忘，智慧提示)
         let displayNotes = (b.notes || b.symptoms || '').trim();
         if (!b._customEdited) {
           displayNotes = this.cleanNoteText(displayNotes);
@@ -3528,9 +3581,13 @@
         b.symptoms = displayNotes;
         const notesEl = document.getElementById('detailNotesDisplay');
         if (notesEl) {
-          notesEl.innerHTML = displayNotes 
-            ? displayNotes 
-            : '<span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>';
+          if (displayNotes) {
+            notesEl.innerHTML = displayNotes;
+          } else if (matchedCust && matchedCust.health_notes) {
+            notesEl.innerHTML = `<span class="text-amber-800 font-medium">💡 CRM 長期健康備忘：${matchedCust.health_notes}</span><br><span class="text-slate-400 italic text-[11px]">（當次調理備忘空白，可點擊右上角新增本次紀錄）</span>`;
+          } else {
+            notesEl.innerHTML = '<span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>';
+          }
         }
         const notesInput = document.getElementById('detailNotesInput');
         if (notesInput) notesInput.value = displayNotes;

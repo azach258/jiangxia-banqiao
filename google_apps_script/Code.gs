@@ -118,19 +118,44 @@ function doGet(e) {
         var customerName = title;
         var phone = '';
 
-        var titleParts = title.split(/\s+/);
-        if (titleParts.length >= 2 && /^[0-9-]+$/.test(titleParts[titleParts.length - 1])) {
-          phone = titleParts[titleParts.length - 1];
-          customerName = titleParts.slice(0, titleParts.length - 1).join(' ');
-        } else if (title.indexOf('【預約】') !== -1) {
-          customerName = title.replace('【預約】', '').split('-')[0].trim();
+        // 從描述欄優先匹配顧客姓名與電話
+        var nameMatch = desc.match(/(?:顧客姓名|姓名|預約人)[:：]\s*([^\n\r]+)/);
+        if (nameMatch) {
+          customerName = nameMatch[1].trim();
+        }
+
+        var phoneMatch = desc.match(/(?:聯絡電話|電話|手機)[:：]\s*([0-9-]+)/);
+        if (phoneMatch) {
+          phone = phoneMatch[1].trim();
+        }
+
+        // 若無描述欄姓名，從行程標題進行智慧解析 (相容 "粘玉明 - 0932122288"、"王大偉 0912345678"、"【預約】陳先生")
+        if (!nameMatch) {
+          if (title.indexOf(' - ') !== -1) {
+            var dashParts = title.split(' - ');
+            customerName = dashParts[0].trim();
+            if (!phone && dashParts.length > 1 && /^[0-9-]+$/.test(dashParts[1].trim())) {
+              phone = dashParts[1].trim();
+            }
+          } else {
+            var titleParts = title.split(/\s+/);
+            if (titleParts.length >= 2 && /^[0-9-]+$/.test(titleParts[titleParts.length - 1])) {
+              if (!phone) phone = titleParts[titleParts.length - 1];
+              customerName = titleParts.slice(0, titleParts.length - 1).join(' ');
+            } else if (title.indexOf('【預約】') !== -1) {
+              customerName = title.replace('【預約】', '').split('-')[0].trim();
+            }
+          }
+        }
+
+        // 清理姓名中的首尾符號
+        customerName = customerName.replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+        if (/^[0-9-]+$/.test(customerName) && !phone) {
+          phone = customerName;
         }
 
         var serviceItem = '徒手調理放鬆';
         var status = '已確認';
-
-        var phoneMatch = desc.match(/電話[:：]\s*([0-9-]+)/);
-        if (phoneMatch && !phone) phone = phoneMatch[1].trim();
 
         var serviceMatch = desc.match(/項目[:：]\s*([^\n\r]+)/);
         if (serviceMatch) serviceItem = serviceMatch[1].trim();
