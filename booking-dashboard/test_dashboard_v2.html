@@ -1356,6 +1356,9 @@
           return c;
         });
 
+        // 以電話為單一真相源 (SSOT) 進行資料彙總與去重
+        this.consolidateCustomersByPhone();
+
         localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
         localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
 
@@ -1398,6 +1401,114 @@
         }
 
         return t;
+      }
+
+      // ==========================================
+      // 電話為單一真相源 (Single Source of Truth, SSOT) 彙總引擎
+      // 所有預約與客戶資訊，凡符合相同電話號碼，資料全部彙整至該電話底下！
+      // ==========================================
+      consolidateCustomersByPhone() {
+        const phoneMap = new Map();
+
+        // 1. 先處理既有顧客名冊
+        (this.customers || []).forEach(c => {
+          const rawPhone = c.phone || '';
+          const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+          if (!cleanPhone) return;
+
+          if (!phoneMap.has(cleanPhone)) {
+            phoneMap.set(cleanPhone, {
+              id: c.id || ('c-' + cleanPhone),
+              name: (c.name || '').trim(),
+              phone: rawPhone,
+              visit_count: parseInt(c.visit_count, 10) || 0,
+              last_visited_at: c.last_visited_at || '',
+              health_notes: (c.health_notes || '').trim()
+            });
+          } else {
+            const existing = phoneMap.get(cleanPhone);
+            // 姓名彙整：若既有名稱為純電話或新顧客，優先用真實姓名替換
+            const cName = (c.name || '').trim();
+            if (cName && !/^[0-9-]+$/.test(cName) && cName !== '新顧客' && cName !== '預約顧客') {
+              existing.name = cName;
+            }
+            // 到店次數累計
+            existing.visit_count = Math.max(existing.visit_count, parseInt(c.visit_count, 10) || 0);
+            // 最近來訪日期更新
+            if (c.last_visited_at && (!existing.last_visited_at || c.last_visited_at > existing.last_visited_at)) {
+              existing.last_visited_at = c.last_visited_at;
+            }
+            // 健康備忘合併（去重累加）
+            const cNotes = (c.health_notes || '').trim();
+            if (cNotes && !existing.health_notes.includes(cNotes)) {
+              existing.health_notes = existing.health_notes ? `${existing.health_notes} ｜ ${cNotes}` : cNotes;
+            }
+          }
+        });
+
+        // 2. 從所有預約排程中，將主訴、備忘、姓名、方案完整反向彙整至該電話底下
+        (this.bookings || []).forEach(b => {
+          const rawPhone = b.phone || '';
+          const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+          if (!cleanPhone) return;
+
+          let entry = phoneMap.get(cleanPhone);
+          if (!entry) {
+            entry = {
+              id: 'c-' + cleanPhone,
+              name: (b.customerName || '預約顧客').trim(),
+              phone: rawPhone,
+              visit_count: 0,
+              last_visited_at: '',
+              health_notes: ''
+            };
+            phoneMap.set(cleanPhone, entry);
+          }
+
+          // 統一姓名：若排程有有效姓名，更新進顧客檔案
+          const bName = (b.customerName || '').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+          if (bName && !/^[0-9-]+$/.test(bName) && bName !== '線上預約顧客' && bName !== '新顧客' && bName !== '預約顧客') {
+            if (!entry.name || /^[0-9-]+$/.test(entry.name) || entry.name === '新顧客' || entry.name === '預約顧客') {
+              entry.name = bName;
+            }
+          }
+
+          // 統一最近來訪日期
+          const bDate = b.start ? b.start.slice(0, 10) : '';
+          if (bDate && (!entry.last_visited_at || bDate > entry.last_visited_at)) {
+            entry.last_visited_at = bDate;
+          }
+
+          // 彙整主訴與備忘
+          const bNote = (b.notes || b.symptoms || '').trim();
+          if (bNote && !entry.health_notes.includes(bNote)) {
+            entry.health_notes = entry.health_notes ? `${entry.health_notes} ｜ ${bNote}` : bNote;
+          }
+        });
+
+        // 3. 校準到店次數：若以預約紀錄筆數計算較多，以真實有效排程筆數為準
+        phoneMap.forEach((cust, cleanPhone) => {
+          const actualBookingCount = (this.bookings || []).filter(b => {
+            const bp = (b.phone || '').replace(/[^0-9]/g, '');
+            return bp === cleanPhone && b.status !== '已取消';
+          }).length;
+          cust.visit_count = Math.max(cust.visit_count || 0, actualBookingCount, 1);
+        });
+
+        // 4. 重建 this.customers 清單（以電話為唯一 Key，徹底去重）
+        this.customers = Array.from(phoneMap.values());
+
+        // 5. 反向同步：將所有預約排程中的顧客姓名與手機格式，全面統一為 CRM 中的標準姓名
+        (this.bookings || []).forEach(b => {
+          const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+          if (cleanPhone && phoneMap.has(cleanPhone)) {
+            const master = phoneMap.get(cleanPhone);
+            if (master.name && !/^[0-9-]+$/.test(master.name) && master.name !== '預約顧客') {
+              b.customerName = master.name;
+            }
+            b.phone = master.phone || b.phone;
+          }
+        });
       }
 
       // ==========================================
@@ -1462,6 +1573,7 @@
       }
 
       saveState() {
+        this.consolidateCustomersByPhone();
         localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
         localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
         localStorage.setItem('jiangxia_sync_queue_v2', JSON.stringify(this.syncQueue));
@@ -2913,24 +3025,53 @@
         }
 
         list.forEach(c => {
+          const cleanPhone = (c.phone || '').replace(/[^0-9]/g, '');
+          const history = cleanPhone ? this.getCustomerHistory(c.phone) : [];
+          
+          // 彙整該電話底下的歷史項目與主訴症狀
+          const serviceSet = new Set();
+          const symptomsList = [];
+          history.forEach(h => {
+            if (h.serviceItem) serviceSet.add(h.serviceItem);
+            const sym = h.symptoms || h.notes || '';
+            if (sym && !symptomsList.includes(sym)) symptomsList.push(sym);
+          });
+          const servicesStr = Array.from(serviceSet).join('、') || '尚未排程特定項目';
+          const symptomsStr = symptomsList.length > 0 ? symptomsList.join(' ｜ ') : '尚未記錄具體主訴';
+
           const card = document.createElement('div');
           card.className = 'p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card hover:border-slate-300 space-y-3 transition duration-150';
           card.innerHTML = `
             <div class="flex items-center justify-between">
               <div>
                 <span class="text-sm font-bold text-slate-900">${c.name}</span>
-                <span class="text-xs text-slate-500 block font-normal">${c.phone}</span>
+                <span class="text-xs text-slate-500 block font-mono font-medium">${c.phone}</span>
               </div>
               <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
                 來訪 ${c.visit_count} 次
               </span>
             </div>
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1">
-              <span class="text-[11px] text-amber-800 font-bold block">💡 身體狀況 ＆ 習慣上下文備忘：</span>
-              <p class="leading-relaxed font-normal">${c.health_notes ? c.health_notes : '<span class="text-slate-400 italic">（留空白，待調理後填寫）</span>'}</p>
+            
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1.5">
+              <div>
+                <span class="text-[11px] text-brand-800 font-bold block flex items-center gap-1">
+                  <i data-lucide="tag" class="w-3 h-3 text-brand-600"></i>
+                  <span>歷次調理方案彙總：</span>
+                </span>
+                <p class="text-slate-700 leading-relaxed font-normal">${servicesStr}</p>
+              </div>
+              
+              <div class="pt-1.5 border-t border-slate-200/60">
+                <span class="text-[11px] text-amber-800 font-bold block flex items-center gap-1">
+                  <i data-lucide="activity" class="w-3 h-3 text-amber-600"></i>
+                  <span>主訴症狀與健康備忘彙總：</span>
+                </span>
+                <p class="text-slate-700 leading-relaxed font-normal">${c.health_notes ? c.health_notes : (symptomsStr !== '尚未記錄具體主訴' ? symptomsStr : '<span class="text-slate-400 italic">（留空白，待調理後填寫）</span>')}</p>
+              </div>
             </div>
+
             <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
-              <span>上次來訪: ${c.last_visited_at || '未記錄'}</span>
+              <span class="font-mono text-[11px]">最近來訪: ${c.last_visited_at || '未記錄'}</span>
               <div class="flex items-center gap-1.5">
                 <button onclick="app.openEditCustomerModal('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1" title="編輯客戶姓名、電話、到店次數與備忘">
                   <i data-lucide="edit-3" class="w-3 h-3 text-slate-500"></i>
@@ -3191,15 +3332,16 @@
           target.last_visited_at = lastVisit;
           target.health_notes = healthNotes;
 
-          // 同步更新相關預約排程中的顧客姓名與電話
+          // 以電話為單一真相源：將符合原電話或新電話之所有歷史與未來排程，全面統一顧客姓名與電話
           this.bookings.forEach(b => {
-            if (b.phone && b.phone.replace(/[^0-9]/g, '') === cleanOrig) {
+            const bp = (b.phone || '').replace(/[^0-9]/g, '');
+            if ((cleanOrig && bp === cleanOrig) || (cleanNew && bp === cleanNew)) {
               b.customerName = newName;
               b.phone = newPhone;
             }
           });
 
-          this.showToast(`✅ 已成功更新【${newName}】的客戶檔案！`, 'success');
+          this.showToast(`✅ 已成功更新【${newName}】（${newPhone}）的客戶檔案，全排程已完成統一彙總！`, 'success');
         } else {
           // 新增顧客至 CRM
           const newCustomer = {
@@ -3211,6 +3353,16 @@
             health_notes: healthNotes
           };
           this.customers.unshift(newCustomer);
+
+          // 同步將相同電話之排程歸納
+          this.bookings.forEach(b => {
+            const bp = (b.phone || '').replace(/[^0-9]/g, '');
+            if (cleanNew && bp === cleanNew) {
+              b.customerName = newName;
+              b.phone = newPhone;
+            }
+          });
+
           this.showToast(`✨ 已成功新增顧客【${newName}】至 CRM 記憶庫！`, 'success');
         }
 

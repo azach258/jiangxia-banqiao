@@ -751,9 +751,10 @@ function handleUpdateCustomer(params) {
         var rowPhone = String(data[r][3] || '').replace(/[^0-9]/g, '');
 
         var matched = false;
+        // 電話為單一真相源 (SSOT) 優先匹配
         if (origPhone && rowPhone && (origPhone === rowPhone || rowPhone.indexOf(origPhone) !== -1 || origPhone.indexOf(rowPhone) !== -1)) {
           matched = true;
-        } else if (origName && rowName && (origName === rowName || rowName.indexOf(origName) !== -1)) {
+        } else if (!origPhone && origName && rowName && (origName === rowName || rowName.indexOf(origName) !== -1)) {
           matched = true;
         }
 
@@ -764,6 +765,39 @@ function handleUpdateCustomer(params) {
           updatedRows++;
         }
       }
+    }
+
+    // 同步更新日曆中該電話對應的所有近期事件標題與描述
+    try {
+      var cal = getTargetCalendar();
+      if (cal && (origPhone || newPhone)) {
+        var cleanTargetP = origPhone || newPhone.replace(/[^0-9]/g, '');
+        var now = new Date();
+        var calEvents = cal.getEvents(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000), new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000));
+        for (var ci = 0; ci < calEvents.length; ci++) {
+          var ce = calEvents[ci];
+          var cTitle = ce.getTitle() || '';
+          var cDesc = ce.getDescription() || '';
+          if (cTitle.indexOf(cleanTargetP) !== -1 || cDesc.indexOf(cleanTargetP) !== -1) {
+            // 更新行程標題
+            ce.setTitle((newName || '顧客') + ' ' + (newPhone || cleanTargetP));
+            // 更新行程描述內的姓名與電話
+            var newDesc = cDesc;
+            if (newName && newDesc.indexOf('顧客姓名：') !== -1) {
+              newDesc = newDesc.replace(/顧客姓名：[^\n\r]*/, '顧客姓名：' + newName);
+            }
+            if (newPhone && newDesc.indexOf('聯絡電話：') !== -1) {
+              newDesc = newDesc.replace(/聯絡電話：[^\n\r]*/, '聯絡電話：' + newPhone);
+            }
+            if (newNotes && newDesc.indexOf('備註說明：') !== -1) {
+              newDesc = newDesc.replace(/備註說明：[^\n\r]*/, '備註說明：' + newNotes);
+            }
+            ce.setDescription(newDesc);
+          }
+        }
+      }
+    } catch(calUpdateErr) {
+      Logger.log('日曆行程批次姓名同步非致命錯誤: ' + calUpdateErr.toString());
     }
 
     return {
