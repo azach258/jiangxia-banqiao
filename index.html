@@ -1441,8 +1441,25 @@
         }
 
         const localBookings = this.getBookingsFromStorage();
+        // 讀取墓碑已刪除名冊，徹底杜絕幽靈行程卡位
+        let deletedIds = [];
+        try {
+          deletedIds = JSON.parse(localStorage.getItem('jiangxia_deleted_events_v2') || '[]');
+        } catch(e) { deletedIds = []; }
+
+        // 若雲端已有行程，以雲端為主排除重複的本地暫存
+        const cloudIds = new Set(this.cloudBookings.map(c => c.id));
+        const filteredLocal = localBookings.filter(b => {
+          if (b.status === '已取消') return false;
+          if (b.id && deletedIds.includes(b.id)) return false;
+          if (b.cloudSyncedId && deletedIds.includes(b.cloudSyncedId)) return false;
+          // 若本地暫存已經同步在雲端出現，以雲端行程為主
+          if (b.cloudSyncedId && cloudIds.has(b.cloudSyncedId)) return false;
+          return true;
+        });
+
         // 整合本地與雲端日曆行程，確保跨手機時段防撞
-        const allBookings = [...localBookings, ...this.cloudBookings];
+        const allBookings = [...filteredLocal, ...this.cloudBookings.filter(c => !deletedIds.includes(c.id))];
         const dayBookings = allBookings.filter(b => b.start && b.start.startsWith(this.selectedDateStr) && b.status !== '已取消');
 
         // 營業時間 14:00 ~ 22:00 (每小時一個時段，最晚預約 21:00，共 8 個時段)
@@ -1586,7 +1603,6 @@
 
         // 2. 更新或新建顧客 CRM 記憶庫
         const customers = this.getCustomersFromStorage();
-        const cleanPhone = phone.replace(/[^0-9]/g, '');
         let cust = customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
 
         if (cust) {

@@ -252,6 +252,12 @@ function doGet(e) {
       return createJsonResponse(updateRes);
     }
 
+    // 1-5. 修改預約時段 (支援 updateBookingTime)
+    if (action === 'updateBookingTime') {
+      var updateTimeRes = handleUpdateBookingTime(params);
+      return createJsonResponse(updateTimeRes);
+    }
+
     return createJsonResponse({ success: false, message: '未知的 GET 操作指令: ' + action });
 
   } catch (error) {
@@ -436,6 +442,12 @@ function doPost(e) {
       return createJsonResponse(updatePostRes);
     }
 
+    // 2-4. 修改預約時段 (支援 updateBookingTime)
+    if (action === 'updateBookingTime') {
+      var updateTimePostRes = handleUpdateBookingTime(payload);
+      return createJsonResponse(updateTimePostRes);
+    }
+
     return createJsonResponse({ success: false, message: '未知的 POST 操作指令: ' + action });
 
   } catch (error) {
@@ -603,3 +615,69 @@ function handleUpdateNotes(params) {
   }
 }
 
+// ==========================================
+// 7. 修改預約時段函式：同步更新 Google 日曆事件開始與結束時間
+// ==========================================
+function handleUpdateBookingTime(params) {
+  var eventId = params.eventId || params.id;
+  var newStartTimeStr = params.startTime;
+  var durationMin = parseInt(params.durationMin || 60, 10);
+
+  if (!eventId) {
+    return { success: false, message: '缺少 eventId 或 id' };
+  }
+  if (!newStartTimeStr) {
+    return { success: false, message: '缺少新的開始時間 startTime' };
+  }
+
+  try {
+    var cal = getTargetCalendar();
+    var evt = cal.getEventById(eventId);
+    if (!evt && eventId.indexOf('@google.com') === -1) {
+      evt = cal.getEventById(eventId + '@google.com');
+    }
+    if (!evt && eventId.indexOf('@google.com') !== -1) {
+      evt = cal.getEventById(eventId.replace('@google.com', ''));
+    }
+
+    if (!evt) {
+      return { success: false, message: '日曆上未找到該行程' };
+    }
+
+    var newStart = new Date(newStartTimeStr);
+    var newEnd = new Date(newStart.getTime() + durationMin * 60 * 1000);
+
+    var oldStartStr = Utilities.formatDate(evt.getStartTime(), 'Asia/Taipei', 'yyyy/MM/dd (E) HH:mm');
+    var newStartStr = Utilities.formatDate(newStart, 'Asia/Taipei', 'yyyy/MM/dd (E) HH:mm');
+
+    evt.setTime(newStart, newEnd);
+
+    // 同步更新日曆 Description 內的建立/變更紀錄
+    var oldDesc = evt.getDescription() || '';
+    var nowLog = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
+    var updatedDesc = oldDesc + '\n[時段變更] 於 ' + nowLog + ' 從 ' + oldStartStr + ' 變更為 ' + newStartStr;
+    evt.setDescription(updatedDesc);
+
+    // 發送 Telegram 推播通知
+    try {
+      var tgMsg = '🔄 <b>【江夏板橋館・預約時段改期通報】</b>\n' +
+        '━━━━━━━━━━━━━━━\n' +
+        '👤 <b>排程資訊</b>：' + evt.getTitle() + '\n' +
+        '⏳ <b>原約時段</b>：' + oldStartStr + '\n' +
+        '✨ <b>改至新時段</b>：' + newStartStr + '\n' +
+        '━━━━━━━━━━━━━━━\n' +
+        '👉 <a href="https://azach258.github.io/jiangxia-banqiao/dashboard/?openExternalBrowser=1">點此開啟師傅排程看板</a>';
+      sendTelegramNotification(tgMsg);
+    } catch(tgE) {}
+
+    return {
+      success: true,
+      message: '已成功更新 Google 日曆行程時段！',
+      eventId: eventId,
+      oldStart: oldStartStr,
+      newStart: Utilities.formatDate(newStart, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss')
+    };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}

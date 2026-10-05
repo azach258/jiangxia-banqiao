@@ -537,20 +537,29 @@
           </div>
         </div>
 
-        <!-- Service Item (方案計價) -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">調理方案（收費方案） <span class="text-brand-600">*</span></label>
-          <select id="formService" onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
-            <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0" selected>【免費】檢查評估諮詢 ｜ NT$ 0 (到店現場評估)</option>
-            <option value="頸、背、腰 (含整體結構調整)" data-duration="60" data-price="1500">頸、背、腰 (含整體結構調整) ｜ NT$ 1,500 (旗艦推薦)</option>
-            <option value="骨盆調理" data-duration="60" data-price="1200">骨盆調理 ｜ NT$ 1,200</option>
-            <option value="四肢 (肩膀/手肘/膝蓋/腳)" data-duration="60" data-price="800">四肢 (肩膀/手肘/膝蓋/腳) ｜ NT$ 800</option>
-            <option value="手指、手腕、腳踝" data-duration="60" data-price="600">手指、手腕、腳踝 ｜ NT$ 600</option>
-            <option value="鬆筋按摩 (60分鐘)" data-duration="60" data-price="1300">鬆筋按摩 (60分鐘) ｜ NT$ 1,300</option>
-            <option value="鬆筋按摩 (30分鐘)" data-duration="30" data-price="700">鬆筋按摩 (30分鐘) ｜ NT$ 700</option>
-          </select>
-          <p class="text-[11px] text-slate-400 mt-1">※ 整復調理每次固定占用 1 小時；鬆筋按摩 30 分鐘為半小時時間槽</p>
+        <!-- Service Item (方案計價 ＆ 自訂應收金額) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">調理方案（收費方案） <span class="text-brand-600">*</span></label>
+            <select id="formService" onchange="app.onFormServiceChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
+              <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0" selected>【免費】檢查評估諮詢 ｜ NT$ 0 (到店現場評估)</option>
+              <option value="頸、背、腰 (含整體結構調整)" data-duration="60" data-price="1500">頸、背、腰 (含整體結構調整) ｜ NT$ 1,500 (旗艦推薦)</option>
+              <option value="骨盆調理" data-duration="60" data-price="1200">骨盆調理 ｜ NT$ 1,200</option>
+              <option value="四肢 (肩膀/手肘/膝蓋/腳)" data-duration="60" data-price="800">四肢 (肩膀/手肘/膝蓋/腳) ｜ NT$ 800</option>
+              <option value="手指、手腕、腳踝" data-duration="60" data-price="600">手指、手腕、腳踝 ｜ NT$ 600</option>
+              <option value="鬆筋按摩 (60分鐘)" data-duration="60" data-price="1300">鬆筋按摩 (60分鐘) ｜ NT$ 1,300</option>
+              <option value="鬆筋按摩 (30分鐘)" data-duration="30" data-price="700">鬆筋按摩 (30分鐘) ｜ NT$ 700</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">預約應收金額 <span class="text-[10px] text-brand-600">(可自訂)</span></label>
+            <div class="relative flex items-center">
+              <span class="absolute left-3 text-xs text-slate-400">NT$</span>
+              <input type="number" id="formPrice" value="0" min="0" step="50" oninput="app.markFormPriceCustom()" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            </div>
+          </div>
         </div>
+        <p class="text-[11px] text-slate-400 -mt-2">※ 價格會隨方案自動切換，亦可手動輸入自訂折扣價或加購金額；整復每次占用 1 小時</p>
 
         <!-- Anti-Collision Indicator (Light Theme) -->
         <div id="conflictStatusBox" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800">
@@ -598,9 +607,51 @@
             <h4 id="detailCustomerName" class="text-lg font-bold text-slate-900">王大偉</h4>
             <p id="detailPhone" class="text-xs text-slate-500">0912-345-678</p>
           </div>
-          <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            已確認
-          </span>
+          <div class="flex items-center gap-2">
+            <span id="detailVisitBadge" class="text-xs"></span>
+            <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              已確認
+            </span>
+          </div>
+        </div>
+
+        <!-- Appointment Time & Reschedule Bar (時段顯示與直接改時間) -->
+        <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2.5 text-xs">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4 text-amber-700"></i>
+              <span class="font-bold text-amber-950">預約時段：</span>
+              <span id="detailTimeRange" class="font-mono font-bold text-amber-900 text-sm">--</span>
+            </div>
+            <button type="button" onclick="app.toggleEditTimeMode()" id="btnToggleEditTime" class="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold text-xs shadow-subtle transition flex items-center gap-1 active:scale-95">
+              <i data-lucide="calendar-clock" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span id="btnEditTimeText">修改預約時間</span>
+            </button>
+          </div>
+
+          <!-- 隱藏的改時間面板 (點擊展開) -->
+          <div id="detailEditTimePanel" class="hidden pt-2 border-t border-amber-200 space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-bold text-amber-900 mb-0.5">更改日期</label>
+                <input type="date" id="detailNewDate" class="w-full bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 transition">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-amber-900 mb-0.5">更改開始時間</label>
+                <input type="time" id="detailNewTime" step="1800" class="w-full bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 transition">
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[10px] text-amber-800">※ 改時間將自動釋出原本時段，並同步推播至 Google 日曆</span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="app.toggleEditTimeMode(false)" class="px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-700 text-xs">取消</button>
+                <button type="button" onclick="app.saveRescheduledTime()" id="btnConfirmReschedule" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                  <span>確認改期</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3 text-xs">
@@ -2084,6 +2135,21 @@
         }
       }
 
+      // 方案變更與自訂金額連動
+      onFormServiceChange() {
+        this.checkTimeConflict();
+        const serviceSelect = document.getElementById('formService');
+        const priceInput = document.getElementById('formPrice');
+        if (serviceSelect && priceInput && !this._formPriceIsCustom) {
+          const selectedPrice = parseInt(serviceSelect.selectedOptions[0]?.dataset.price || 0, 10);
+          priceInput.value = selectedPrice;
+        }
+      }
+
+      markFormPriceCustom() {
+        this._formPriceIsCustom = true;
+      }
+
       // ==========================================
       // 5. 顧客上下文記憶自動帶出 (Context CRM Memory)
       // ==========================================
@@ -2105,7 +2171,11 @@
           hint.classList.remove('hidden');
           card.classList.remove('hidden');
 
-          if (!nameInput.value) nameInput.value = matchedCustomer.name;
+          // 核心修復 1：若師傅已輸入姓名（可能為代約人或家人），絕不強制覆寫！
+          if (!nameInput.value || nameInput.dataset.autoFilled === 'true') {
+            nameInput.value = matchedCustomer.name;
+            nameInput.dataset.autoFilled = 'true';
+          }
           document.getElementById('ctxVisitCountBadge').textContent = `來訪 ${matchedCustomer.visit_count} 次`;
           document.getElementById('ctxHealthNotes').innerHTML = matchedCustomer.health_notes 
             ? matchedCustomer.health_notes 
@@ -2118,6 +2188,9 @@
         } else {
           hint.classList.add('hidden');
           card.classList.add('hidden');
+          if (nameInput.dataset.autoFilled === 'true') {
+            delete nameInput.dataset.autoFilled;
+          }
         }
       }
 
@@ -2192,7 +2265,16 @@
         const serviceSelect = document.getElementById('formService');
         const service = serviceSelect.value;
         const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
-        const price = parseInt(serviceSelect.selectedOptions[0]?.dataset.price || 1200, 10);
+        
+        // 核心修復 3：讀取師傅手動輸入的預約應收金額，若自訂則標記 isCustomPrice
+        const formPriceInput = document.getElementById('formPrice');
+        let price = parseInt(serviceSelect.selectedOptions[0]?.dataset.price || 0, 10);
+        let isCustomPrice = false;
+        if (formPriceInput && formPriceInput.value !== '') {
+          price = parseInt(formPriceInput.value, 10) || 0;
+          isCustomPrice = true;
+        }
+
         const notes = document.getElementById('formNotes').value.trim();
         const symptoms = notes;
 
@@ -2208,6 +2290,7 @@
           symptoms: symptoms,
           durationMin: duration,
           price: price,
+          isCustomPrice: isCustomPrice,
           paymentMethod: '現金',
           status: '已確認',
           syncStatus: this.simulateOffline ? 'pending' : 'synced',
@@ -2594,16 +2677,21 @@
                 exists.customerName = evt.customerName || exists.customerName;
                 exists.serviceItem = evt.serviceItem || exists.serviceItem;
                 exists.status = evt.status || exists.status;
+                // 核心修復 3：若師傅曾自訂金額，絕不以預設推算價格覆蓋
+                if (!exists.isCustomPrice && exists.price === undefined) {
+                  exists.price = price;
+                }
                 // 核心防沖洗保護：若師傅手動編輯過備忘，優先保留師傅最新編輯紀錄
                 if (!exists._customEdited) {
                   exists.notes = cleanNotes || this.cleanNoteText(exists.notes);
                   exists.symptoms = exists.notes;
+                  // 若未手動改過時間，才以雲端日曆時間校準
+                  exists.start = evt.start.slice(0, 19);
+                  exists.end = evt.end.slice(0, 19);
                 } else if (!exists.notes && cleanNotes) {
                   exists.notes = cleanNotes;
                   exists.symptoms = cleanNotes;
                 }
-                exists.start = evt.start.slice(0, 19);
-                exists.end = evt.end.slice(0, 19);
                 exists.cloudSyncedId = evt.id;
                 updatedCount++;
               }
@@ -3297,16 +3385,23 @@
         if (!b) return;
 
         b.serviceItem = serviceName;
-        b.price = price;
-
+        
+        // 若使用者先前有手動修改過特價/自訂金額，切換方案時提醒並保留，除非使用者想覆蓋
         const priceInput = document.getElementById('detailPriceInput');
-        if (priceInput) priceInput.value = price;
+        if (!b.isCustomPrice) {
+          b.price = price;
+          if (priceInput) priceInput.value = price;
+          this.showToast(`✅ 已切換為方案【${serviceName}】，金額自動帶入 NT$ ${price}`, 'success');
+        } else {
+          // 自訂價格狀態下：方案名稱切換，金額保留師傅的自訂值
+          if (priceInput) priceInput.value = b.price;
+          this.showToast(`✅ 已切換為方案【${serviceName}】（保留您手動設定之自訂金額 NT$ ${b.price}）`, 'info');
+        }
 
-        this.renderDetailServiceButtons(serviceName, price);
+        this.renderDetailServiceButtons(serviceName, b.price);
         this.saveState();
         this.renderTimeline();
         this.renderReports();
-        this.showToast(`✅ 已切換為方案【${serviceName}】，金額自動帶入 NT$ ${price}`, 'success');
       }
 
       // ==========================================
@@ -3370,11 +3465,111 @@
         }
       }
 
+      toggleEditTimeMode(forceState) {
+        const panel = document.getElementById('detailEditTimePanel');
+        const btnText = document.getElementById('btnEditTimeText');
+        if (!panel) return;
+        const isHidden = panel.classList.contains('hidden');
+        const show = (forceState !== undefined) ? forceState : isHidden;
+
+        if (show) {
+          panel.classList.remove('hidden');
+          if (btnText) btnText.textContent = '收合改期';
+          if (this.activeDetailId) {
+            const b = this.bookings.find(x => x.id === this.activeDetailId);
+            if (b) {
+              const dateInput = document.getElementById('detailNewDate');
+              const timeInput = document.getElementById('detailNewTime');
+              if (dateInput) dateInput.value = b.start.slice(0, 10);
+              if (timeInput) timeInput.value = b.start.slice(11, 16);
+            }
+          }
+        } else {
+          panel.classList.add('hidden');
+          if (btnText) btnText.textContent = '修改預約時間';
+        }
+      }
+
+      async saveRescheduledTime() {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (!b) return;
+
+        const newDate = document.getElementById('detailNewDate')?.value;
+        const newTime = document.getElementById('detailNewTime')?.value;
+
+        if (!newDate || !newTime) {
+          alert('請完整選擇新的預約日期與開始時間！');
+          return;
+        }
+
+        const duration = b.durationMin || 60;
+        const newStart = new Date(`${newDate}T${newTime}:00`);
+        const newEnd = new Date(newStart.getTime() + duration * 60 * 1000);
+
+        // 防撞檢查：排除自身這筆預約，檢查新時段是否已有人
+        const conflict = this.bookings.find(other => {
+          if (other.id === b.id || other.status === '已取消') return false;
+          const otherStart = new Date(other.start);
+          const otherEnd = new Date(other.end);
+          return (newStart < otherEnd && newEnd > otherStart);
+        });
+
+        if (conflict) {
+          alert(`⛔ 無法改至該時段！\n該時段已與【${conflict.customerName}】的預約 (${conflict.start.slice(11, 16)} ~ ${conflict.end.slice(11, 16)}) 重疊！`);
+          return;
+        }
+
+        const oldStartStr = b.start.replace('T', ' ');
+        const newStartIso = `${newDate}T${newTime}:00`;
+        const newEndIso = `${newDate}T${newEnd.toTimeString().slice(0, 5)}:00`;
+
+        b.start = newStartIso;
+        b.end = newEndIso;
+        b._customEdited = true;
+
+        this.saveState();
+        this.renderTimeline();
+        this.renderReports();
+
+        // 更新詳情彈窗內顯示的時段
+        const timeRangeEl = document.getElementById('detailTimeRange');
+        if (timeRangeEl) timeRangeEl.textContent = `${b.start.replace('T', ' ')} ~ ${b.end.slice(11, 16)}`;
+        this.toggleEditTimeMode(false);
+
+        this.showToast(`🗓️ 已成功為【${b.customerName}】改期至 ${newDate} ${newTime}！原時段已釋出。`, 'success');
+
+        // 同步推播至 Google 日曆 (透過 GAS updateBookingTime)
+        const targetEventId = b.cloudSyncedId || b.id;
+        if (this.gasUrl && !this.simulateOffline && targetEventId) {
+          try {
+            fetch(this.gasUrl, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'updateBookingTime',
+                id: targetEventId,
+                eventId: targetEventId,
+                startTime: newStartIso,
+                durationMin: duration,
+                secret: this.gasSecret
+              })
+            }).then(r => r.json()).then(res => {
+              if (res && res.success) {
+                console.log('Google 日曆行程改期成功:', res);
+              }
+            }).catch(e => {
+              console.warn('Google 日曆改期遠端請求失敗:', e);
+            });
+          } catch(e) {}
+        }
+      }
+
       onDetailPriceChanged(val) {
         if (!this.activeDetailId) return;
         const b = this.bookings.find(x => x.id === this.activeDetailId);
         if (b) {
           b.price = parseInt(val, 10) || 0;
+          b.isCustomPrice = true;
           this.saveState();
           this.renderReports();
         }
@@ -3386,12 +3581,15 @@
         if (!b) return;
 
         const priceInput = document.getElementById('detailPriceInput');
-        if (priceInput) b.price = parseInt(priceInput.value, 10) || 0;
+        if (priceInput) {
+          b.price = parseInt(priceInput.value, 10) || 0;
+          b.isCustomPrice = true;
+        }
 
         this.saveState();
         this.renderTimeline();
         this.renderReports();
-        this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與金額（NT$ ${b.price}）！`, 'success');
+        this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與自訂金額（NT$ ${b.price}）！`, 'success');
       }
 
       updateBookingStatus(newStatus) {
@@ -3459,6 +3657,12 @@
           if (!document.getElementById('formTime').value) {
             document.getElementById('formTime').value = '14:00';
           }
+          this._formPriceIsCustom = false;
+          const serviceSelect = document.getElementById('formService');
+          const priceInput = document.getElementById('formPrice');
+          if (serviceSelect && priceInput) {
+            priceInput.value = parseInt(serviceSelect.selectedOptions[0]?.dataset.price || 0, 10);
+          }
           this.checkTimeConflict();
         }
         if (id === 'cloudSettingsModal') {
@@ -3480,10 +3684,16 @@
           document.getElementById('formPhone').value = '';
           const serviceSelect = document.getElementById('formService');
           if (serviceSelect) serviceSelect.value = '【免費】檢查評估諮詢';
+          const priceInput = document.getElementById('formPrice');
+          if (priceInput) priceInput.value = '0';
+          this._formPriceIsCustom = false;
           if (document.getElementById('formSymptoms')) document.getElementById('formSymptoms').value = '';
           document.getElementById('formNotes').value = '';
           document.getElementById('phoneContextHint').classList.add('hidden');
           document.getElementById('customerContextCard').classList.add('hidden');
+        }
+        if (id === 'detailModal') {
+          this.toggleEditTimeMode(false);
         }
       }
 
