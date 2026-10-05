@@ -2758,8 +2758,12 @@
           });
           this.showToast('⚠️ Google 日曆離線中，已本機安全入庫並存入同步佇列！', 'warning');
         } else if (this.gasUrl) {
-          this.pushBookingToCloud(newBooking).then(ok => {
-            if (ok) {
+          this.pushBookingToCloud(newBooking).then(result => {
+            if (result && result.success) {
+              if (result.eventId) {
+                newBooking.cloudSyncedId = result.eventId;
+                this.saveState();
+              }
               this.showToast(`✨ 預約成功！已同步至 Google 日曆與試算表 (${time})！`, 'success');
             } else {
               newBooking.syncStatus = 'pending';
@@ -2788,7 +2792,7 @@
       // ==========================================
       // 7. 佇列補傳 (Flush Sync Queue)
       // ==========================================
-      flushSyncQueue() {
+      async flushSyncQueue() {
         if (this.simulateOffline) {
           alert('目前仍處於「模擬斷網」模式，請先關閉模擬斷網再進行補傳！');
           return;
@@ -2800,15 +2804,35 @@
           return;
         }
 
-        this.syncQueue.forEach(item => {
-          const b = this.bookings.find(x => x.id === item.id);
-          if (b) b.syncStatus = 'synced';
+        let successCount = 0;
+        for (let i = 0; i < this.syncQueue.length; i++) {
+          const item = this.syncQueue[i];
+          if (item.type === 'create') {
+            const result = await this.pushBookingToCloud(item.payload);
+            if (result && result.success) {
+              const b = this.bookings.find(x => x.id === item.id);
+              if (b) {
+                b.syncStatus = 'synced';
+                if (result.eventId) b.cloudSyncedId = result.eventId;
+              }
+              successCount++;
+            }
+          }
+        }
+
+        // Only clear the successfully synced ones
+        this.syncQueue = this.syncQueue.filter(item => {
+           const b = this.bookings.find(x => x.id === item.id);
+           return b && b.syncStatus !== 'synced';
         });
 
-        this.syncQueue = [];
         this.saveState();
         this.renderTimeline();
-        this.showToast(`🎉 補傳成功！已將 ${count} 筆離線預約成功推播至 Google 日曆！`, 'success');
+        if (successCount > 0) {
+          this.showToast(`🎉 補傳成功！已將 ${successCount} 筆離線預約成功推播至 Google 日曆！`, 'success');
+        } else {
+          this.showToast('⚠️ 佇列補傳失敗，請檢查網路狀態。', 'warning');
+        }
       }
 
       toggleSimulateOffline() {
@@ -3046,7 +3070,7 @@
               }
 
               const cleanPhone = (evt.phone || '').replace(/[^0-9]/g, '');
-              const exists = this.bookings.find(b => b.id === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
+              const exists = this.bookings.find(b => b.id === evt.id || b.cloudSyncedId === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
               
               const sItem = evt.serviceItem || '';
               let price = 800;
@@ -3134,13 +3158,15 @@
                 if (!exists._customEdited) {
                   exists.notes = cleanNotes || this.cleanNoteText(exists.notes);
                   exists.symptoms = exists.notes;
-                  // 若未手動改過時間，才以雲端日曆時間校準
-                  exists.start = evt.start.slice(0, 19);
-                  exists.end = evt.end.slice(0, 19);
                 } else if (!exists.notes && cleanNotes) {
                   exists.notes = cleanNotes;
                   exists.symptoms = cleanNotes;
                 }
+                
+                // 【核心修復】：時間(start/end)永遠以 Google Calendar (SSOT) 為準，確保改時間不殘留舊時段
+                exists.start = evt.start.slice(0, 19);
+                exists.end = evt.end.slice(0, 19);
+                
                 exists.cloudSyncedId = evt.id;
                 updatedCount++;
               }
@@ -3225,7 +3251,7 @@
           });
           const result = await res.json();
           if (result && result.success) {
-            return true;
+            return result; // contains eventId
           }
           return false;
         } catch (e) {
