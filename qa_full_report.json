@@ -1,0 +1,225 @@
+{
+  "front_results": [
+    {
+      "id": "BTN-F01",
+      "name": "Header「線上即時預約」",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F02",
+      "name": "Hero「立即線上預約排程 (免等待)」",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F03",
+      "name": "部位一「手指手腕腳踝」預約按鈕",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F04",
+      "name": "部位二「四肢」預約按鈕",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F05",
+      "name": "部位三「骨盆調理」預約按鈕",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F05B",
+      "name": "部位四「頸背腰整體」預約按鈕",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F05C",
+      "name": "優惠「預約【免費】檢查評估」按鈕",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F06",
+      "name": "地圖旁「線上即時預約」按鈕",
+      "status": "PASS",
+      "msg": "彈窗正常開啟且無跳新分頁"
+    },
+    {
+      "id": "BTN-F07",
+      "name": "預約彈窗右上角「關閉 ✖」按鈕",
+      "status": "PASS",
+      "msg": "彈窗順暢關閉"
+    },
+    {
+      "id": "FORM-F01",
+      "name": "表單空值驗證 (未填姓名電話)",
+      "status": "PASS",
+      "msg": "空值防呆阻擋生效"
+    },
+    {
+      "id": "FORM-F02",
+      "name": "表單正常送出 (陳先生 0911222333)",
+      "status": "PASS",
+      "msg": "預約成功憑證卡彈出"
+    },
+    {
+      "id": "BTN-F08",
+      "name": "成功卡片「一鍵複製發送 LINE@」",
+      "status": "PASS",
+      "msg": "LINE 複製與外跳觸發正常"
+    },
+    {
+      "id": "BTN-F09",
+      "name": "成功卡片「完成並關閉」按鈕",
+      "status": "PASS",
+      "msg": "憑證卡順利關閉"
+    },
+    {
+      "id": "LINK-F01",
+      "name": "Header 電話「0989 879 614」",
+      "status": "PASS",
+      "msg": "撥號連結正常 (tel:0989879614)"
+    },
+    {
+      "id": "LINK-F02",
+      "name": "地圖「開啟 Google Maps 導航」",
+      "status": "PASS",
+      "msg": "導航連結與外開標籤正常"
+    },
+    {
+      "id": "MODAL-F01",
+      "name": "Footer 隱私權政策彈窗",
+      "status": "PASS",
+      "msg": "privacyModal 正常開啟"
+    },
+    {
+      "id": "MODAL-F02",
+      "name": "Footer 服務條款彈窗",
+      "status": "PASS",
+      "msg": "termsModal 正常開啟"
+    },
+    {
+      "id": "DATE-F01",
+      "name": "前台預約「自選日曆日期 (Date Picker)」",
+      "status": "PASS",
+      "msg": "日曆自選日期切換與時段聯動正常"
+    }
+  ],
+  "dashboard_results": [
+    {
+      "id": "BTN-D01",
+      "name": "頂部導覽「日曆排程」Tab",
+      "status": "PASS",
+      "msg": "視圖切換正常"
+    },
+    {
+      "id": "BTN-D02",
+      "name": "頂部導覽「顧客 CRM 記憶庫」Tab",
+      "status": "PASS",
+      "msg": "視圖切換正常"
+    },
+    {
+      "id": "BTN-D03",
+      "name": "頂部導覽「營收統計」Tab",
+      "status": "PASS",
+      "msg": "視圖切換正常"
+    },
+    {
+      "id": "BTN-D04",
+      "name": "頂部「雲端同步」按鈕",
+      "status": "PASS",
+      "msg": "同步觸發反饋正常"
+    },
+    {
+      "id": "BTN-D05",
+      "name": "頂部「雲端設定」按鈕",
+      "status": "PASS",
+      "msg": "雲端設定彈窗開啟正常"
+    },
+    {
+      "id": "BTN-D06",
+      "name": "「排入新預約」按鈕",
+      "status": "PASS",
+      "msg": "新增預約彈窗開啟正常"
+    },
+    {
+      "id": "BTN-D07",
+      "name": "歷史名冊「匯入名冊 (CSV)」按鈕",
+      "status": "PASS",
+      "msg": "CSV 匯入彈窗開啟正常"
+    },
+    {
+      "id": "BTN-D08",
+      "name": "日期切換「前一天」<",
+      "status": "PASS",
+      "msg": "日期切換連動正常"
+    },
+    {
+      "id": "BTN-D09",
+      "name": "日期切換「後一天」>",
+      "status": "PASS",
+      "msg": "日期切換連動正常"
+    },
+    {
+      "id": "BTN-D10",
+      "name": "日期選擇器「回到今天」",
+      "status": "PASS",
+      "msg": "日期切換連動正常"
+    },
+    {
+      "id": "BTN-D11",
+      "name": "金額防窺開關 (Privacy Toggle)",
+      "status": "PASS",
+      "msg": "金額防窺開關切換與記憶正常"
+    },
+    {
+      "id": "BTN-D12",
+      "name": "空白時段「＋新增」按鈕",
+      "status": "PASS",
+      "msg": "空白時段一鍵新增觸發正常 (時段: 15:00)"
+    },
+    {
+      "id": "BTN-D13",
+      "name": "已預約時段「預約下次」按鈕",
+      "status": "PASS",
+      "msg": "預約下次自動代入正常 (顧客: QA測試員, 建議日期: 2026-10-06)"
+    },
+    {
+      "id": "DATE-D01",
+      "name": "後台時間軸「直接日曆跳轉日期 (Date Picker)」",
+      "status": "PASS",
+      "msg": "日曆跳轉任意日期與排程重繪正常"
+    },
+    {
+      "id": "FORM-D01",
+      "name": "後台預約「衝突防呆檢測」",
+      "status": "PASS",
+      "msg": "時段衝突檢測反饋正常 (⛔ 排程衝突警告！ 該時段已與【王大偉】的預約 (...)"
+    },
+    {
+      "id": "CRM-D01",
+      "name": "老顧客電話輸入自動帶入備忘 (0912-345-678)",
+      "status": "PASS",
+      "msg": "老顧客上下文記憶自動帶出 (備忘長度: 3)"
+    }
+  ],
+  "console_errors": [
+    {
+      "page": "Front",
+      "log": {
+        "level": "SEVERE",
+        "message": "http://localhost:8090/favicon.ico - Failed to load resource: the server responded with a status of 404 (File not found)",
+        "source": "network",
+        "timestamp": 1790739913954
+      }
+    }
+  ],
+  "rwd_issues": [
+    "前台手機版 (390px) 無水平破版，Viewport 完美契合",
+    "後台手機版 (390px) 無水平破版，卡片流完美契合"
+  ]
+}
