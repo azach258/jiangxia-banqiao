@@ -1799,7 +1799,7 @@
           b._customEdited = true; // æ¨™è??ºå¸«?…æ??•ç·¨è¼¯ï??œç?è¢«é›²ç«¯è¼ªè©¢å¼·?¶æ?æ´?
           
           // ?Œæ­¥?´æ–°?³é¡§å®?CRM è¨˜æ†¶åº«ï??ç?ç´¯ç??´æ–°å®¢æˆ¶?·æ??¥åº·?…æ­·ï¼Œæ?çµ•è??‹ï?
-          const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+          const cleanPhone = this.getCleanPhoneKey(b.phone);
           let c = this.customers.find(cust => (cleanPhone && cust.phone.replace(/[^0-9]/g, '') === cleanPhone) || (b.customerName && cust.name === b.customerName));
           if (c) {
             if (!c.health_notes || c.health_notes === 'é¡§å®¢?ç?' || c.health_notes === '?? || c.health_notes.includes('?™ç©º??) || c.health_notes.includes('å°šæœªå¡«å¯«')) {
@@ -1939,8 +1939,8 @@
         let updatedCount = 0;
 
         this.pendingImportData.forEach(incoming => {
-          const cleanPhone = incoming.phone.replace(/[^0-9]/g, '');
-          const existing = this.customers.find(c => (c.phone || "").replace(/[^0-9]/g, '') === cleanPhone);
+          const cleanPhone = this.getCleanPhoneKey(incoming.phone);
+          const existing = this.customers.find(c => this.getCleanPhoneKey(c.phone) === cleanPhone);
 
           if (existing) {
             existing.visit_count += incoming.visit_count;
@@ -2094,7 +2094,7 @@
       getVisitCount(phone) {
         if (!phone) return 1;
         const clean = phone.replace(/[^0-9]/g, '');
-        const cust = this.customers.find(c => c.phone && (c.phone || "").replace(/[^0-9]/g, '') === clean);
+        const cust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === clean);
         let baseCount = cust ? (cust.visit_count || 1) : 0;
         const bCount = this.bookings.filter(b => b.phone && b.phone.replace(/[^0-9]/g, '') === clean && b.status !== 'å·²å?æ¶?).length;
         return Math.max(baseCount, bCount, 1);
@@ -2522,7 +2522,7 @@
         const nameInput = document.getElementById('formName');
         const btnAppend = document.getElementById('btnAppendPastNotes');
 
-        const matchedCustomer = this.customers.find(c => (c.phone || "").replace(/[^0-9]/g, '') === cleanPhone);
+        const matchedCustomer = this.customers.find(c => this.getCleanPhoneKey(c.phone) === cleanPhone);
 
         if (matchedCustomer && cleanPhone.length >= 8) {
           hint.classList.remove('hidden');
@@ -2732,7 +2732,7 @@
 
         // 2. ?´æ–°é¡§å®¢ CRM
         const crmNotes = notes;
-        let customer = this.customers.find(c => (c.phone || "").replace(/[^0-9]/g, '') === phone.replace(/[^0-9]/g, ''));
+        let customer = this.customers.find(c => this.getCleanPhoneKey(c.phone) === phone.replace(/[^0-9]/g, ''));
         if (customer) {
           customer.visit_count = (customer.visit_count || 1) + 1;
           customer.last_visited_at = date;
@@ -3076,7 +3076,7 @@
                 if (pureId && this.deletedEventIds.includes(pureId)) return;
               }
 
-              const cleanPhone = (evt.phone || '').replace(/[^0-9]/g, '');
+              const cleanPhone = this.getCleanPhoneKey(evt.phone);
               const exists = this.bookings.find(b => b.id === evt.id || b.cloudSyncedId === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
               
               const sItem = evt.serviceItem || '';
@@ -3094,7 +3094,7 @@
               // é¡§å®¢å§“å?æ·¨å???CRM ?œè¯å¼·å?
               let cleanEvtName = (evt.customerName || '').replace(/^[-?“â€”\s]+|[-?“â€”\s]+$/g, '').trim();
               if (cleanPhone) {
-                const existingCust = this.customers.find(c => c.phone && (c.phone || "").replace(/[^0-9]/g, '') === cleanPhone);
+                const existingCust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanPhone);
                 if ((!cleanEvtName || /^[0-9-]+$/.test(cleanEvtName) || cleanEvtName === 'ç·šä??ç?é¡§å®¢') && existingCust && existingCust.name) {
                   cleanEvtName = existingCust.name;
                 }
@@ -3126,7 +3126,7 @@
 
                 // ?Œæ­¥?³é¡§å®?CRMï¼ˆæ™º?§ç´¯ç©æ??·ï??´ç?è¢«ç³»çµ±é?ç´„å?ä¸²æ?æ´—ï?
                 if (cleanPhone) {
-                  let cust = this.customers.find(c => (c.phone || "").replace(/[^0-9]/g, '') === cleanPhone);
+                  let cust = this.customers.find(c => this.getCleanPhoneKey(c.phone) === cleanPhone);
                   if (cust) {
                     cust.visit_count += 1;
                     cust.last_visited_at = evt.start.slice(0, 10);
@@ -3182,10 +3182,10 @@
             // 2. è·¨è¨­?™é¡§å®?CRM ?²ç«¯?ˆæ?ï¼ˆå?è©¦ç?è¡¨å??Šè‡ª?•è?è¶³ï??›æ?æ©?è·¨ç€è¦½?¨æ°¸ä¸å¤±?¶ï?
             if (Array.isArray(result.sheetCustomers) && result.sheetCustomers.length > 0) {
               result.sheetCustomers.forEach(sc => {
-                const cleanPhone = (sc.phone || '').replace(/[^0-9]/g, '');
+                const cleanPhone = this.getCleanPhoneKey(sc.phone);
                 if (!cleanPhone && !sc.name) return;
                 const scNotes = this.cleanNoteText(sc.health_notes);
-                let cust = this.customers.find(c => (cleanPhone && (c.phone || "").replace(/[^0-9]/g, '') === cleanPhone) || (sc.name && c.name === sc.name));
+                let cust = this.customers.find(c => (cleanPhone && this.getCleanPhoneKey(c.phone) === cleanPhone) || (sc.name && c.name === sc.name));
                 if (cust) {
                   if (sc.last_visited_at && (!cust.last_visited_at || sc.last_visited_at > cust.last_visited_at)) {
                     cust.last_visited_at = sc.last_visited_at;
@@ -3706,12 +3706,12 @@
         }
 
         const standardNewPhone = this.formatStandardPhone(newPhone);
-        const cleanOrig = origPhone.replace(/[^0-9]/g, '');
+        const cleanOrig = this.getCleanPhoneKey(origPhone);
         const cleanNew = standardNewPhone.replace(/[^0-9]/g, '');
 
         let target = null;
         if (cleanOrig) {
-          target = this.customers.find(c => c.phone && (c.phone || "").replace(/[^0-9]/g, '') === cleanOrig);
+          target = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanOrig);
         }
 
         if (target) {
@@ -3724,7 +3724,7 @@
 
           // ä»¥é›»è©±ç‚º?®ä??Ÿç›¸æºï?å°‡ç¬¦?ˆå??»è©±?–æ–°?»è©±ä¹‹æ??‰æ­·?²è??ªä??’ç?ï¼Œå…¨?¢çµ±ä¸€é¡§å®¢å§“å???09xx-xxxxxx ?»è©±
           this.bookings.forEach(b => {
-            const bp = (b.phone || '').replace(/[^0-9]/g, '');
+            const bp = this.getCleanPhoneKey(b.phone);
             if ((cleanOrig && bp === cleanOrig) || (cleanNew && bp === cleanNew)) {
               b.customerName = newName;
               b.phone = standardNewPhone;
@@ -3746,7 +3746,7 @@
 
           // ?Œæ­¥å°‡ç›¸?Œé›»è©±ä??’ç?æ­¸ç?
           this.bookings.forEach(b => {
-            const bp = (b.phone || '').replace(/[^0-9]/g, '');
+            const bp = this.getCleanPhoneKey(b.phone);
             if (cleanNew && bp === cleanNew) {
               b.customerName = newName;
               b.phone = standardNewPhone;
@@ -3798,7 +3798,7 @@
           return;
         }
 
-        const cleanOrig = origPhone.replace(/[^0-9]/g, '');
+        const cleanOrig = this.getCleanPhoneKey(origPhone);
         
         if (cleanOrig && !this.deletedCustomerPhones.includes(cleanOrig)) {
           this.deletedCustomerPhones.push(cleanOrig);
@@ -3806,8 +3806,8 @@
         }
 
         this.customers = this.customers.filter(c => {
-          if (cleanOrig && c.phone && (c.phone || "").replace(/[^0-9]/g, '') === cleanOrig) return false;
-          if (origName && c.name === origName) return false;
+          if (cleanOrig && c.phone && this.getCleanPhoneKey(c.phone) === cleanOrig) return false;
+          
           return true;
         });
 
@@ -4075,8 +4075,8 @@
         if (!b) return;
 
         // ?ºæ…§é¡§å®¢?æŸ¥ï¼šè‹¥?ç?å§“å??ºç©º?ç?ç¬¦è??–ç??»è©±ï¼Œè‡ª?•å? CRM è¨˜æ†¶åº«åŒ¹?å???
-        const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
-        const matchedCust = this.customers.find(c => c.phone && (c.phone || "").replace(/[^0-9]/g, '') === cleanPhone);
+        const cleanPhone = this.getCleanPhoneKey(b.phone);
+        const matchedCust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanPhone);
 
         let resolvedName = (b.customerName || '').replace(/^[-?“â€”\s]+|[-?“â€”\s]+$/g, '').trim();
         // ?¥å?å­—ç‚ºç´”æ•¸å­—ï?èª¤å??»è©±å­˜ç‚º?å?ï¼‰æ??¡æ?å­—ä¸²
@@ -4588,4 +4588,11 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
 
