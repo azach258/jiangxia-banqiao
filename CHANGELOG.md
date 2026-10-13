@@ -2,6 +2,25 @@
 
 本文檔記錄「江夏傳統整復推拿 板橋館」AI 客服機器人、Prompt 集中倉庫與自動化工具的所有版本演進、功能修復與 Git 變更紀錄。
 
+## 📌 [v2.2.1] - 2026-10-13 15:45:00
+### 🛡️ 徹底修復歷史就診紀錄（如 10/2）儲存後重新整理 (F5) 消失之雙向同步刪除過濾盲區 (Query Window Safety Guard)
+- **修復問題**：
+  在後台排程看板輸入過去的就診紀錄（例如 10/2 預約），儲存時有顯示紀錄，但瀏覽器一旦重新整理 (F5)，該筆 10/2 客戶紀錄便徹底消失；重複輸入同一個客戶資料亦會重複發生消失現象（而 10/1 初始假資料則不受影響）。
+- **根本原因**：
+  1. **GAS 雲端查詢區間過窄**：`google_apps_script/Code.gs` 與 `gas_calendar_api.js` 之 `getEvents` 舊代碼硬編碼只抓取過去 3 天至未來 30 天（`now - 3 days` 到 `now + 30 days`）。以系統當前日期 10/13 為基準，查詢起點為 10/10，任何早於 10/10 的歷史行程（包括 10/2）均不在雲端日曆回傳資料中。
+  2. **雙向刪除過濾器缺乏時間視窗安全守衛**：看板在 `fetchFromCloud()` 執行與 Google 日曆雙向刪除對齊時，直接以 `if (b.cloudSyncedId && !cloudIds.has(b.cloudSyncedId)) return false;` 判斷本地預約是否已被雲端刪除，**未核對該行程之時間是否屬於本次雲端查詢的時間範圍**。
+  3. **抹除連鎖反應**：使用者登入 10/2 資料時，前端成功將預約推播至 Google 日曆並獲取 `cloudSyncedId` 寫入本地 `localStorage`；但在重新整理 (F5) 時，`fetchFromCloud()` 收到僅含 10/10 以後資料的 `result.data`，過濾器誤判「雲端已無此 10/2 行程，代表師傅已在日曆上刪除」，強行從 `this.bookings` 剔除並覆寫 `localStorage`，導致歷史紀錄永久丟失。而 10/1 剛好屬於初始假資料無 `cloudSyncedId`，因而未觸發該過濾條件。
+- **解決方案**：
+  1. **前端實裝時間視窗安全守衛 (`Query Window Safety Guard`)**：
+     - 在 `fetchFromCloud()` 中解析查詢區間（`cloudQueryStart` ~ `cloudQueryEnd`），**只有當預約時間明確落在本次雲端查詢視窗內時**，雲端找不到該 ID 才判定為被日曆手動刪除。
+     - 凡是落在查詢視窗外的所有歷史舊帳或超遠期預約，100% 豁免核對，絕不誤刪！
+  2. **GAS 雲端 API 查詢範圍擴增至 365 天**：
+     - `google_apps_script/Code.gs` 與 `booking-dashboard/gas_calendar_api.js` 之 `getEvents` 預設查詢範圍擴大為過去 365 天（一年）至未來 180 天（半年），並支援前端傳入 `startTime` 與 `endTime` 自訂區間，回傳標準 `queryStartTime` 與 `queryEndTime`。
+  3. **ID 雙向容錯去重比對**：
+     - `cloudIds` Set 同時收錄含 `@google.com` 與去除後之純 ID；並在 `exists` 比對時納入純 ID 與時間+號碼匹配，徹底免疫 ID 格式差異。
+  4. **全端測試與雙倉庫自動同步部署**：
+     - 通過 Node.js 語法校驗與 3 大情境單元測試（舊版 GAS 兼容、新版 GAS 覆蓋、真實日曆手動刪除連動），並完成 GitHub Pages 部署。
+
 ## 📌 [v2.2.0] - 2026-10-13 15:25:00
 ### 🛠️ 徹底修復「免費檢查評估」金額無法更改為 0、短路運算回退 1500 與歷史快取自動自我校正 (Auto-Heal)
 - **修復問題**：
