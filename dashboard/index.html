@@ -317,37 +317,30 @@
 
     <!-- VIEW 2: CUSTOMERS (Context Memory CRM) -->
     <div id="view-customers" class="hidden space-y-5">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
+      <!-- 頂部功能列：搜尋與操作 -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-subtle flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <i data-lucide="book-open-check" class="w-5 h-5 text-brand-600"></i>
-            顧客健康歷程記憶庫 (CRM Context Database)
+            <i data-lucide="clipboard-list" class="w-5 h-5 text-brand-600"></i>
+            <span>顧客專屬調理病歷卡 (Medical Record Book)</span>
           </h2>
-          <p class="text-xs text-slate-500 mt-0.5">累計紀錄每位顧客的身體慣性、舊傷禁忌、偏好力道與回訪週期</p>
+          <p class="text-xs text-slate-500 mt-0.5">以電話號碼為單一真相源・每次到店記錄歷程累積・自動帶入歷史病況</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          <button onclick="app.downloadCsvTemplate()" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-            <span>下載 CSV 範本</span>
-          </button>
-          <button onclick="app.openModal('importModal')" class="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-subtle">
-            <i data-lucide="upload" class="w-4 h-4 text-blue-600"></i>
-            <span>匯入歷史 (CSV)</span>
-          </button>
-          <button onclick="app.openNewCustomerModal()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 active:scale-95">
-            <i data-lucide="user-plus" class="w-4 h-4"></i>
-            <span>新增顧客</span>
-          </button>
-          <div class="w-full sm:w-60 relative">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex-1 md:w-64 relative">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" id="customerSearchInput" oninput="app.searchCustomers(this.value)" placeholder="搜尋顧客姓名或手機..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            <input type="text" id="customerSearchInput" oninput="app.searchCustomers(this.value)" placeholder="搜尋姓名、電話、主訴..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
           </div>
+          <button onclick="app.openNewCustomerModal()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 active:scale-95 whitespace-nowrap">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>建立新客戶</span>
+          </button>
         </div>
       </div>
 
-      <!-- Customers Grid -->
-      <div id="customersListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Dynamically rendered -->
+      <!-- 顧客病歷表卡片列表容器 (垂直結構化卡片) -->
+      <div id="customersListContainer" class="space-y-4">
+        <!-- Dynamically rendered as structured Medical Record Cards -->
       </div>
     </div>
 
@@ -474,7 +467,7 @@
   </nav>
 
   <!-- MODAL 1: 新增 / 編輯預約 (純白高質感 ✕ 防撞期 ✕ 上下文自動帶出) -->
-  <div id="bookingModal" onclick="if(event.target === this) app.closeModal('bookingModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg">
+  <div id="bookingModal" onclick="if(event.target === this) app.closeModal('bookingModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg my-auto">
     <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Modal Header -->
@@ -508,16 +501,23 @@
           </div>
         </div>
 
-        <!-- Customer Name -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">顧客姓名 <span class="text-brand-600">*</span></label>
-          <input type="text" id="formName" required placeholder="請輸入姓名" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+        <!-- Customer Name with Autocomplete Search -->
+        <div class="relative">
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">顧客姓名 <span class="text-brand-600">*</span></label>
+            <span class="text-[10px] text-slate-400">可直接輸入姓名搜尋老客戶</span>
+          </div>
+          <input type="text" id="formName" required oninput="app.handleNameInput(this.value)" onfocus="app.handleNameInput(this.value)" placeholder="請輸入姓名（輸入時可自動搜尋反查電話）" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+          <!-- 姓名搜尋下拉選單 -->
+          <div id="nameSuggestDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-float z-30 max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs">
+            <!-- 動態插入顧客匹配項目 -->
+          </div>
         </div>
 
         <!-- Context CRM Memory Card (Auto-revealed for returning customers) -->
         <div id="customerContextCard" class="hidden p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs space-y-1.5">
           <div class="flex items-center justify-between text-amber-900 font-bold">
-            <span class="flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-amber-700"></i>健康歷程上下文記憶</span>
+            <span class="flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-amber-700"></i>病歷檔案上下文記憶</span>
             <span id="ctxVisitCountBadge" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-semibold">來訪 0 次</span>
           </div>
           <p id="ctxHealthNotes" class="text-amber-800 leading-relaxed font-normal">
@@ -525,7 +525,10 @@
           </p>
           <div class="text-[10px] text-amber-700 pt-1 flex items-center justify-between border-t border-amber-200/60">
             <span id="ctxLastVisit">上次來訪：--</span>
-            <span class="text-slate-500">已自動融入本次備忘</span>
+            <button type="button" onclick="app.appendPastNotesToForm()" class="text-amber-900 font-bold hover:underline flex items-center gap-0.5">
+              <i data-lucide="copy-plus" class="w-3 h-3 text-amber-700"></i>
+              <span>帶入病歷並向下新增 ⬇</span>
+            </button>
           </div>
         </div>
 
@@ -571,10 +574,16 @@
           <span id="conflictStatusText" class="font-medium">時段檢測中...</span>
         </div>
 
-        <!-- Notes (主訴症狀與調理備註整合) -->
+        <!-- Notes (主訴症狀與調理備註整合，支援向下新增病歷) -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">主訴症狀 ＆ 本次調理備註說明</label>
-          <textarea id="formNotes" rows="2" placeholder="可在此填寫顧客主訴症狀（例如：久坐腰痠、落枕、膏肓緊繃）或特殊狀況說明，若到店現場評估亦可留白..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">主訴症狀 ＆ 本次調理備註說明</label>
+            <button type="button" onclick="app.appendPastNotesToForm()" id="btnAppendPastNotes" class="hidden text-[11px] text-amber-700 font-bold hover:underline flex items-center gap-1">
+              <i data-lucide="history" class="w-3 h-3 text-amber-600"></i>
+              <span>帶入過去病歷向下新增</span>
+            </button>
+          </div>
+          <textarea id="formNotes" rows="3" placeholder="可在此填寫顧客主訴症狀（例如：久坐腰痠、落枕、膏肓緊繃）或特殊狀況說明，若到店現場評估亦可留白..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
         </div>
 
         <!-- Modal Footer -->
@@ -592,7 +601,7 @@
   </div>
 
   <!-- MODAL 2: 預約詳情 ＆ 健康備忘 (Care Record) -->
-  <div id="detailModal" onclick="if(event.target === this) app.closeModal('detailModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg">
+  <div id="detailModal" onclick="if(event.target === this) app.closeModal('detailModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer"><div class="cursor-default w-full max-w-lg my-auto">
     <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float">
       
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -606,13 +615,19 @@
       </div>
 
       <div class="p-6 space-y-4 text-sm">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
           <div>
-            <h4 id="detailCustomerName" class="text-lg font-bold text-slate-900">王大偉</h4>
-            <p id="detailPhone" class="text-xs text-slate-500">0912-345-678</p>
+            <div class="flex items-center gap-2">
+              <h4 id="detailCustomerName" class="text-base font-bold text-slate-900">顧客姓名</h4>
+              <span id="detailVisitBadge" class="text-xs"></span>
+            </div>
+            <p id="detailPhone" class="text-xs text-slate-500 font-mono mt-0.5">0912-345-678</p>
           </div>
           <div class="flex items-center gap-2">
-            <span id="detailVisitBadge" class="text-xs"></span>
+            <button type="button" onclick="app.editCustomerFromDetail()" id="btnDetailEditCustomer" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-subtle transition flex items-center gap-1 active:scale-95" title="編輯顧客檔案與健康備忘">
+              <i data-lucide="user-cog" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>客戶資料</span>
+            </button>
             <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               已確認
             </span>
@@ -781,8 +796,8 @@
   </div>
 
   <!-- MODAL: 客戶專屬到店病歷時間軸 (Customer Visit History Modal) -->
-  <div id="customerHistoryModal" onclick="if(event.target === this) app.closeModal('customerHistoryModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
-    <div class="cursor-default w-full max-w-lg">
+  <div id="customerHistoryModal" onclick="if(event.target === this) app.closeModal('customerHistoryModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-lg my-auto">
       <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
         
         <!-- Header -->
@@ -866,8 +881,8 @@
   </div>
 
   <!-- MODAL: 編輯客戶 CRM 檔案資料庫 (Edit Customer Profile Modal) -->
-  <div id="customerEditModal" onclick="if(event.target === this) app.closeModal('customerEditModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
-    <div class="cursor-default w-full max-w-md">
+  <div id="customerEditModal" onclick="if(event.target === this) app.closeModal('customerEditModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-md my-auto">
       <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
         
         <!-- Header -->
@@ -946,8 +961,8 @@
   </div>
 
   <!-- MODAL 3: 匯入歷史資料 (CSV / Excel 試算表) -->
-  <div id="importModal" onclick="if(event.target === this) app.closeModal('importModal')" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
-    <div class="cursor-default w-full max-w-lg">
+  <div id="importModal" onclick="if(event.target === this) app.closeModal('importModal')" class="hidden fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 py-8 sm:py-12 bg-slate-900/40 backdrop-blur-sm overflow-y-auto cursor-pointer">
+    <div class="cursor-default w-full max-w-lg my-auto">
       <div class="bg-white border border-slate-200 rounded-2xl w-full overflow-hidden shadow-float animate-in fade-in zoom-in-95 duration-200">
         
         <!-- Modal Header -->
@@ -1024,8 +1039,8 @@
   </div>
 
   <!-- MODAL: GOOGLE CLOUD API SETTINGS -->
-  <div id="cloudSettingsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden transform transition-all">
+  <div id="cloudSettingsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 py-8 sm:py-12">
+    <div class="relative bg-white w-full max-w-xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden transform transition-all my-auto">
       
       <!-- Modal Header -->
       <div class="bg-gradient-to-r from-blue-50 to-indigo-50/40 px-6 py-4 border-b border-blue-100 flex items-center justify-between">
@@ -1140,12 +1155,12 @@
 
   <!-- Core JavaScript Application Logic -->
   <script>
-    // Initial Seed Data (僅保留真實預約與顧客名冊，上下文備忘留白待調理後填寫)
+    // Initial Seed Data (僅保留真實預約與顧客名冊，電話一律標準化為 10 碼 09xx-xxxxxx)
     const SEED_CUSTOMERS = [
       {
         id: "c-4",
         name: "方鼎文",
-        phone: "0982061546",
+        phone: "0982-061546",
         visit_count: 1,
         last_visited_at: "2026-09-30",
         health_notes: ""
@@ -1153,7 +1168,7 @@
       {
         id: "c-5",
         name: "林宜萱",
-        phone: "0975229293",
+        phone: "0975-229293",
         visit_count: 1,
         last_visited_at: "2026-10-01",
         health_notes: ""
@@ -1161,7 +1176,7 @@
       {
         id: "c-6",
         name: "曾鵲燕",
-        phone: "0911810159",
+        phone: "0911-810159",
         visit_count: 1,
         last_visited_at: "2026-10-01",
         health_notes: ""
@@ -1169,7 +1184,7 @@
       {
         id: "c-7",
         name: "卓越順",
-        phone: "0933889293",
+        phone: "0933-889293",
         visit_count: 1,
         last_visited_at: "2026-10-01",
         health_notes: ""
@@ -1180,7 +1195,7 @@
       {
         id: "b-4",
         customerName: "方鼎文",
-        phone: "0982061546",
+        phone: "0982-061546",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1195,7 +1210,7 @@
       {
         id: "b-5",
         customerName: "林宜萱",
-        phone: "0975229293",
+        phone: "0975-229293",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1210,7 +1225,7 @@
       {
         id: "b-6",
         customerName: "曾鵲燕",
-        phone: "0911810159",
+        phone: "0911-810159",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1225,7 +1240,7 @@
       {
         id: "b-7",
         customerName: "卓越順",
-        phone: "0933889293",
+        phone: "0933-889293",
         serviceItem: "【免費】檢查評估諮詢",
         symptoms: "",
         durationMin: 30,
@@ -1283,6 +1298,11 @@
         try {
           this.deletedEventIds = JSON.parse(localStorage.getItem('jiangxia_deleted_events_v2') || '[]');
         } catch(e) { this.deletedEventIds = []; }
+        
+        this.deletedCustomerPhones = [];
+        try {
+          this.deletedCustomerPhones = JSON.parse(localStorage.getItem('jiangxia_deleted_customers_v2') || '[]');
+        } catch(e) { this.deletedCustomerPhones = []; }
 
         // 清理殘留之測試假資料 (王大偉/李小姐/張經理/QA測試員等) 以及已刪除的行程
         storedBookings = (storedBookings || []).filter(b => {
@@ -1338,10 +1358,20 @@
           localStorage.setItem('jiangxia_sync_queue_v2', JSON.stringify([]));
         }
 
-        // 全面深度清洗舊資料中殘留的系統日曆中繼字串（如「顧客姓名：方鼎文 聯絡電話：... 建立時間：...」）
+        // 全面深度清洗舊資料中殘留的系統日曆中繼字串，並自動修復歷史預約金額
         this.bookings = (storedBookings || []).map(b => {
           b.notes = this.cleanNoteText(b.notes);
           b.symptoms = this.cleanNoteText(b.symptoms);
+          
+          // 自動修復金額：若為免費檢查評估，金額卻為 1500 或未設定，自動修正為 0
+          if (b.serviceItem && (b.serviceItem.includes('免費') || b.serviceItem.includes('評估') || b.serviceItem.includes('諮詢'))) {
+            if (b.price === 1500 || b.price === undefined || b.price === null || !b.isCustomPrice) {
+              b.price = 0;
+              b.isCustomPrice = false;
+            }
+          } else if (b.price === undefined || b.price === null) {
+            b.price = this.getServiceDefaultPrice(b.serviceItem);
+          }
           return b;
         });
 
@@ -1350,12 +1380,32 @@
           return c;
         });
 
+        // 以電話為單一真相源 (SSOT) 進行資料彙總與去重
+        this.consolidateCustomersByPhone();
+
         localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
         localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
 
         this.syncQueue = JSON.parse(localStorage.getItem('jiangxia_sync_queue_v2') || '[]');
         this.gasUrl = localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
         this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
+      }
+
+      getServiceDefaultPrice(serviceItem) {
+        if (!serviceItem) return 0;
+        const s = String(serviceItem);
+        if (s.includes('免費') || s.includes('0') || s.includes('諮詢') || s.includes('評估')) return 0;
+        if (s.includes('600')) return 600;
+        if (s.includes('700')) return 700;
+        if (s.includes('800')) return 800;
+        if (s.includes('1200') || s.includes('1,200')) return 1200;
+        if (s.includes('1300') || s.includes('1,300')) return 1300;
+        if (s.includes('1500') || s.includes('1,500')) return 1500;
+        if (s.includes('手指') || s.includes('手腕') || s.includes('腳踝')) return 600;
+        if (s.includes('四肢') || s.includes('肩膀') || s.includes('膝蓋')) return 800;
+        if (s.includes('骨盆')) return 1200;
+        if (s.includes('頸') || s.includes('背') || s.includes('腰')) return 1500;
+        return 0;
       }
 
       cleanNoteText(text) {
@@ -1392,6 +1442,241 @@
         }
 
         return t;
+      }
+
+      // ==========================================
+      // 電話格式標準化 (台灣 10 碼 09xx-xxxxxx 標準格式)
+      // 支援處理：09xxxxxxxx、9xxxxxxxx (9碼自動補0)、+8869xxxxxxxx 等
+      // ==========================================
+      formatStandardPhone(rawPhone) {
+        if (!rawPhone || typeof rawPhone !== 'string') return '';
+        let digits = rawPhone.replace(/[^0-9]/g, '');
+        // 處理 +886 或 886 開頭
+        if (digits.startsWith('886') && digits.length >= 11) {
+          digits = '0' + digits.slice(3);
+        } else if (digits.length === 9 && digits.startsWith('9')) {
+          // 處理 9 碼漏 0 狀況 (例如試算表欄位誤存為 933889293)
+          digits = '0' + digits;
+        }
+        // 台灣手機 10 碼 09xxxxxxxx 格式化為 09xx-xxxxxx
+        if (digits.length === 10 && digits.startsWith('09')) {
+          return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+        }
+        // 若具備 09 開頭且長度為 8~10 碼
+        if (digits.startsWith('09') && digits.length >= 8) {
+          if (digits.length <= 4) return digits;
+          return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+        }
+        return rawPhone.trim();
+      }
+
+      getCleanPhoneKey(rawPhone) {
+        if (!rawPhone || typeof rawPhone !== 'string') return '';
+        let digits = rawPhone.replace(/[^0-9]/g, '');
+        if (digits.startsWith('886') && digits.length >= 11) {
+          digits = '0' + digits.slice(3);
+        } else if (digits.length === 9 && digits.startsWith('9')) {
+          digits = '0' + digits;
+        }
+        return digits;
+      }
+
+      // ==========================================
+      // 電話為單一真相源 (Single Source of Truth, SSOT) 彙總引擎
+      // 所有預約與客戶資訊，凡符合相同電話號碼，資料全部彙整至該電話底下！
+      // 並且全面固定電話格式為標準 10 碼 09xx-xxxxxx，杜絕重複名冊
+      // ==========================================
+      consolidateCustomersByPhone() {
+        const phoneMap = new Map();
+        const nameToPhoneMap = new Map();
+
+        // 輔助清洗姓名（去除前後破折號、空格）
+        const sanitizeName = (rawName) => {
+          if (!rawName) return '';
+          return rawName.replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+        };
+
+        // 判斷是否為無效或測試假人名
+        const isDummyName = (name) => {
+          if (!name) return true;
+          return name.includes('QA') || name.includes('測試') || 
+                 name === '王大偉' || name === '李小姐' || name === '張經理' ||
+                 name === '線上預約顧客' || name === '新顧客' || name === '預約顧客' || 
+                 /^[0-9-]+$/.test(name);
+        };
+
+        // 1. 先處理既有顧客名冊
+        (this.customers || []).forEach(c => {
+          const rawPhone = c.phone || '';
+          const phoneKey = this.getCleanPhoneKey(rawPhone);
+          const rawName = sanitizeName(c.name);
+
+          // 排除測試人員
+          if (c.name && (c.name.includes('QA') || c.name.includes('測試') || c.name === '王大偉' || c.name === '李小姐' || c.name === '張經理')) {
+            return;
+          }
+          if (!phoneKey) return;
+          if (this.deletedCustomerPhones && this.deletedCustomerPhones.includes(phoneKey)) return;
+
+          const standardPhone = this.formatStandardPhone(rawPhone);
+
+          if (!phoneMap.has(phoneKey)) {
+            phoneMap.set(phoneKey, {
+              id: c.id || ('c-' + phoneKey),
+              name: rawName,
+              phone: standardPhone,
+              visit_count: parseInt(c.visit_count, 10) || 0,
+              last_visited_at: c.last_visited_at || '',
+              health_notes: (c.health_notes || '').trim()
+            });
+            if (rawName && !isDummyName(rawName)) {
+              nameToPhoneMap.set(rawName, phoneKey);
+            }
+          } else {
+            const existing = phoneMap.get(phoneKey);
+            // 姓名彙整：若既有名稱為純電話或新顧客，優先用真實姓名替換
+            if (rawName && !isDummyName(rawName)) {
+              existing.name = rawName;
+              nameToPhoneMap.set(rawName, phoneKey);
+            }
+            // 統一格式化電話
+            existing.phone = standardPhone;
+            // 到店次數累計
+            existing.visit_count = Math.max(existing.visit_count, parseInt(c.visit_count, 10) || 0);
+            // 最近來訪日期更新
+            if (c.last_visited_at && (!existing.last_visited_at || c.last_visited_at > existing.last_visited_at)) {
+              existing.last_visited_at = c.last_visited_at;
+            }
+            // 健康備忘合併（去重累加）
+            const cNotes = (c.health_notes || '').trim();
+            if (cNotes && !existing.health_notes.includes(cNotes)) {
+              existing.health_notes = existing.health_notes ? `${existing.health_notes} ｜ ${cNotes}` : cNotes;
+            }
+          }
+        });
+
+        // 2. 從所有預約排程中，將主訴、備忘、姓名、方案完整反向彙整至該電話底下
+        (this.bookings || []).forEach(b => {
+          const rawPhone = b.phone || '';
+          let phoneKey = this.getCleanPhoneKey(rawPhone);
+          const bName = sanitizeName(b.customerName);
+
+          // 若排程無電話但有姓名，且 CRM 中已有該姓名對應的電話，自動關聯綁定
+          if (!phoneKey && bName && nameToPhoneMap.has(bName)) {
+            phoneKey = nameToPhoneMap.get(bName);
+          }
+          if (!phoneKey) return;
+          if (this.deletedCustomerPhones && this.deletedCustomerPhones.includes(phoneKey)) return;
+
+          const standardPhone = this.formatStandardPhone(rawPhone || phoneKey);
+
+          let entry = phoneMap.get(phoneKey);
+          if (!entry) {
+            entry = {
+              id: 'c-' + phoneKey,
+              name: (!isDummyName(bName) ? bName : '預約顧客'),
+              phone: standardPhone,
+              visit_count: 0,
+              last_visited_at: '',
+              health_notes: ''
+            };
+            phoneMap.set(phoneKey, entry);
+            if (bName && !isDummyName(bName)) {
+              nameToPhoneMap.set(bName, phoneKey);
+            }
+          } else if (!entry.phone || entry.phone.length < 10) {
+            entry.phone = standardPhone;
+          }
+
+          // 統一姓名：若排程有有效乾淨姓名，更新進顧客檔案
+          if (bName && !isDummyName(bName)) {
+            if (!entry.name || isDummyName(entry.name)) {
+              entry.name = bName;
+              nameToPhoneMap.set(bName, phoneKey);
+            }
+          }
+
+          // 統一最近來訪日期
+          const bDate = b.start ? b.start.slice(0, 10) : '';
+          if (bDate && (!entry.last_visited_at || bDate > entry.last_visited_at)) {
+            entry.last_visited_at = bDate;
+          }
+
+          // 彙整主訴與備忘
+          const bNote = (b.notes || b.symptoms || '').trim();
+          if (bNote && !entry.health_notes.includes(bNote)) {
+            entry.health_notes = entry.health_notes ? `${entry.health_notes} ｜ ${bNote}` : bNote;
+          }
+        });
+
+        // 3. 同姓名跨電話合流檢查（防止同一位老客戶因過去電話錄入格式不同而分裂成多張卡片）
+        const nameGroups = new Map();
+        phoneMap.forEach((cust, key) => {
+          const cleanN = cust.name;
+          if (cleanN && !isDummyName(cleanN)) {
+            if (!nameGroups.has(cleanN)) {
+              nameGroups.set(cleanN, []);
+            }
+            nameGroups.get(cleanN).push(cust);
+          }
+        });
+
+        nameGroups.forEach((custList, name) => {
+          if (custList.length > 1) {
+            // 挑選最佳主要記錄（優先選來訪次數最多、電話為標準10碼的）
+            custList.sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0));
+            const primary = custList[0];
+            for (let i = 1; i < custList.length; i++) {
+              const duplicate = custList[i];
+              // 合併來訪次數
+              primary.visit_count = Math.max(primary.visit_count, duplicate.visit_count);
+              // 合併備忘
+              if (duplicate.health_notes && !primary.health_notes.includes(duplicate.health_notes)) {
+                primary.health_notes = primary.health_notes ? `${primary.health_notes} ｜ ${duplicate.health_notes}` : duplicate.health_notes;
+              }
+              // 合併最近來訪
+              if (duplicate.last_visited_at && (!primary.last_visited_at || duplicate.last_visited_at > primary.last_visited_at)) {
+                primary.last_visited_at = duplicate.last_visited_at;
+              }
+              // 從 phoneMap 移除重複次要鍵，將其重定向至 primary 的電話
+              const dupKey = this.getCleanPhoneKey(duplicate.phone);
+              if (dupKey && dupKey !== this.getCleanPhoneKey(primary.phone)) {
+                phoneMap.delete(dupKey);
+              }
+            }
+          }
+        });
+
+        // 4. 校準到店次數：若以預約紀錄筆數計算較多，以真實有效排程筆數為準
+        phoneMap.forEach((cust, cleanPhone) => {
+          const actualBookingCount = (this.bookings || []).filter(b => {
+            const bp = this.getCleanPhoneKey(b.phone);
+            return bp === cleanPhone && b.status !== '已取消';
+          }).length;
+          cust.visit_count = Math.max(cust.visit_count || 0, actualBookingCount, 1);
+        });
+
+        // 5. 重建 this.customers 清單（以電話為唯一 Key，徹底去重）
+        this.customers = Array.from(phoneMap.values());
+
+        // 6. 反向同步：將所有預約排程中的顧客姓名與手機格式，全面統一為 CRM 中的標準姓名與 09xx-xxxxxx 標準格式
+        (this.bookings || []).forEach(b => {
+          const phoneKey = this.getCleanPhoneKey(b.phone);
+          const bName = sanitizeName(b.customerName);
+          let master = phoneKey ? phoneMap.get(phoneKey) : null;
+          if (!master && bName && nameToPhoneMap.has(bName)) {
+            master = phoneMap.get(nameToPhoneMap.get(bName));
+          }
+
+          if (master) {
+            if (master.name && !isDummyName(master.name)) {
+              b.customerName = master.name;
+            }
+            b.phone = master.phone;
+          } else if (b.phone) {
+            b.phone = this.formatStandardPhone(b.phone);
+          }
+        });
       }
 
       // ==========================================
@@ -1456,6 +1741,7 @@
       }
 
       saveState() {
+        this.consolidateCustomersByPhone();
         localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
         localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
         localStorage.setItem('jiangxia_sync_queue_v2', JSON.stringify(this.syncQueue));
@@ -1540,7 +1826,7 @@
           b._customEdited = true; // 標記為師傅手動編輯，杜絕被雲端輪詢強制沖洗
           
           // 同步更新至顧客 CRM 記憶庫（持續累積更新客戶長期健康病歷，杜絕覆蓋）
-          const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+          const cleanPhone = this.getCleanPhoneKey(b.phone);
           let c = this.customers.find(cust => (cleanPhone && cust.phone.replace(/[^0-9]/g, '') === cleanPhone) || (b.customerName && cust.name === b.customerName));
           if (c) {
             if (!c.health_notes || c.health_notes === '顧客預約' || c.health_notes === '無' || c.health_notes.includes('留空白') || c.health_notes.includes('尚未填寫')) {
@@ -1630,7 +1916,8 @@
           const parts = row.split(',').map(s => s.trim().replace(/^["']|["']$/g, ''));
           if (parts.length >= 2) {
             const name = parts[0];
-            const phone = parts[1];
+            const rawPhone = parts[1];
+            const phone = this.formatStandardPhone(rawPhone);
             const visitCount = parseInt(parts[2] || '1', 10);
             const lastVisit = parts[3] || new Date().toISOString().split('T')[0];
             const healthNotes = parts.slice(4).join(', ') || '歷史資料匯入';
@@ -1684,6 +1971,7 @@
 
           if (existing) {
             existing.visit_count += incoming.visit_count;
+            existing.phone = this.formatStandardPhone(incoming.phone);
             if (incoming.health_notes && incoming.health_notes !== '歷史資料匯入') {
               existing.health_notes = existing.health_notes ? `${existing.health_notes}；${incoming.health_notes}` : incoming.health_notes;
             }
@@ -1693,7 +1981,7 @@
             this.customers.push({
               id: 'c-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
               name: incoming.name,
-              phone: incoming.phone,
+              phone: this.formatStandardPhone(incoming.phone),
               visit_count: incoming.visit_count,
               last_visited_at: incoming.last_visited_at,
               health_notes: incoming.health_notes
@@ -1727,7 +2015,7 @@
           b.phone,
           b.serviceItem,
           b.durationMin || 60,
-          b.price || 1200,
+          (b.price !== undefined && b.price !== null ? Number(b.price) : 1200),
           b.paymentMethod || '現金',
           b.status,
           b.syncStatus,
@@ -2021,9 +2309,10 @@
               const syncDot = b.syncStatus === 'pending' ? '🟡' : '🟢';
               const visitCount = this.getVisitCount(b.phone);
               const visitBadge = this.formatVisitBadge(visitCount);
+const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price) : this.getServiceDefaultPrice(b.serviceItem);
               const priceDisplay = this.hidePrice 
                 ? '<span class="text-slate-400 font-mono tracking-widest font-bold">***</span>' 
-                : `<span class="font-bold text-slate-900">$${(b.price || 1500).toLocaleString()}</span>`;
+                : `<span class="font-bold text-slate-900">$${validPrice.toLocaleString()}</span>`;
 
               rowsHtml += `
                 <tr class="hover:bg-slate-50/80 transition duration-150 border-b border-slate-100">
@@ -2245,22 +2534,30 @@
       handlePhoneInput(phone) {
         // 自動防呆過濾非數字與加減號
         let clean = phone.replace(/[^0-9-]/g, '');
-        if (clean !== phone) {
+        const digits = clean.replace(/[^0-9]/g, '');
+
+        // 當已輸入 10 碼且為 09 開頭，自動格式化為 09xx-xxxxxx 標準 10 碼格式
+        if (digits.length === 10 && digits.startsWith('09') && clean !== `${digits.slice(0, 4)}-${digits.slice(4)}`) {
+          clean = `${digits.slice(0, 4)}-${digits.slice(4)}`;
+          document.getElementById('formPhone').value = clean;
+        } else if (clean !== phone) {
           document.getElementById('formPhone').value = clean;
         }
-        const cleanPhone = clean.trim();
+
+        const cleanPhone = digits;
         const hint = document.getElementById('phoneContextHint');
         const card = document.getElementById('customerContextCard');
         const nameInput = document.getElementById('formName');
-        const notesInput = document.getElementById('formNotes');
+        const btnAppend = document.getElementById('btnAppendPastNotes');
 
-        const matchedCustomer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone.replace(/[^0-9]/g, ''));
+        const matchedCustomer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
 
         if (matchedCustomer && cleanPhone.length >= 8) {
           hint.classList.remove('hidden');
           card.classList.remove('hidden');
+          if (btnAppend) btnAppend.classList.remove('hidden');
 
-          // 核心修復 1：若師傅已輸入姓名（可能為代約人或家人），絕不強制覆寫！
+          // 若師傅已輸入姓名（可能為代約人或家人），若未手動修改則自動帶入
           if (!nameInput.value || nameInput.dataset.autoFilled === 'true') {
             nameInput.value = matchedCustomer.name;
             nameInput.dataset.autoFilled = 'true';
@@ -2268,19 +2565,88 @@
           document.getElementById('ctxVisitCountBadge').textContent = `來訪 ${matchedCustomer.visit_count} 次`;
           document.getElementById('ctxHealthNotes').innerHTML = matchedCustomer.health_notes 
             ? matchedCustomer.health_notes 
-            : '<span class="text-slate-400 italic">尚無備忘紀錄（待調理完成後填寫）</span>';
+            : '<span class="text-slate-400 italic">尚無歷史病歷備忘（本次調理後可新增）</span>';
           document.getElementById('ctxLastVisit').textContent = `上次來訪：${matchedCustomer.last_visited_at || '無紀錄'}`;
 
-          if (!notesInput.value && matchedCustomer.health_notes) {
-            notesInput.value = matchedCustomer.health_notes;
-          }
+          // 快取前次病歷內容以供向下新增
+          this._lastMatchedNotes = matchedCustomer.health_notes || '';
         } else {
           hint.classList.add('hidden');
           card.classList.add('hidden');
+          if (btnAppend) btnAppend.classList.add('hidden');
           if (nameInput.dataset.autoFilled === 'true') {
             delete nameInput.dataset.autoFilled;
           }
+          this._lastMatchedNotes = '';
         }
+      }
+
+      handleNameInput(nameVal) {
+        const query = (nameVal || '').trim();
+        const dropdown = document.getElementById('nameSuggestDropdown');
+        if (!dropdown) return;
+
+        if (!query) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+          return;
+        }
+
+        const matches = this.customers.filter(c => c.name && c.name.toLowerCase().includes(query.toLowerCase()));
+        if (matches.length === 0) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+          return;
+        }
+
+        dropdown.innerHTML = matches.slice(0, 6).map(c => `
+          <div onclick="app.selectCustomerSuggestion('${c.name}', '${c.phone}')" class="p-2.5 hover:bg-amber-50 cursor-pointer flex items-center justify-between transition">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-800">${c.name}</span>
+              <span class="font-mono text-slate-500 text-[11px]">${c.phone}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">到店 ${c.visit_count} 次</span>
+              <span class="text-[10px] text-slate-400">${c.last_visited_at || ''}</span>
+            </div>
+          </div>
+        `).join('');
+        dropdown.classList.remove('hidden');
+      }
+
+      selectCustomerSuggestion(name, phone) {
+        document.getElementById('formName').value = name;
+        document.getElementById('formPhone').value = phone;
+        const dropdown = document.getElementById('nameSuggestDropdown');
+        if (dropdown) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+        }
+        this.handlePhoneInput(phone);
+      }
+
+      appendPastNotesToForm() {
+        const notesInput = document.getElementById('formNotes');
+        if (!notesInput) return;
+        const past = this._lastMatchedNotes || '';
+        if (!past) {
+          this.showToast('ℹ️ 該顧客尚無過去病歷紀錄可帶入', 'info');
+          return;
+        }
+        const currentVal = notesInput.value.trim();
+        if (currentVal.includes(past)) {
+          this.showToast('ℹ️ 過去病歷已存在於文字框中', 'info');
+          return;
+        }
+        
+        const template = `【過往病歷】：${past}\n【本次主訴/紀錄】：`;
+        if (!currentVal) {
+          notesInput.value = template;
+        } else {
+          notesInput.value = `${currentVal}\n${template}`;
+        }
+        notesInput.focus();
+        this.showToast('📋 已帶入過去病歷！請在下方繼續向下新增本次主訴紀錄。', 'success');
       }
 
 
@@ -2348,7 +2714,8 @@
 
       executeSaveBooking() {
         const name = document.getElementById('formName').value.trim();
-        const phone = document.getElementById('formPhone').value.trim();
+        const rawPhone = document.getElementById('formPhone').value.trim();
+        const phone = this.formatStandardPhone(rawPhone);
         const date = document.getElementById('formDate').value;
         const time = document.getElementById('formTime').value;
         const serviceSelect = document.getElementById('formService');
@@ -2397,7 +2764,14 @@
         if (customer) {
           customer.visit_count = (customer.visit_count || 1) + 1;
           customer.last_visited_at = date;
-          if (crmNotes) customer.health_notes = crmNotes;
+          if (crmNotes) {
+            if (!customer.health_notes || customer.health_notes === '顧客預約' || customer.health_notes === '無' || customer.health_notes.includes('留空白')) {
+              customer.health_notes = crmNotes;
+            } else if (!customer.health_notes.includes(crmNotes)) {
+              // 依電話向下累積病歷
+              customer.health_notes = `${customer.health_notes} ｜ ${crmNotes}`;
+            }
+          }
         } else {
           this.customers.push({
             id: 'c-' + Date.now(),
@@ -2419,8 +2793,12 @@
           });
           this.showToast('⚠️ Google 日曆離線中，已本機安全入庫並存入同步佇列！', 'warning');
         } else if (this.gasUrl) {
-          this.pushBookingToCloud(newBooking).then(ok => {
-            if (ok) {
+          this.pushBookingToCloud(newBooking).then(result => {
+            if (result && result.success) {
+              if (result.eventId) {
+                newBooking.cloudSyncedId = result.eventId;
+                this.saveState();
+              }
               this.showToast(`✨ 預約成功！已同步至 Google 日曆與試算表 (${time})！`, 'success');
             } else {
               newBooking.syncStatus = 'pending';
@@ -2449,7 +2827,7 @@
       // ==========================================
       // 7. 佇列補傳 (Flush Sync Queue)
       // ==========================================
-      flushSyncQueue() {
+      async flushSyncQueue() {
         if (this.simulateOffline) {
           alert('目前仍處於「模擬斷網」模式，請先關閉模擬斷網再進行補傳！');
           return;
@@ -2461,15 +2839,35 @@
           return;
         }
 
-        this.syncQueue.forEach(item => {
-          const b = this.bookings.find(x => x.id === item.id);
-          if (b) b.syncStatus = 'synced';
+        let successCount = 0;
+        for (let i = 0; i < this.syncQueue.length; i++) {
+          const item = this.syncQueue[i];
+          if (item.type === 'create') {
+            const result = await this.pushBookingToCloud(item.payload);
+            if (result && result.success) {
+              const b = this.bookings.find(x => x.id === item.id);
+              if (b) {
+                b.syncStatus = 'synced';
+                if (result.eventId) b.cloudSyncedId = result.eventId;
+              }
+              successCount++;
+            }
+          }
+        }
+
+        // Only clear the successfully synced ones
+        this.syncQueue = this.syncQueue.filter(item => {
+           const b = this.bookings.find(x => x.id === item.id);
+           return b && b.syncStatus !== 'synced';
         });
 
-        this.syncQueue = [];
         this.saveState();
         this.renderTimeline();
-        this.showToast(`🎉 補傳成功！已將 ${count} 筆離線預約成功推播至 Google 日曆！`, 'success');
+        if (successCount > 0) {
+          this.showToast(`🎉 補傳成功！已將 ${successCount} 筆離線預約成功推播至 Google 日曆！`, 'success');
+        } else {
+          this.showToast('⚠️ 佇列補傳失敗，請檢查網路狀態。', 'warning');
+        }
       }
 
       toggleSimulateOffline() {
@@ -2706,25 +3104,33 @@
                 if (pureId && this.deletedEventIds.includes(pureId)) return;
               }
 
-              const cleanPhone = (evt.phone || '').replace(/[^0-9]/g, '');
-              const exists = this.bookings.find(b => b.id === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
+              const cleanPhone = this.getCleanPhoneKey(evt.phone);
+              const exists = this.bookings.find(b => b.id === evt.id || b.cloudSyncedId === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
               
               const sItem = evt.serviceItem || '';
-              let price = 800;
-              if (sItem.includes('600')) price = 600;
-              else if (sItem.includes('700')) price = 700;
-              else if (sItem.includes('800')) price = 800;
-              else if (sItem.includes('1200') || sItem.includes('1,200')) price = 1200;
-              else if (sItem.includes('1300') || sItem.includes('1,300')) price = 1300;
-              else if (sItem.includes('1500') || sItem.includes('1,500')) price = 1500;
-              else if (sItem.includes('免費')) price = 0;
+              let price = this.getServiceDefaultPrice(sItem);
 
               const cleanNotes = this.cleanNoteText(evt.notes);
+              
+              // 顧客姓名淨化與 CRM 關聯強化
+              let cleanEvtName = (evt.customerName || '').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+              if (cleanPhone) {
+                const existingCust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === cleanPhone);
+                if ((!cleanEvtName || /^[0-9-]+$/.test(cleanEvtName) || cleanEvtName === '線上預約顧客') && existingCust && existingCust.name) {
+                  cleanEvtName = existingCust.name;
+                }
+              }
+              if (!cleanEvtName || /^[0-9-]+$/.test(cleanEvtName)) {
+                cleanEvtName = '預約顧客';
+              }
+
+              const standardPhone = this.formatStandardPhone(evt.phone || '');
+
               if (!exists) {
                 this.bookings.push({
                   id: evt.id,
-                  customerName: evt.customerName || '線上預約顧客',
-                  phone: evt.phone || '',
+                  customerName: cleanEvtName,
+                  phone: standardPhone,
                   serviceItem: evt.serviceItem || '傳統整復調理',
                   durationMin: 30,
                   price: price,
@@ -2745,6 +3151,10 @@
                   if (cust) {
                     cust.visit_count += 1;
                     cust.last_visited_at = evt.start.slice(0, 10);
+                    cust.phone = standardPhone;
+                    if (cleanEvtName !== '預約顧客' && (!cust.name || cust.name === '新顧客' || /^[0-9-]+$/.test(cust.name))) {
+                      cust.name = cleanEvtName;
+                    }
                     // 核心保護：只有在顧客完全無備忘、且 cleanNotes 是具體內容時才填寫；若有新備忘則智慧累積
                     if (!cust.health_notes && cleanNotes) {
                       cust.health_notes = cleanNotes;
@@ -2754,8 +3164,8 @@
                   } else {
                     this.customers.push({
                       id: 'c-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                      name: evt.customerName || '新顧客',
-                      phone: evt.phone,
+                      name: cleanEvtName,
+                      phone: standardPhone,
                       visit_count: 1,
                       last_visited_at: evt.start.slice(0, 10),
                       health_notes: cleanNotes || ''
@@ -2763,24 +3173,31 @@
                   }
                 }
               } else {
-                exists.customerName = evt.customerName || exists.customerName;
+                if (cleanEvtName !== '預約顧客' && cleanEvtName) {
+                  exists.customerName = cleanEvtName;
+                }
                 exists.serviceItem = evt.serviceItem || exists.serviceItem;
                 exists.status = evt.status || exists.status;
-                // 核心修復 3：若師傅曾自訂金額，絕不以預設推算價格覆蓋
-                if (!exists.isCustomPrice && exists.price === undefined) {
+                // 若雲端或本地項目為免費評估，且金額曾誤記為 1500，自動修正為 0
+                if ((exists.serviceItem && (exists.serviceItem.includes('免費') || exists.serviceItem.includes('評估'))) || (evt.serviceItem && (evt.serviceItem.includes('免費') || evt.serviceItem.includes('評估')))) {
+                  exists.price = 0;
+                  exists.isCustomPrice = false;
+                } else if (!exists.isCustomPrice && (exists.price === undefined || exists.price === null)) {
                   exists.price = price;
                 }
                 // 核心防沖洗保護：若師傅手動編輯過備忘，優先保留師傅最新編輯紀錄
                 if (!exists._customEdited) {
                   exists.notes = cleanNotes || this.cleanNoteText(exists.notes);
                   exists.symptoms = exists.notes;
-                  // 若未手動改過時間，才以雲端日曆時間校準
-                  exists.start = evt.start.slice(0, 19);
-                  exists.end = evt.end.slice(0, 19);
                 } else if (!exists.notes && cleanNotes) {
                   exists.notes = cleanNotes;
                   exists.symptoms = cleanNotes;
                 }
+                
+                // 【核心修復】：時間(start/end)永遠以 Google Calendar (SSOT) 為準，確保改時間不殘留舊時段
+                exists.start = evt.start.slice(0, 19);
+                exists.end = evt.end.slice(0, 19);
+                
                 exists.cloudSyncedId = evt.id;
                 updatedCount++;
               }
@@ -2812,6 +3229,9 @@
                 }
               });
             }
+
+            // 3. 雲端合流後，全面執行以電話為唯一真相源 (SSOT) 深度去重合流與號碼標準化
+            this.consolidateCustomersByPhone();
 
             this.lastSyncTime = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             this.saveState();
@@ -2862,7 +3282,7 @@
           });
           const result = await res.json();
           if (result && result.success) {
-            return true;
+            return result; // contains eventId
           }
           return false;
         } catch (e) {
@@ -2872,7 +3292,8 @@
       }
 
       // ==========================================
-      // 8. 顧客 CRM 記憶庫渲染 (Customers View)
+      // 8. 顧客專屬調理病歷簿渲染 (Medical Record Book View)
+      // 單一真相源固定為電話號碼，姓名與其他資訊可由搜尋反查，每次到店向下累積病歷
       // ==========================================
       renderCustomers(filterText = '') {
         const container = document.getElementById('customersListContainer');
@@ -2880,50 +3301,207 @@
 
         let list = this.customers;
         if (filterText) {
-          list = list.filter(c => c.name.includes(filterText) || c.phone.includes(filterText));
+          const query = filterText.toLowerCase();
+          list = list.filter(c => 
+            (c.name && c.name.toLowerCase().includes(query)) || 
+            (c.phone && c.phone.includes(query)) ||
+            (c.health_notes && c.health_notes.toLowerCase().includes(query))
+          );
         }
 
+        // 徹底排除測試人員
+        list = list.filter(c => {
+          const name = c.name || '';
+          return !(name.includes('QA') || name.includes('測試') || name === '王大偉' || name === '李小姐' || name === '張經理');
+        });
+
         if (list.length === 0) {
-          container.innerHTML = '<div class="col-span-3 text-center text-slate-400 py-12 bg-white rounded-2xl border border-slate-200">查無符合的顧客資料</div>';
+          container.innerHTML = `
+            <div class="text-center text-slate-400 py-16 bg-white rounded-2xl border border-slate-200 space-y-2">
+              <i data-lucide="clipboard-x" class="w-8 h-8 mx-auto text-slate-300"></i>
+              <p class="font-bold text-slate-600">查無符合的顧客病歷檔案</p>
+              <p class="text-xs text-slate-400">可嘗試輸入其他電話號碼、姓名關鍵字或點擊右上角「建立新客戶」</p>
+            </div>
+          `;
+          if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
           return;
         }
 
+        // 雙重防禦：確保同電話或同真實姓名絕不重複繪製第二張卡片
+        const renderedPhoneKeys = new Set();
+        const renderedNames = new Set();
+
         list.forEach(c => {
-          const card = document.createElement('div');
-          card.className = 'p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card hover:border-slate-300 space-y-3 transition duration-150';
-          card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="text-sm font-bold text-slate-900">${c.name}</span>
-                <span class="text-xs text-slate-500 block font-normal">${c.phone}</span>
+          const phoneKey = this.getCleanPhoneKey(c.phone);
+          const cleanName = (c.name || '').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+
+          // 若已繪製過該電話或該姓名，自動跳過以防重複卡片
+          if (phoneKey && renderedPhoneKeys.has(phoneKey)) return;
+          if (cleanName && cleanName !== '預約顧客' && cleanName !== '新顧客' && renderedNames.has(cleanName)) return;
+
+          if (phoneKey) renderedPhoneKeys.add(phoneKey);
+          if (cleanName && cleanName !== '預約顧客' && cleanName !== '新顧客') renderedNames.add(cleanName);
+
+          const history = phoneKey ? this.getCustomerHistory(c.phone) : [];
+          const totalVisits = Math.max(c.visit_count || 0, history.length, 1);
+          
+          // 初診與末診日期
+          let firstVisitDate = '--';
+          let latestVisitDate = c.last_visited_at || '--';
+          if (history.length > 0) {
+            latestVisitDate = history[0].start.slice(0, 10);
+            firstVisitDate = history[history.length - 1].start.slice(0, 10);
+          } else if (c.last_visited_at) {
+            firstVisitDate = c.last_visited_at;
+          }
+
+          // 累計消費
+          let totalSpent = 0;
+          history.forEach(h => { totalSpent += (Number(h.price) || 0); });
+          const spentDisplay = this.hidePrice ? '***' : `$${totalSpent.toLocaleString()}`;
+
+          // 最近 3 次就診明細（病歷表核心，由近到遠倒序）
+          const recentVisits = history.slice(0, 3);
+          const hasMoreVisits = history.length > 3;
+
+          let visitsRowsHtml = '';
+          if (recentVisits.length === 0) {
+            visitsRowsHtml = `
+              <div class="p-3 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                暫無詳細預約紀錄（可能為名冊匯入之歷史顧客）
               </div>
-              <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
-                來訪 ${c.visit_count} 次
-              </span>
+            `;
+          } else {
+            visitsRowsHtml = recentVisits.map((h, vIdx) => {
+              const visitNumber = history.length - vIdx;
+              const dateStr = h.start.slice(0, 10);
+              const timeStr = `${h.start.slice(11, 16)} ~ ${h.end ? h.end.slice(11, 16) : ''}`;
+              const partsBadge = (Array.isArray(h.bodyParts) && h.bodyParts.length > 0)
+                ? h.bodyParts.map(p => `<span class="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold">${p}</span>`).join(' ')
+                : '';
+              const noteText = h.notes || h.symptoms || '';
+              const priceText = this.hidePrice ? '***' : `$${(Number(h.price) || 0).toLocaleString()}`;
+
+              return `
+                <div class="p-3 rounded-xl bg-white border border-slate-200/90 shadow-subtle hover:border-amber-300 transition duration-150 space-y-1.5">
+                  <div class="flex items-center justify-between flex-wrap gap-1 text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px]">
+                        第 ${visitNumber} 次到店
+                      </span>
+                      <span class="font-bold text-slate-800 flex items-center gap-1">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <span>${dateStr}</span>
+                        <span class="text-slate-400 font-mono text-[11px] font-normal">(${timeStr})</span>
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                        h.status === '已完成' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                        (h.status === '已到店' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                      }">${h.status}</span>
+                      <span class="font-bold text-slate-900 text-xs">${priceText}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 text-xs flex-wrap">
+                    <span class="font-semibold text-brand-800">${h.serviceItem || '調理整復'}</span>
+                    ${partsBadge ? `<span class="text-slate-300">|</span> ${partsBadge}` : ''}
+                  </div>
+
+                  <div class="p-2 rounded-lg bg-slate-50 border border-slate-200/70 text-[11px] text-slate-700 leading-relaxed font-normal">
+                    <strong class="text-slate-900 font-semibold">本次主訴/病歷：</strong>
+                    ${noteText ? noteText : '<span class="text-slate-400 italic">（當時未記錄特殊主訴）</span>'}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-2xl border border-slate-200/90 shadow-card hover:shadow-lg transition duration-200 overflow-hidden';
+          card.innerHTML = `
+            <!-- 1. 病歷卡抬頭 (SSOT: 電話號碼為病歷編號) -->
+            <div class="px-5 py-4 bg-gradient-to-r from-amber-50/50 via-slate-50/80 to-white border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center font-bold text-base shadow-subtle">
+                  ${(c.name || '客').slice(0, 1)}
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-base font-bold text-slate-900">${c.name}</h3>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold ${
+                      totalVisits >= 5 ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                      (totalVisits > 1 ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200')
+                    }">
+                      累計來訪 ${totalVisits} 次
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                    <span class="font-mono font-bold text-brand-800 flex items-center gap-1 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">
+                      <i data-lucide="phone" class="w-3 h-3 text-brand-600"></i>
+                      <span>${c.phone}</span>
+                    </span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-[11px] text-slate-500">初診: ${firstVisitDate} ｜ 最近: ${latestVisitDate}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 右側快速操作按鈕 -->
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="app.quickBookForCustomer('${c.name}', '${c.phone}')" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1.5">
+                  <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                  <span>➕ 新增本次排程/病歷</span>
+                </button>
+                <button type="button" onclick="app.openEditCustomerModal('${c.phone}')" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-subtle transition active:scale-95 flex items-center gap-1" title="編輯病歷基本資料">
+                  <i data-lucide="user-cog" class="w-3.5 h-3.5 text-slate-500"></i>
+                  <span>編輯檔案</span>
+                </button>
+                <button type="button" onclick="app.showCustomerHistory('${c.phone}')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1" title="展開所有歷次就診明細">
+                  <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-amber-700"></i>
+                  <span>歷程 (${history.length})</span>
+                </button>
+              </div>
             </div>
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 space-y-1">
-              <span class="text-[11px] text-amber-800 font-bold block">💡 身體狀況 ＆ 習慣上下文備忘：</span>
-              <p class="leading-relaxed font-normal">${c.health_notes ? c.health_notes : '<span class="text-slate-400 italic">（留空白，待調理後填寫）</span>'}</p>
+
+            <!-- 2. 長期體質與禁忌備忘 (固定摘要區) -->
+            <div class="px-5 py-3 bg-amber-50/40 border-b border-amber-200/50 flex items-start gap-2.5 text-xs">
+              <div class="flex items-center gap-1 text-amber-900 font-bold whitespace-nowrap mt-0.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-700"></i>
+                <span>長期體質與健康備忘：</span>
+              </div>
+              <div class="text-amber-950 font-medium leading-relaxed flex-1">
+                ${c.health_notes ? c.health_notes : '<span class="text-slate-400 font-normal italic">尚無長期體質備忘，可在新增預約或編輯檔案時隨時補充</span>'}
+              </div>
+              <div class="text-[11px] text-slate-500 whitespace-nowrap">
+                實收產能：<strong class="text-slate-900 font-bold">${spentDisplay}</strong>
+              </div>
             </div>
-            <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
-              <span>上次來訪: ${c.last_visited_at || '未記錄'}</span>
-              <div class="flex items-center gap-1.5">
-                <button onclick="app.openEditCustomerModal('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1" title="編輯客戶姓名、電話、到店次數與備忘">
-                  <i data-lucide="edit-3" class="w-3 h-3 text-slate-500"></i>
-                  <span>編輯</span>
-                </button>
-                <button onclick="app.showCustomerHistory('${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1">
-                  <i data-lucide="clipboard-list" class="w-3 h-3 text-amber-700"></i>
-                  <span>到店病歷</span>
-                </button>
-                <button onclick="app.quickBookForCustomer('${c.name}', '${c.phone}')" class="px-2.5 py-1 text-xs font-semibold bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-lg transition active:scale-95 shadow-subtle">
-                  排程
-                </button>
+
+            <!-- 3. 歷次到店病歷時間軸 (向下累積記錄) -->
+            <div class="p-5 bg-slate-50/50 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="history" class="w-3.5 h-3.5 text-brand-600"></i>
+                  <span>歷次到店調理明細（最近 3 次）：</span>
+                </span>
+                ${hasMoreVisits ? `
+                  <button type="button" onclick="app.showCustomerHistory('${c.phone}')" class="text-brand-700 font-bold hover:underline flex items-center gap-0.5 text-xs">
+                    <span>展開全部 ${history.length} 筆歷程</span>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                  </button>
+                ` : ''}
+              </div>
+
+              <div class="space-y-2">
+                ${visitsRowsHtml}
               </div>
             </div>
           `;
           container.appendChild(card);
         });
+
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
       }
 
@@ -2932,19 +3510,19 @@
       // ==========================================
       getCustomerHistory(phone) {
         if (!phone) return [];
-        const clean = phone.replace(/[^0-9]/g, '');
-        if (!clean) return [];
+        const phoneKey = this.getCleanPhoneKey(phone);
+        if (!phoneKey) return [];
         return this.bookings
-          .filter(b => b.phone && b.phone.replace(/[^0-9]/g, '') === clean && b.status !== '已取消')
+          .filter(b => b.phone && this.getCleanPhoneKey(b.phone) === phoneKey && b.status !== '已取消')
           .sort((a, b) => new Date(b.start) - new Date(a.start));
       }
 
       showCustomerHistory(phone) {
         if (!phone) return;
-        const clean = phone.replace(/[^0-9]/g, '');
-        const cust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === clean) || {
+        const phoneKey = this.getCleanPhoneKey(phone);
+        const cust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === phoneKey) || {
           name: '訪客',
-          phone: phone,
+          phone: this.formatStandardPhone(phone),
           visit_count: 1,
           health_notes: ''
         };
@@ -3098,8 +3676,8 @@
 
       openEditCustomerModal(phone) {
         if (!phone) return;
-        const clean = phone.replace(/[^0-9]/g, '');
-        const cust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === clean);
+        const cleanKey = this.getCleanPhoneKey(phone);
+        const cust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanKey);
         if (!cust) return;
 
         document.getElementById('editCustOrigPhone').value = cust.phone;
@@ -3121,6 +3699,21 @@
         }
       }
 
+      editCustomerFromDetail() {
+        if (!this.activeDetailId) return;
+        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        if (!b) return;
+        this.closeModal('detailModal');
+        if (b.phone) {
+          this.openEditCustomerModal(b.phone);
+        } else if (b.customerName) {
+          const cust = this.customers.find(c => c.name === b.customerName);
+          if (cust && cust.phone) {
+            this.openEditCustomerModal(cust.phone);
+          }
+        }
+      }
+
       async handleSaveCustomerProfile(e) {
         if (e) e.preventDefault();
         const origPhone = document.getElementById('editCustOrigPhone').value.trim();
@@ -3136,8 +3729,9 @@
           return;
         }
 
+        const standardNewPhone = this.formatStandardPhone(newPhone);
         const cleanOrig = origPhone.replace(/[^0-9]/g, '');
-        const cleanNew = newPhone.replace(/[^0-9]/g, '');
+        const cleanNew = standardNewPhone.replace(/[^0-9]/g, '');
 
         let target = null;
         if (cleanOrig) {
@@ -3147,31 +3741,42 @@
         if (target) {
           // 更新既有顧客
           target.name = newName;
-          target.phone = newPhone;
+          target.phone = standardNewPhone;
           target.visit_count = visitCount;
           target.last_visited_at = lastVisit;
           target.health_notes = healthNotes;
 
-          // 同步更新相關預約排程中的顧客姓名與電話
+          // 以電話為單一真相源：將符合原電話或新電話之所有歷史與未來排程，全面統一顧客姓名與 09xx-xxxxxx 電話
           this.bookings.forEach(b => {
-            if (b.phone && b.phone.replace(/[^0-9]/g, '') === cleanOrig) {
+            const bp = (b.phone || '').replace(/[^0-9]/g, '');
+            if ((cleanOrig && bp === cleanOrig) || (cleanNew && bp === cleanNew)) {
               b.customerName = newName;
-              b.phone = newPhone;
+              b.phone = standardNewPhone;
             }
           });
 
-          this.showToast(`✅ 已成功更新【${newName}】的客戶檔案！`, 'success');
+          this.showToast(`✅ 已成功更新【${newName}】（${standardNewPhone}）的客戶檔案，全排程已完成統一彙總！`, 'success');
         } else {
           // 新增顧客至 CRM
           const newCustomer = {
             id: 'c-' + Date.now(),
             name: newName,
-            phone: newPhone,
+            phone: standardNewPhone,
             visit_count: visitCount,
             last_visited_at: lastVisit || this.currentDateStr,
             health_notes: healthNotes
           };
           this.customers.unshift(newCustomer);
+
+          // 同步將相同電話之排程歸納
+          this.bookings.forEach(b => {
+            const bp = (b.phone || '').replace(/[^0-9]/g, '');
+            if (cleanNew && bp === cleanNew) {
+              b.customerName = newName;
+              b.phone = standardNewPhone;
+            }
+          });
+
           this.showToast(`✨ 已成功新增顧客【${newName}】至 CRM 記憶庫！`, 'success');
         }
 
@@ -3213,13 +3818,19 @@
           return;
         }
 
-        if (!confirm(`確定要將顧客【${origName || origPhone}】從 CRM 記憶庫中移除嗎？\n（移除後歷史排程記錄仍將保留）`)) {
+        if (!confirm(`確定要將顧客【${origName || origPhone}】從 CRM 記憶庫中永久隱藏嗎？\n（移除後將不再顯示於客戶名單中）`)) {
           return;
         }
 
-        const cleanOrig = origPhone.replace(/[^0-9]/g, '');
+        const cleanOrig = this.getCleanPhoneKey(origPhone);
+        
+        if (cleanOrig && !this.deletedCustomerPhones.includes(cleanOrig)) {
+          this.deletedCustomerPhones.push(cleanOrig);
+          localStorage.setItem('jiangxia_deleted_customers_v2', JSON.stringify(this.deletedCustomerPhones));
+        }
+
         this.customers = this.customers.filter(c => {
-          if (cleanOrig && c.phone && c.phone.replace(/[^0-9]/g, '') === cleanOrig) return false;
+          if (cleanOrig && c.phone && this.getCleanPhoneKey(c.phone) === cleanOrig) return false;
           if (origName && c.name === origName) return false;
           return true;
         });
@@ -3487,8 +4098,22 @@
         const b = this.bookings.find(x => x.id === id);
         if (!b) return;
 
-        document.getElementById('detailCustomerName').textContent = b.customerName;
-        document.getElementById('detailPhone').textContent = b.phone;
+        // 智慧顧客反查：若預約姓名為空、純符號或純電話，自動從 CRM 記憶庫匹配姓名
+        const cleanPhone = this.getCleanPhoneKey(b.phone);
+        const matchedCust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === cleanPhone);
+
+        let resolvedName = (b.customerName || '').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
+        // 若名字為純數字（誤將電話存為名字）或無效字串
+        if (!resolvedName || /^[0-9-]+$/.test(resolvedName) || resolvedName === '線上預約顧客' || resolvedName === '顧客') {
+          if (matchedCust && matchedCust.name && !/^[0-9-]+$/.test(matchedCust.name)) {
+            resolvedName = matchedCust.name;
+            b.customerName = matchedCust.name; // 自動補全修復預約物件
+          }
+        }
+        if (!resolvedName) resolvedName = '預約顧客';
+
+        document.getElementById('detailCustomerName').textContent = resolvedName;
+        document.getElementById('detailPhone').textContent = b.phone || (matchedCust ? matchedCust.phone : '未留電話');
         
         // 1. 渲染調理方案按鈕 (金額自動帶入)
         this.renderDetailServiceButtons(b.serviceItem, b.price);
@@ -3502,7 +4127,13 @@
         // 3. 金額輸入框
         const priceInput = document.getElementById('detailPriceInput');
         if (priceInput) {
-          priceInput.value = (b.price !== undefined && b.price !== null) ? b.price : 1500;
+          let resolvedPrice = (b.price !== undefined && b.price !== null) ? Number(b.price) : this.getServiceDefaultPrice(b.serviceItem);
+          if (b.serviceItem && (b.serviceItem.includes('免費') || b.serviceItem.includes('評估') || b.serviceItem.includes('諮詢')) && resolvedPrice === 1500) {
+            resolvedPrice = 0;
+            b.price = 0;
+            b.isCustomPrice = false;
+          }
+          priceInput.value = resolvedPrice;
         }
 
         const statusBadge = document.getElementById('detailStatusBadge');
@@ -3519,7 +4150,7 @@
         const syncStatusEl = document.getElementById('detailSyncStatus');
         if (syncStatusEl) syncStatusEl.textContent = b.syncStatus === 'pending' ? '🟡 本地已存檔 (待補傳 Google 日曆)' : '🟢 本地優先 / 已同步 Google 日曆';
 
-        // 4. 主訴症狀 ＆ 調理備忘 (優先顯示師傅手動編輯紀錄，杜絕被強制洗白)
+        // 4. 主訴症狀 ＆ 調理備忘 (若無當次備忘，但 CRM 內有長期健康備忘，智慧提示)
         let displayNotes = (b.notes || b.symptoms || '').trim();
         if (!b._customEdited) {
           displayNotes = this.cleanNoteText(displayNotes);
@@ -3528,9 +4159,13 @@
         b.symptoms = displayNotes;
         const notesEl = document.getElementById('detailNotesDisplay');
         if (notesEl) {
-          notesEl.innerHTML = displayNotes 
-            ? displayNotes 
-            : '<span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>';
+          if (displayNotes) {
+            notesEl.innerHTML = displayNotes;
+          } else if (matchedCust && matchedCust.health_notes) {
+            notesEl.innerHTML = `<span class="text-amber-800 font-medium">💡 CRM 長期健康備忘：${matchedCust.health_notes}</span><br><span class="text-slate-400 italic text-[11px]">（當次調理備忘空白，可點擊右上角新增本次紀錄）</span>`;
+          } else {
+            notesEl.innerHTML = '<span class="text-slate-400 italic">（留空白，待師傅現場調理時/調理完成後填寫紀錄）</span>';
+          }
         }
         const notesInput = document.getElementById('detailNotesInput');
         if (notesInput) notesInput.value = displayNotes;
@@ -3599,9 +4234,19 @@
 
         const selectedLabel = document.getElementById('detailServiceSelected');
         let matched = false;
+        const cleanCurrent = (currentService || '').replace(/[【】\[\]\s]/g, '');
 
         SERVICE_PRICE_OPTIONS.forEach(opt => {
-          const isSelected = (currentService === opt.name) || (!matched && currentService && (currentService.includes(opt.shortName) || currentService.includes(opt.name.slice(0, 4))));
+          let isSelected = false;
+          if (currentService === opt.name) {
+            isSelected = true;
+          } else if (!matched && cleanCurrent) {
+            const cleanOpt = opt.name.replace(/[【】\[\]\s]/g, '');
+            const cleanShort = opt.shortName.replace(/[【】\[\]\s]/g, '');
+            if (cleanCurrent.includes(cleanShort) || cleanOpt.includes(cleanCurrent) || cleanCurrent.includes(cleanOpt) || ((cleanCurrent.includes('免費') || cleanCurrent.includes('評估')) && cleanOpt.includes('免費'))) {
+              isSelected = true;
+            }
+          }
           if (isSelected) matched = true;
 
           const btn = document.createElement('button');
@@ -3626,18 +4271,13 @@
         if (!b) return;
 
         b.serviceItem = serviceName;
+        b.price = Number(price);
+        b.isCustomPrice = false;
         
-        // 若使用者先前有手動修改過特價/自訂金額，切換方案時提醒並保留，除非使用者想覆蓋
         const priceInput = document.getElementById('detailPriceInput');
-        if (!b.isCustomPrice) {
-          b.price = price;
-          if (priceInput) priceInput.value = price;
-          this.showToast(`✅ 已切換為方案【${serviceName}】，金額自動帶入 NT$ ${price}`, 'success');
-        } else {
-          // 自訂價格狀態下：方案名稱切換，金額保留師傅的自訂值
-          if (priceInput) priceInput.value = b.price;
-          this.showToast(`✅ 已切換為方案【${serviceName}】（保留您手動設定之自訂金額 NT$ ${b.price}）`, 'info');
-        }
+        if (priceInput) priceInput.value = b.price;
+
+        this.showToast(`✅ 已切換為【${serviceName}】，金額更新為 NT$ ${b.price}`, 'success');
 
         this.renderDetailServiceButtons(serviceName, b.price);
         this.saveState();
@@ -3812,6 +4452,7 @@
           b.price = parseInt(val, 10) || 0;
           b.isCustomPrice = true;
           this.saveState();
+          this.renderTimeline();
           this.renderReports();
         }
       }
@@ -3823,14 +4464,15 @@
 
         const priceInput = document.getElementById('detailPriceInput');
         if (priceInput) {
-          b.price = parseInt(priceInput.value, 10) || 0;
+          const val = priceInput.value.trim();
+          b.price = val === '' ? 0 : (parseInt(val, 10) || 0);
           b.isCustomPrice = true;
         }
 
         this.saveState();
         this.renderTimeline();
         this.renderReports();
-        this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與自訂金額（NT$ ${b.price}）！`, 'success');
+        this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與金額（NT$ ${b.price}）！`, 'success');
       }
 
       updateBookingStatus(newStatus) {
@@ -3932,6 +4574,11 @@
           document.getElementById('formNotes').value = '';
           document.getElementById('phoneContextHint').classList.add('hidden');
           document.getElementById('customerContextCard').classList.add('hidden');
+          const suggestDropdown = document.getElementById('nameSuggestDropdown');
+          if (suggestDropdown) suggestDropdown.classList.add('hidden');
+          const btnAppend = document.getElementById('btnAppendPastNotes');
+          if (btnAppend) btnAppend.classList.add('hidden');
+          this._lastMatchedNotes = '';
         }
         if (id === 'detailModal') {
           this.toggleEditTimeMode(false);

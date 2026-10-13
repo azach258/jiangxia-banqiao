@@ -1269,9 +1269,9 @@
         const d = String(now.getDate()).padStart(2, '0');
         this.selectedDateStr = `${y}-${m}-${d}`;
         this.selectedTimeStr = "14:00";
-        this.selectedService = "頸、背、腰 (含整體結構調整)";
-        this.selectedDuration = 60;
-        this.selectedPrice = 1500;
+        this.selectedService = "【免費】檢查評估諮詢";
+        this.selectedDuration = 15;
+        this.selectedPrice = 0;
 
         // 雲端 API 設定 (支援 URL 參數 ?api= 或共用 localStorage)
         this.gasUrl = new URLSearchParams(window.location.search).get('api') || localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
@@ -1282,6 +1282,7 @@
       }
 
       init() {
+        this.handleServiceChange();
         this.renderDateTabs();
         this.listenStorageChanges();
         if (this.gasUrl) {
@@ -1512,8 +1513,9 @@
           const card = r.closest('label');
           if (r.checked) {
             this.selectedService = r.value;
-            this.selectedDuration = 60; // 每次預約占用 1 小時
-            this.selectedPrice = parseInt(r.dataset.price || 1500, 10);
+            this.selectedDuration = parseInt(r.dataset.duration || 60, 10);
+            const p = r.dataset.price;
+            this.selectedPrice = (p !== undefined && p !== null && p !== '') ? parseInt(p, 10) : 0;
             if (card) {
               card.classList.remove('border-slate-200', 'bg-white');
               if (r.value.includes('免費')) {
@@ -1541,8 +1543,8 @@
               break;
             }
           }
-          this.handleServiceChange();
         }
+        this.handleServiceChange();
         this.renderDateTabs();
         if (this.gasUrl) {
           this.fetchCloudBookings();
