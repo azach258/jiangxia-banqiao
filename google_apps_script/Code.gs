@@ -105,8 +105,17 @@ function doGet(e) {
     // 1-2. 抓取預約列表
     if (action === 'getEvents') {
       var now = new Date();
-      var startTime = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-      var endTime = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      // 支援前端自訂查詢區間，預設涵蓋過去 365 天至未來 180 天（完整覆蓋年度歷史就診記錄與長期排程）
+      var startTime = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      if (params.startTime) {
+        var parsedStart = new Date(params.startTime);
+        if (!isNaN(parsedStart.getTime())) startTime = parsedStart;
+      }
+      var endTime = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
+      if (params.endTime) {
+        var parsedEnd = new Date(params.endTime);
+        if (!isNaN(parsedEnd.getTime())) endTime = parsedEnd;
+      }
       var events = cal.getEvents(startTime, endTime);
 
       var data = [];
@@ -209,6 +218,8 @@ function doGet(e) {
       return createJsonResponse({
         success: true,
         count: data.length,
+        queryStartTime: Utilities.formatDate(startTime, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss').replace(' ', 'T'),
+        queryEndTime: Utilities.formatDate(endTime, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss').replace(' ', 'T'),
         data: data,
         sheetCustomers: sheetCustomers
       });

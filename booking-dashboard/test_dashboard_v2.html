@@ -3051,15 +3051,42 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         if (!this.gasUrl || this.simulateOffline) return;
 
         try {
-          const fetchUrl = `${this.gasUrl}?action=getEvents&secret=${encodeURIComponent(this.gasSecret)}`;
+          const nowMs = Date.now();
+          const qStart = new Date(nowMs - 365 * 24 * 60 * 60 * 1000).toISOString();
+          const qEnd = new Date(nowMs + 180 * 24 * 60 * 60 * 1000).toISOString();
+          const fetchUrl = `${this.gasUrl}?action=getEvents&secret=${encodeURIComponent(this.gasSecret)}&startTime=${encodeURIComponent(qStart)}&endTime=${encodeURIComponent(qEnd)}`;
           const res = await fetch(fetchUrl);
           const result = await res.json();
 
           if (result && result.success && Array.isArray(result.data)) {
             // 1. 雲端日曆雙向刪除對齊 (Google Calendar 為單一真相源 SSOT)
             // 當用戶在 Google 日曆上刪除行程，或日曆上已無該項目時，後台排程名冊必須同步徹底清除！
-            const cloudIds = new Set(result.data.map(evt => evt.id));
+            // ⚠️ 重要安全守衛 (Query Window Safety Guard)：
+            // 只有當行程的「預約時間」明確落在「本次雲端查詢的時間視窗內」時，
+            // 雲端日曆上找不到該行程才能判定為已被刪除！
+            // 落在查詢視窗外的歷史就診紀錄或超遠期預約，絕不能誤刪！
+            const cloudIds = new Set();
+            result.data.forEach(evt => {
+              if (evt.id) {
+                cloudIds.add(evt.id);
+                const pureId = evt.id.replace('@google.com', '');
+                cloudIds.add(pureId);
+                cloudIds.add(pureId + '@google.com');
+              }
+            });
             const prevLen = this.bookings.length;
+
+            // 若後端有回傳 queryStartTime / queryEndTime 則採用；
+            // 若為舊版 GAS（未回傳區間），則舊版 GAS 預設只抓取過去 3 天至未來 30 天
+            const cloudQueryStart = result.queryStartTime 
+              ? new Date(result.queryStartTime) 
+              : new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+            const cloudQueryEnd = result.queryEndTime 
+              ? new Date(result.queryEndTime) 
+              : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+            const queryStartMs = cloudQueryStart.getTime();
+            const queryEndMs = cloudQueryEnd.getTime();
 
             this.bookings = this.bookings.filter(b => {
               // 0. 墓碑機制檢查：若此事件已在後台被刪除，徹底排除
@@ -3069,10 +3096,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 const pureId = (b.id || '').replace('@google.com', '');
                 if (pureId && this.deletedEventIds.includes(pureId)) return false;
               }
-              // 來自 Google 日曆的行程 (以 @google.com 結尾)
-              if (b.id && b.id.includes('@google.com')) {
-                return cloudIds.has(b.id);
-              }
+
               // 歷史測試假資料與被刪除的測試人員自動剔除
               const name = b.customerName || '';
               if (name.includes('QA') || name.includes('測試') || name === '王大偉' || name === '李小姐' || name === '張經理') {
@@ -3081,10 +3105,24 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               if (b.id === 'b-1' || b.id === 'b-2' || b.id === 'b-3') {
                 return false;
               }
-              // 若本地行程帶有 cloudSyncedId 但雲端已無此行程
-              if (b.cloudSyncedId && !cloudIds.has(b.cloudSyncedId)) {
-                return false;
+
+              // 判斷行程時間是否落在本次雲端日曆查詢視窗內
+              const bStartStr = (b.start || '').replace(' ', 'T');
+              const bTime = bStartStr ? new Date(bStartStr).getTime() : NaN;
+              const inQueryWindow = !isNaN(bTime) && bTime >= queryStartMs && bTime <= queryEndMs;
+
+              // ⚠️ 雙向刪除檢驗：只有在本次查詢時間範圍內的預約，才進行雲端存在性核對
+              if (inQueryWindow) {
+                // 來自 Google 日曆的行程 (以 @google.com 結尾)
+                if (b.id && b.id.includes('@google.com') && !cloudIds.has(b.id)) {
+                  return false;
+                }
+                // 若本地行程帶有 cloudSyncedId 但雲端已無此行程（代表在 Google 日曆被手動刪除）
+                if (b.cloudSyncedId && !cloudIds.has(b.cloudSyncedId)) {
+                  return false;
+                }
               }
+
               return true;
             });
 
@@ -3105,7 +3143,18 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               }
 
               const cleanPhone = this.getCleanPhoneKey(evt.phone);
-              const exists = this.bookings.find(b => b.id === evt.id || b.cloudSyncedId === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
+              const evtPureId = (evt.id || '').replace('@google.com', '');
+              const exists = this.bookings.find(b => {
+                if (b.id === evt.id || b.cloudSyncedId === evt.id) return true;
+                if (evtPureId) {
+                  if (b.id && b.id.replace('@google.com', '') === evtPureId) return true;
+                  if (b.cloudSyncedId && b.cloudSyncedId.replace('@google.com', '') === evtPureId) return true;
+                }
+                const bPhoneClean = b.phone ? this.getCleanPhoneKey(b.phone) : '';
+                const bStart16 = (b.start || '').replace(' ', 'T').slice(0, 16);
+                const evtStart16 = (evt.start || '').replace(' ', 'T').slice(0, 16);
+                return (bStart16 && evtStart16 && bStart16 === evtStart16 && cleanPhone && bPhoneClean === cleanPhone);
+              });
               
               const sItem = evt.serviceItem || '';
               let price = this.getServiceDefaultPrice(sItem);
