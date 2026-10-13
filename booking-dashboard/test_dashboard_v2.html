@@ -1298,6 +1298,11 @@
         try {
           this.deletedEventIds = JSON.parse(localStorage.getItem('jiangxia_deleted_events_v2') || '[]');
         } catch(e) { this.deletedEventIds = []; }
+        
+        this.deletedCustomerPhones = [];
+        try {
+          this.deletedCustomerPhones = JSON.parse(localStorage.getItem('jiangxia_deleted_customers_v2') || '[]');
+        } catch(e) { this.deletedCustomerPhones = []; }
 
         // 清理殘留之測試假資料 (王大偉/李小姐/張經理/QA測試員等) 以及已刪除的行程
         storedBookings = (storedBookings || []).filter(b => {
@@ -1353,10 +1358,20 @@
           localStorage.setItem('jiangxia_sync_queue_v2', JSON.stringify([]));
         }
 
-        // 全面深度清洗舊資料中殘留的系統日曆中繼字串（如「顧客姓名：方鼎文 聯絡電話：... 建立時間：...」）
+        // 全面深度清洗舊資料中殘留的系統日曆中繼字串，並自動修復歷史預約金額
         this.bookings = (storedBookings || []).map(b => {
           b.notes = this.cleanNoteText(b.notes);
           b.symptoms = this.cleanNoteText(b.symptoms);
+          
+          // 自動修復金額：若為免費檢查評估，金額卻為 1500 或未設定，自動修正為 0
+          if (b.serviceItem && (b.serviceItem.includes('免費') || b.serviceItem.includes('評估') || b.serviceItem.includes('諮詢'))) {
+            if (b.price === 1500 || b.price === undefined || b.price === null || !b.isCustomPrice) {
+              b.price = 0;
+              b.isCustomPrice = false;
+            }
+          } else if (b.price === undefined || b.price === null) {
+            b.price = this.getServiceDefaultPrice(b.serviceItem);
+          }
           return b;
         });
 
@@ -1374,6 +1389,23 @@
         this.syncQueue = JSON.parse(localStorage.getItem('jiangxia_sync_queue_v2') || '[]');
         this.gasUrl = localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
         this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
+      }
+
+      getServiceDefaultPrice(serviceItem) {
+        if (!serviceItem) return 0;
+        const s = String(serviceItem);
+        if (s.includes('免費') || s.includes('0') || s.includes('諮詢') || s.includes('評估')) return 0;
+        if (s.includes('600')) return 600;
+        if (s.includes('700')) return 700;
+        if (s.includes('800')) return 800;
+        if (s.includes('1200') || s.includes('1,200')) return 1200;
+        if (s.includes('1300') || s.includes('1,300')) return 1300;
+        if (s.includes('1500') || s.includes('1,500')) return 1500;
+        if (s.includes('手指') || s.includes('手腕') || s.includes('腳踝')) return 600;
+        if (s.includes('四肢') || s.includes('肩膀') || s.includes('膝蓋')) return 800;
+        if (s.includes('骨盆')) return 1200;
+        if (s.includes('頸') || s.includes('背') || s.includes('腰')) return 1500;
+        return 0;
       }
 
       cleanNoteText(text) {
@@ -1484,6 +1516,7 @@
             return;
           }
           if (!phoneKey) return;
+          if (this.deletedCustomerPhones && this.deletedCustomerPhones.includes(phoneKey)) return;
 
           const standardPhone = this.formatStandardPhone(rawPhone);
 
@@ -1533,6 +1566,7 @@
             phoneKey = nameToPhoneMap.get(bName);
           }
           if (!phoneKey) return;
+          if (this.deletedCustomerPhones && this.deletedCustomerPhones.includes(phoneKey)) return;
 
           const standardPhone = this.formatStandardPhone(rawPhone || phoneKey);
 
@@ -1792,7 +1826,7 @@
           b._customEdited = true; // 標記為師傅手動編輯，杜絕被雲端輪詢強制沖洗
           
           // 同步更新至顧客 CRM 記憶庫（持續累積更新客戶長期健康病歷，杜絕覆蓋）
-          const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+          const cleanPhone = this.getCleanPhoneKey(b.phone);
           let c = this.customers.find(cust => (cleanPhone && cust.phone.replace(/[^0-9]/g, '') === cleanPhone) || (b.customerName && cust.name === b.customerName));
           if (c) {
             if (!c.health_notes || c.health_notes === '顧客預約' || c.health_notes === '無' || c.health_notes.includes('留空白') || c.health_notes.includes('尚未填寫')) {
@@ -1981,7 +2015,7 @@
           b.phone,
           b.serviceItem,
           b.durationMin || 60,
-          b.price || 1200,
+          (b.price !== undefined && b.price !== null ? Number(b.price) : 1200),
           b.paymentMethod || '現金',
           b.status,
           b.syncStatus,
@@ -2275,9 +2309,10 @@
               const syncDot = b.syncStatus === 'pending' ? '🟡' : '🟢';
               const visitCount = this.getVisitCount(b.phone);
               const visitBadge = this.formatVisitBadge(visitCount);
+const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price) : this.getServiceDefaultPrice(b.serviceItem);
               const priceDisplay = this.hidePrice 
                 ? '<span class="text-slate-400 font-mono tracking-widest font-bold">***</span>' 
-                : `<span class="font-bold text-slate-900">$${(b.price || 1500).toLocaleString()}</span>`;
+                : `<span class="font-bold text-slate-900">$${validPrice.toLocaleString()}</span>`;
 
               rowsHtml += `
                 <tr class="hover:bg-slate-50/80 transition duration-150 border-b border-slate-100">
@@ -2758,8 +2793,12 @@
           });
           this.showToast('⚠️ Google 日曆離線中，已本機安全入庫並存入同步佇列！', 'warning');
         } else if (this.gasUrl) {
-          this.pushBookingToCloud(newBooking).then(ok => {
-            if (ok) {
+          this.pushBookingToCloud(newBooking).then(result => {
+            if (result && result.success) {
+              if (result.eventId) {
+                newBooking.cloudSyncedId = result.eventId;
+                this.saveState();
+              }
               this.showToast(`✨ 預約成功！已同步至 Google 日曆與試算表 (${time})！`, 'success');
             } else {
               newBooking.syncStatus = 'pending';
@@ -2788,7 +2827,7 @@
       // ==========================================
       // 7. 佇列補傳 (Flush Sync Queue)
       // ==========================================
-      flushSyncQueue() {
+      async flushSyncQueue() {
         if (this.simulateOffline) {
           alert('目前仍處於「模擬斷網」模式，請先關閉模擬斷網再進行補傳！');
           return;
@@ -2800,15 +2839,35 @@
           return;
         }
 
-        this.syncQueue.forEach(item => {
-          const b = this.bookings.find(x => x.id === item.id);
-          if (b) b.syncStatus = 'synced';
+        let successCount = 0;
+        for (let i = 0; i < this.syncQueue.length; i++) {
+          const item = this.syncQueue[i];
+          if (item.type === 'create') {
+            const result = await this.pushBookingToCloud(item.payload);
+            if (result && result.success) {
+              const b = this.bookings.find(x => x.id === item.id);
+              if (b) {
+                b.syncStatus = 'synced';
+                if (result.eventId) b.cloudSyncedId = result.eventId;
+              }
+              successCount++;
+            }
+          }
+        }
+
+        // Only clear the successfully synced ones
+        this.syncQueue = this.syncQueue.filter(item => {
+           const b = this.bookings.find(x => x.id === item.id);
+           return b && b.syncStatus !== 'synced';
         });
 
-        this.syncQueue = [];
         this.saveState();
         this.renderTimeline();
-        this.showToast(`🎉 補傳成功！已將 ${count} 筆離線預約成功推播至 Google 日曆！`, 'success');
+        if (successCount > 0) {
+          this.showToast(`🎉 補傳成功！已將 ${successCount} 筆離線預約成功推播至 Google 日曆！`, 'success');
+        } else {
+          this.showToast('⚠️ 佇列補傳失敗，請檢查網路狀態。', 'warning');
+        }
       }
 
       toggleSimulateOffline() {
@@ -3045,18 +3104,11 @@
                 if (pureId && this.deletedEventIds.includes(pureId)) return;
               }
 
-              const cleanPhone = (evt.phone || '').replace(/[^0-9]/g, '');
-              const exists = this.bookings.find(b => b.id === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
+              const cleanPhone = this.getCleanPhoneKey(evt.phone);
+              const exists = this.bookings.find(b => b.id === evt.id || b.cloudSyncedId === evt.id || (b.start.slice(0, 16) === evt.start.slice(0, 16) && cleanPhone && b.phone.replace(/[^0-9]/g, '') === cleanPhone));
               
               const sItem = evt.serviceItem || '';
-              let price = 800;
-              if (sItem.includes('600')) price = 600;
-              else if (sItem.includes('700')) price = 700;
-              else if (sItem.includes('800')) price = 800;
-              else if (sItem.includes('1200') || sItem.includes('1,200')) price = 1200;
-              else if (sItem.includes('1300') || sItem.includes('1,300')) price = 1300;
-              else if (sItem.includes('1500') || sItem.includes('1,500')) price = 1500;
-              else if (sItem.includes('免費')) price = 0;
+              let price = this.getServiceDefaultPrice(sItem);
 
               const cleanNotes = this.cleanNoteText(evt.notes);
               
@@ -3126,21 +3178,26 @@
                 }
                 exists.serviceItem = evt.serviceItem || exists.serviceItem;
                 exists.status = evt.status || exists.status;
-                // 核心修復 3：若師傅曾自訂金額，絕不以預設推算價格覆蓋
-                if (!exists.isCustomPrice && exists.price === undefined) {
+                // 若雲端或本地項目為免費評估，且金額曾誤記為 1500，自動修正為 0
+                if ((exists.serviceItem && (exists.serviceItem.includes('免費') || exists.serviceItem.includes('評估'))) || (evt.serviceItem && (evt.serviceItem.includes('免費') || evt.serviceItem.includes('評估')))) {
+                  exists.price = 0;
+                  exists.isCustomPrice = false;
+                } else if (!exists.isCustomPrice && (exists.price === undefined || exists.price === null)) {
                   exists.price = price;
                 }
                 // 核心防沖洗保護：若師傅手動編輯過備忘，優先保留師傅最新編輯紀錄
                 if (!exists._customEdited) {
                   exists.notes = cleanNotes || this.cleanNoteText(exists.notes);
                   exists.symptoms = exists.notes;
-                  // 若未手動改過時間，才以雲端日曆時間校準
-                  exists.start = evt.start.slice(0, 19);
-                  exists.end = evt.end.slice(0, 19);
                 } else if (!exists.notes && cleanNotes) {
                   exists.notes = cleanNotes;
                   exists.symptoms = cleanNotes;
                 }
+                
+                // 【核心修復】：時間(start/end)永遠以 Google Calendar (SSOT) 為準，確保改時間不殘留舊時段
+                exists.start = evt.start.slice(0, 19);
+                exists.end = evt.end.slice(0, 19);
+                
                 exists.cloudSyncedId = evt.id;
                 updatedCount++;
               }
@@ -3225,7 +3282,7 @@
           });
           const result = await res.json();
           if (result && result.success) {
-            return true;
+            return result; // contains eventId
           }
           return false;
         } catch (e) {
@@ -3761,13 +3818,19 @@
           return;
         }
 
-        if (!confirm(`確定要將顧客【${origName || origPhone}】從 CRM 記憶庫中移除嗎？\n（移除後歷史排程記錄仍將保留）`)) {
+        if (!confirm(`確定要將顧客【${origName || origPhone}】從 CRM 記憶庫中永久隱藏嗎？\n（移除後將不再顯示於客戶名單中）`)) {
           return;
         }
 
-        const cleanOrig = origPhone.replace(/[^0-9]/g, '');
+        const cleanOrig = this.getCleanPhoneKey(origPhone);
+        
+        if (cleanOrig && !this.deletedCustomerPhones.includes(cleanOrig)) {
+          this.deletedCustomerPhones.push(cleanOrig);
+          localStorage.setItem('jiangxia_deleted_customers_v2', JSON.stringify(this.deletedCustomerPhones));
+        }
+
         this.customers = this.customers.filter(c => {
-          if (cleanOrig && c.phone && c.phone.replace(/[^0-9]/g, '') === cleanOrig) return false;
+          if (cleanOrig && c.phone && this.getCleanPhoneKey(c.phone) === cleanOrig) return false;
           if (origName && c.name === origName) return false;
           return true;
         });
@@ -4036,7 +4099,7 @@
         if (!b) return;
 
         // 智慧顧客反查：若預約姓名為空、純符號或純電話，自動從 CRM 記憶庫匹配姓名
-        const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+        const cleanPhone = this.getCleanPhoneKey(b.phone);
         const matchedCust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === cleanPhone);
 
         let resolvedName = (b.customerName || '').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
@@ -4064,7 +4127,13 @@
         // 3. 金額輸入框
         const priceInput = document.getElementById('detailPriceInput');
         if (priceInput) {
-          priceInput.value = (b.price !== undefined && b.price !== null) ? b.price : 1500;
+          let resolvedPrice = (b.price !== undefined && b.price !== null) ? Number(b.price) : this.getServiceDefaultPrice(b.serviceItem);
+          if (b.serviceItem && (b.serviceItem.includes('免費') || b.serviceItem.includes('評估') || b.serviceItem.includes('諮詢')) && resolvedPrice === 1500) {
+            resolvedPrice = 0;
+            b.price = 0;
+            b.isCustomPrice = false;
+          }
+          priceInput.value = resolvedPrice;
         }
 
         const statusBadge = document.getElementById('detailStatusBadge');
@@ -4165,9 +4234,19 @@
 
         const selectedLabel = document.getElementById('detailServiceSelected');
         let matched = false;
+        const cleanCurrent = (currentService || '').replace(/[【】\[\]\s]/g, '');
 
         SERVICE_PRICE_OPTIONS.forEach(opt => {
-          const isSelected = (currentService === opt.name) || (!matched && currentService && (currentService.includes(opt.shortName) || currentService.includes(opt.name.slice(0, 4))));
+          let isSelected = false;
+          if (currentService === opt.name) {
+            isSelected = true;
+          } else if (!matched && cleanCurrent) {
+            const cleanOpt = opt.name.replace(/[【】\[\]\s]/g, '');
+            const cleanShort = opt.shortName.replace(/[【】\[\]\s]/g, '');
+            if (cleanCurrent.includes(cleanShort) || cleanOpt.includes(cleanCurrent) || cleanCurrent.includes(cleanOpt) || ((cleanCurrent.includes('免費') || cleanCurrent.includes('評估')) && cleanOpt.includes('免費'))) {
+              isSelected = true;
+            }
+          }
           if (isSelected) matched = true;
 
           const btn = document.createElement('button');
@@ -4192,18 +4271,13 @@
         if (!b) return;
 
         b.serviceItem = serviceName;
+        b.price = Number(price);
+        b.isCustomPrice = false;
         
-        // 若使用者先前有手動修改過特價/自訂金額，切換方案時提醒並保留，除非使用者想覆蓋
         const priceInput = document.getElementById('detailPriceInput');
-        if (!b.isCustomPrice) {
-          b.price = price;
-          if (priceInput) priceInput.value = price;
-          this.showToast(`✅ 已切換為方案【${serviceName}】，金額自動帶入 NT$ ${price}`, 'success');
-        } else {
-          // 自訂價格狀態下：方案名稱切換，金額保留師傅的自訂值
-          if (priceInput) priceInput.value = b.price;
-          this.showToast(`✅ 已切換為方案【${serviceName}】（保留您手動設定之自訂金額 NT$ ${b.price}）`, 'info');
-        }
+        if (priceInput) priceInput.value = b.price;
+
+        this.showToast(`✅ 已切換為【${serviceName}】，金額更新為 NT$ ${b.price}`, 'success');
 
         this.renderDetailServiceButtons(serviceName, b.price);
         this.saveState();
@@ -4378,6 +4452,7 @@
           b.price = parseInt(val, 10) || 0;
           b.isCustomPrice = true;
           this.saveState();
+          this.renderTimeline();
           this.renderReports();
         }
       }
@@ -4389,14 +4464,15 @@
 
         const priceInput = document.getElementById('detailPriceInput');
         if (priceInput) {
-          b.price = parseInt(priceInput.value, 10) || 0;
+          const val = priceInput.value.trim();
+          b.price = val === '' ? 0 : (parseInt(val, 10) || 0);
           b.isCustomPrice = true;
         }
 
         this.saveState();
         this.renderTimeline();
         this.renderReports();
-        this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與自訂金額（NT$ ${b.price}）！`, 'success');
+        this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與金額（NT$ ${b.price}）！`, 'success');
       }
 
       updateBookingStatus(newStatus) {
