@@ -1363,9 +1363,9 @@
           b.notes = this.cleanNoteText(b.notes);
           b.symptoms = this.cleanNoteText(b.symptoms);
           
-          // 自動修復金額：若為免費檢查評估，金額卻為 1500 或未設定，自動修正為 0
+          // 自動修復金額：若為免費檢查評估，金額卻為 1500 或未設定，且非師傅手動編輯指定，自動修正為 0
           if (b.serviceItem && (b.serviceItem.includes('免費') || b.serviceItem.includes('評估') || b.serviceItem.includes('諮詢'))) {
-            if (b.price === 1500 || b.price === undefined || b.price === null || !b.isCustomPrice) {
+            if ((b.price === 1500 || b.price === undefined || b.price === null) && !b._customPriceEdited && !b.isCustomPrice) {
               b.price = 0;
               b.isCustomPrice = false;
             }
@@ -3225,14 +3225,21 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 if (cleanEvtName !== '預約顧客' && cleanEvtName) {
                   exists.customerName = cleanEvtName;
                 }
-                exists.serviceItem = evt.serviceItem || exists.serviceItem;
+                // 1. 方案防沖洗保護：若師傅手動指定過方案，100% 保留師傅最新修改，絕不被雲端舊項目覆寫
+                if (!exists._customServiceEdited) {
+                  exists.serviceItem = evt.serviceItem || exists.serviceItem;
+                }
                 exists.status = evt.status || exists.status;
-                // 若雲端或本地項目為免費評估，且金額曾誤記為 1500，自動修正為 0
-                if ((exists.serviceItem && (exists.serviceItem.includes('免費') || exists.serviceItem.includes('評估'))) || (evt.serviceItem && (evt.serviceItem.includes('免費') || evt.serviceItem.includes('評估')))) {
-                  exists.price = 0;
-                  exists.isCustomPrice = false;
-                } else if (!exists.isCustomPrice && (exists.price === undefined || exists.price === null)) {
-                  exists.price = price;
+
+                // 2. 金額防沖洗保護：若師傅手動編輯或確認過金額，100% 保留師傅自訂金額，絕不被雲端預設邏輯歸零或沖洗
+                if (!exists._customPriceEdited && !exists.isCustomPrice) {
+                  // 若雲端或本地項目為免費評估，且金額曾誤記為 1500，自動修正為 0
+                  if ((exists.serviceItem && (exists.serviceItem.includes('免費') || exists.serviceItem.includes('評估'))) || (evt.serviceItem && (evt.serviceItem.includes('免費') || evt.serviceItem.includes('評估')))) {
+                    exists.price = 0;
+                    exists.isCustomPrice = false;
+                  } else if (exists.price === undefined || exists.price === null) {
+                    exists.price = (evt.price !== undefined && evt.price !== null) ? evt.price : price;
+                  }
                 }
                 // 核心防沖洗保護：若師傅手動編輯過備忘，優先保留師傅最新編輯紀錄
                 if (!exists._customEdited) {
@@ -4321,7 +4328,9 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
         b.serviceItem = serviceName;
         b.price = Number(price);
-        b.isCustomPrice = false;
+        b.isCustomPrice = true;
+        b._customServiceEdited = true;
+        b._customPriceEdited = true;
         
         const priceInput = document.getElementById('detailPriceInput');
         if (priceInput) priceInput.value = b.price;
@@ -4332,6 +4341,9 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         this.saveState();
         this.renderTimeline();
         this.renderReports();
+
+        // 雲端雙向同步更新 Google 日曆與試算表中的方案與金額
+        this.syncServiceChangeToCloud(b);
       }
 
       // ==========================================
@@ -4500,6 +4512,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         if (b) {
           b.price = parseInt(val, 10) || 0;
           b.isCustomPrice = true;
+          b._customPriceEdited = true;
           this.saveState();
           this.renderTimeline();
           this.renderReports();
@@ -4516,12 +4529,46 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           const val = priceInput.value.trim();
           b.price = val === '' ? 0 : (parseInt(val, 10) || 0);
           b.isCustomPrice = true;
+          b._customPriceEdited = true;
         }
+        b._customServiceEdited = true;
 
         this.saveState();
         this.renderTimeline();
         this.renderReports();
         this.showToast(`✅ 已成功儲存【${b.customerName}】的方案（${b.serviceItem}）與金額（NT$ ${b.price}）！`, 'success');
+
+        // 雲端雙向同步更新 Google 日曆與試算表中的方案與金額
+        this.syncServiceChangeToCloud(b);
+      }
+
+      syncServiceChangeToCloud(b) {
+        const targetEventId = b.cloudSyncedId || b.id;
+        if (!this.gasUrl || this.simulateOffline || !targetEventId) return;
+        try {
+          fetch(this.gasUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'updateService',
+              id: targetEventId,
+              eventId: targetEventId,
+              serviceItem: b.serviceItem,
+              price: b.price,
+              bodyParts: b.bodyParts || [],
+              phone: b.phone || '',
+              customerName: b.customerName || '',
+              secret: this.gasSecret
+            })
+          }).then(r => r.json()).then(res => {
+            if (res && res.success) {
+              console.log('Google 日曆行程方案與金額同步成功:', res);
+            }
+          }).catch(e => {
+            console.warn('Google 日曆方案與金額非同步推播發送:', e);
+          });
+        } catch(e) {
+          console.warn('雲端方案同步非致命錯誤:', e);
+        }
       }
 
       updateBookingStatus(newStatus) {
