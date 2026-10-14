@@ -2,6 +2,27 @@
 
 本文檔記錄「江夏傳統整復推拿 板橋館」AI 客服機器人、Prompt 集中倉庫與自動化工具的所有版本演進、功能修復與 Git 變更紀錄。
 
+## 📌 [v2.2.2] - 2026-10-14 19:55:00
+### 🛡️ 徹底修復變更服務內容與金額後「過一下又跳回編輯前舊資料」之背景輪詢覆寫漏洞 (Custom Edit Guard & Cloud Bi-directional Sync)
+- **修復問題**：
+  在後台排程看板點選預約詳情，變更調理方案（例如由免費評估切換為自費調理，或調整部位）與應收金額並儲存後，等待約 20 秒以內（「過一下」），畫面與資料又自動跳回編輯前的舊方案與舊金額。
+- **根本原因**：
+  1. **背景 20 秒無感輪詢機制 (`_cloudPollTimer`)**：系統每 20 秒自動執行 `fetchFromCloud(true)` 向 Google Apps Script 拉取最新雲端日曆行程。
+  2. **本地物件缺乏方案與金額保護標記**：師傅手動點擊方案按鈕（`selectDetailService`）或修改金額（`saveDetailChanges`）時，系統僅將變更寫入 `localStorage`，未標記手動保護標籤（對比備忘欄位有 `_customEdited`，方案與金額完全無防沖洗旗標）。
+  3. **雲端合流無條件覆蓋（Overriding Loop）**：在 `fetchFromCloud()` 迴圈中，系統執行 `exists.serviceItem = evt.serviceItem || exists.serviceItem;`。由於 Google 日曆上仍留存原本的預約項目字串，每次輪詢皆將師傅剛改好的方案強制替換回日曆舊值；若舊值包含「免費/評估」，更連帶觸發 `exists.price = 0; exists.isCustomPrice = false;`，將師傅改好的金額直接歸零！
+  4. **缺乏方案與金額之雙向雲端推播**：修改時段（`updateBookingTime`）與備忘（`updateNotes`）皆有發送遠端 API，但方案與金額修改時未推播至 Google 日曆與試算表，導致日曆永遠維持舊資料。
+- **解決方案**：
+  1. **實裝方案與金額防沖洗雙保護守衛 (`_customServiceEdited` & `_customPriceEdited`)**：
+     - 在 `selectDetailService`、`onDetailPriceChanged`、`saveDetailChanges` 統一設置保護標記。
+     - 在 `fetchFromCloud()` 中加入嚴格防禦：若 `exists._customServiceEdited === true`，絕不被雲端舊項目覆寫；若 `exists._customPriceEdited === true` 或 `exists.isCustomPrice === true`，100% 豁免雲端歸零邏輯，守護師傅設定之真實金額。
+  2. **實裝雲端方案與金額雙向推播引擎 (`syncServiceChangeToCloud`)**：
+     - 點擊方案或儲存變更時，自動非同步推播 `action: 'updateService'` 至 Google Apps Script。
+  3. **GAS 雲端橋樑全面升級支援 `updateService`**：
+     - 在 `google_apps_script/Code.gs` 與 `gas_calendar_api.js` 中新增 `handleUpdateService`，即時同步更新 Google 日曆 Description 中的 `預約項目`、`應收金額` 與 `調理部位`，並同步修訂 Google 試算表 `預約紀錄名冊`。
+     - `getEvents` 擴充支援解析日曆描述中的 `應收金額`，達成全平台單一真相源 (SSOT) 雙向閉環。
+  4. **全端語法與單元測試校驗**：
+     - 通過 Node.js 腳本語法檢測與輪詢抗沖洗單元測試，並完成 GitHub Pages 發布。
+
 ## 📌 [v2.2.1] - 2026-10-13 15:45:00
 ### 🛡️ 徹底修復歷史就診紀錄（如 10/2）儲存後重新整理 (F5) 消失之雙向同步刪除過濾盲區 (Query Window Safety Guard)
 - **修復問題**：

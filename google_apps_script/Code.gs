@@ -172,6 +172,9 @@ function doGet(e) {
         var statusMatch = desc.match(/狀態[:：]\s*([^\n\r]+)/);
         if (statusMatch) status = statusMatch[1].trim();
 
+        var priceMatch = desc.match(/(?:應收金額|金額|費用)[:：]\s*(?:NT\$?)?\s*([0-9]+)/);
+        var eventPrice = priceMatch ? parseInt(priceMatch[1], 10) : null;
+
         var startIso = Utilities.formatDate(evt.getStartTime(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss').replace(' ', 'T');
         var endIso = Utilities.formatDate(evt.getEndTime(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss').replace(' ', 'T');
 
@@ -180,6 +183,7 @@ function doGet(e) {
           customerName: customerName,
           phone: phone,
           serviceItem: serviceItem,
+          price: eventPrice,
           status: status,
           notes: desc,
           start: startIso,
@@ -298,6 +302,12 @@ function doGet(e) {
     if (action === 'updateCustomer') {
       var updateCustRes = handleUpdateCustomer(params);
       return createJsonResponse(updateCustRes);
+    }
+
+    // 1-7. 修改預約方案與金額 (支援 updateService)
+    if (action === 'updateService') {
+      var updateServiceRes = handleUpdateService(params);
+      return createJsonResponse(updateServiceRes);
     }
 
     return createJsonResponse({ success: false, message: '未知的 GET 操作指令: ' + action });
@@ -494,6 +504,12 @@ function doPost(e) {
     if (action === 'updateCustomer') {
       var updateCustPostRes = handleUpdateCustomer(payload);
       return createJsonResponse(updateCustPostRes);
+    }
+
+    // 2-6. 修改預約方案與金額 (支援 updateService)
+    if (action === 'updateService') {
+      var updateServicePostRes = handleUpdateService(payload);
+      return createJsonResponse(updateServicePostRes);
     }
 
     return createJsonResponse({ success: false, message: '未知的 POST 操作指令: ' + action });
@@ -820,6 +836,100 @@ function handleUpdateCustomer(params) {
         phone: newPhone,
         health_notes: newNotes
       }
+    };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+// ==========================================
+// 8-1. 修改預約方案與金額函式：同步更新 Google 日曆事件描述與試算表
+// ==========================================
+function handleUpdateService(params) {
+  var eventId = params.eventId || params.id;
+  var newService = params.serviceItem;
+  var newPrice = (params.price !== undefined && params.price !== null) ? Number(params.price) : null;
+  var bodyParts = params.bodyParts;
+
+  if (!eventId) {
+    return { success: false, message: '缺少 eventId 或 id' };
+  }
+
+  try {
+    var cal = getTargetCalendar();
+    var evt = cal.getEventById(eventId);
+    if (!evt && eventId.indexOf('@google.com') === -1) {
+      evt = cal.getEventById(eventId + '@google.com');
+    }
+    if (!evt && eventId.indexOf('@google.com') !== -1) {
+      evt = cal.getEventById(eventId.replace('@google.com', ''));
+    }
+
+    if (!evt) {
+      return { success: false, message: '日曆上未找到該行程' };
+    }
+
+    var oldDesc = evt.getDescription() || '';
+    var updatedDesc = oldDesc;
+
+    if (newService) {
+      if (updatedDesc.indexOf('預約項目：') !== -1) {
+        updatedDesc = updatedDesc.replace(/預約項目[:：][^\n\r]*/, '預約項目：' + newService);
+      } else if (updatedDesc.indexOf('項目：') !== -1) {
+        updatedDesc = updatedDesc.replace(/項目[:：][^\n\r]*/, '項目：' + newService);
+      } else {
+        updatedDesc = updatedDesc + '\n預約項目：' + newService;
+      }
+    }
+
+    if (newPrice !== null && !isNaN(newPrice)) {
+      if (updatedDesc.indexOf('應收金額：') !== -1) {
+        updatedDesc = updatedDesc.replace(/應收金額[:：][^\n\r]*/, '應收金額：NT$ ' + newPrice);
+      } else if (updatedDesc.indexOf('金額：') !== -1) {
+        updatedDesc = updatedDesc.replace(/金額[:：][^\n\r]*/, '金額：NT$ ' + newPrice);
+      } else {
+        updatedDesc = updatedDesc + '\n應收金額：NT$ ' + newPrice;
+      }
+    }
+
+    if (Array.isArray(bodyParts) && bodyParts.length > 0) {
+      var partsStr = bodyParts.join('、');
+      if (updatedDesc.indexOf('調理部位：') !== -1) {
+        updatedDesc = updatedDesc.replace(/調理部位[:：][^\n\r]*/, '調理部位：' + partsStr);
+      } else {
+        updatedDesc = updatedDesc + '\n調理部位：' + partsStr;
+      }
+    }
+
+    evt.setDescription(updatedDesc);
+
+    // 同步更新 Google 試算表中的預約項目
+    try {
+      var ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+      if (ss) {
+        var sheet = ss.getSheetByName('預約紀錄名冊');
+        if (sheet) {
+          var data = sheet.getDataRange().getValues();
+          var targetId = (eventId || '').replace('@google.com', '');
+          for (var r = 1; r < data.length; r++) {
+            var rowId = String(data[r][9] || '').replace('@google.com', '');
+            if (rowId && targetId && (rowId === targetId || rowId.indexOf(targetId) !== -1 || targetId.indexOf(rowId) !== -1)) {
+              if (newService) sheet.getRange(r + 1, 5).setValue(newService);
+              break;
+            }
+          }
+        }
+      }
+    } catch(se) {
+      Logger.log('試算表項目更新非致命錯誤: ' + se.toString());
+    }
+
+    return {
+      success: true,
+      message: '已成功同步更新 Google 日曆與試算表之方案與金額！',
+      eventId: eventId,
+      serviceItem: newService,
+      price: newPrice
     };
   } catch (err) {
     return { success: false, error: err.toString() };
