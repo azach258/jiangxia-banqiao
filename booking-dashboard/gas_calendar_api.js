@@ -716,10 +716,13 @@ function handleUpdateBookingTime(params) {
 
     evt.setTime(newStart, newEnd);
 
-    // 同步更新日曆 Description 內的建立/變更紀錄
+    // 同步更新日曆 Description 內的建立/變更紀錄（若跨日改期，自動清除舊日期的 LINE 提醒與出席標記，確保新日期前一天能重新收到提醒）
     var oldDesc = evt.getDescription() || '';
+    var cleanedDesc = oldDesc
+      .replace(/\n?\[LINE提醒已發送:[^\]]*\]/g, '')
+      .replace(/\n?\[👍 客戶已於 LINE 回覆確認出席\]/g, '');
     var nowLog = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
-    var updatedDesc = oldDesc + '\n[時段變更] 於 ' + nowLog + ' 從 ' + oldStartStr + ' 變更為 ' + newStartStr;
+    var updatedDesc = cleanedDesc + '\n[時段變更] 於 ' + nowLog + ' 從 ' + oldStartStr + ' 變更為 ' + newStartStr;
     evt.setDescription(updatedDesc);
 
     // 發送 Telegram 推播通知
