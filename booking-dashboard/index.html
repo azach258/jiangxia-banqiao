@@ -24,7 +24,53 @@
       if (/Line\//i.test(ua) && window.location.search.indexOf('openExternalBrowser=1') === -1) {
         var sep = window.location.search ? '&' : '?';
         window.location.href = window.location.href + sep + 'openExternalBrowser=1';
+        return;
       }
+
+      // 📲 Telegram 一鍵喚起手機原生簡訊 (sms:) 0.1 秒自動跳轉橋樑
+      try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('quick_sms') === '1') {
+          var rawPhone = (params.get('phone') || '').replace(/[^0-9]/g, '');
+          var custName = params.get('name') || '貴賓';
+          var smsBody = params.get('body') || ('【江夏整復板橋館】' + custName + '您好，溫馨提醒您近期有預約賴師傅調理服務。地址:板橋區館前西路152之1號1樓。改期請電0989879614');
+          var isIOS = /iPad|iPhone|iPod/i.test(ua);
+          var smsDelimiter = isIOS ? '&' : '?';
+          var smsHref = 'sms:' + rawPhone + smsDelimiter + 'body=' + encodeURIComponent(smsBody);
+
+          window.__QUICK_SMS_DATA__ = { phone: rawPhone, name: custName, body: smsBody, smsHref: smsHref };
+
+          // 0.1 秒立即自動喚起手機內建簡訊 App
+          setTimeout(function() {
+            window.location.href = smsHref;
+          }, 120);
+
+          document.addEventListener('DOMContentLoaded', function() {
+            var overlay = document.createElement('div');
+            overlay.id = 'quickSmsBridgeOverlay';
+            overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm';
+            overlay.innerHTML =
+              '<div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-center">' +
+                '<div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto text-2xl font-bold">📲</div>' +
+                '<h2 class="text-lg font-bold text-slate-900">一鍵發送預約提醒簡訊</h2>' +
+                '<p class="text-xs text-slate-500">收件顧客：<strong class="text-slate-800">' + custName + ' (' + rawPhone + ')</strong></p>' +
+                '<div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs text-slate-700 leading-relaxed break-all">' + smsBody + '</div>' +
+                '<a href="' + smsHref + '" class="block w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg transition">📲 點此打開手機簡訊傳送</a>' +
+                '<button type="button" id="btnCopyQuickSms" class="w-full py-2.5 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition">📋 複製簡訊文字</button>' +
+                '<button type="button" onclick="document.getElementById(\'quickSmsBridgeOverlay\').remove()" class="w-full py-2 text-xs text-slate-400 hover:text-slate-600">關閉視窗並進入排程看板</button>' +
+              '</div>';
+            document.body.appendChild(overlay);
+            var copyBtn = document.getElementById('btnCopyQuickSms');
+            if (copyBtn) {
+              copyBtn.onclick = function() {
+                navigator.clipboard.writeText(smsBody).then(function() {
+                  copyBtn.textContent = '✅ 已複製簡訊文字！';
+                });
+              };
+            }
+          });
+        }
+      } catch (e) {}
     })();
   </script>
 
@@ -623,7 +669,11 @@
             </div>
             <p id="detailPhone" class="text-xs text-slate-500 font-mono mt-0.5">0912-345-678</p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 flex-wrap justify-end">
+            <button type="button" onclick="app.sendSmsFromDetail()" id="btnDetailSendSms" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95" title="一鍵喚起手機簡訊發送預約提醒">
+              <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+              <span>簡訊提醒</span>
+            </button>
             <button type="button" onclick="app.editCustomerFromDetail()" id="btnDetailEditCustomer" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-subtle transition flex items-center gap-1 active:scale-95" title="編輯顧客檔案與健康備忘">
               <i data-lucide="user-cog" class="w-3.5 h-3.5 text-amber-700"></i>
               <span>客戶資料</span>
@@ -4278,6 +4328,28 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
         this.openModal('detailModal');
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+      }
+
+      // 一鍵從預約詳情彈窗喚起手機原生簡訊 (65字黃金精簡版)
+      sendSmsFromDetail() {
+        const b = this.bookings.find(item => item.id === this.currentDetailId);
+        if (!b) return;
+        const cleanPhone = String(b.phone || '').replace(/[^0-9]/g, '');
+        if (!cleanPhone) {
+          this.showToast('此筆預約尚未填寫手機號碼，無法發送簡訊', 'error');
+          return;
+        }
+        const custName = (b.customerName || '貴賓').replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim() || '貴賓';
+        const datePart = (b.start || '').slice(5, 10).replace('-', '/');
+        const timePart = (b.start || '').slice(11, 16);
+        const dtObj = new Date((b.start || '').replace(' ', 'T'));
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        const wStr = !isNaN(dtObj.getTime()) ? weekdays[dtObj.getDay()] : '';
+        const smsBody = `【江夏整復板橋館】${custName}您好，提醒您${datePart}${wStr ? '(' + wStr + ')' : ''}${timePart}預約賴師傅調理。地址:板橋區館前西路152之1號1樓。改期請電0989879614`;
+        const ua = navigator.userAgent || '';
+        const isIOS = /iPad|iPhone|iPod/i.test(ua);
+        const sep = isIOS ? '&' : '?';
+        window.location.href = `sms:${cleanPhone}${sep}body=${encodeURIComponent(smsBody)}`;
       }
 
       // ==========================================
