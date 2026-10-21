@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW" class="light">
 <head>
   <meta charset="UTF-8">
@@ -663,13 +663,18 @@
       <div class="p-6 space-y-4 text-sm">
         <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <h4 id="detailCustomerName" class="text-base font-bold text-slate-900">顧客姓名</h4>
               <span id="detailVisitBadge" class="text-xs"></span>
+              <span id="detailLineBindBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600">⚪ 未連結 LINE@</span>
             </div>
             <p id="detailPhone" class="text-xs text-slate-500 font-mono mt-0.5">0912-345-678</p>
           </div>
           <div class="flex items-center gap-1.5 flex-wrap justify-end">
+            <button type="button" onclick="app.toggleLineBindPanel()" id="btnDetailBindLine" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95" title="從 LINE@ 官方帳號好友名單主動配對連結此顧客">
+              <i data-lucide="link" class="w-3.5 h-3.5"></i>
+              <span>連結 LINE@</span>
+            </button>
             <button type="button" onclick="app.sendSmsFromDetail()" id="btnDetailSendSms" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95" title="一鍵喚起手機簡訊發送預約提醒">
               <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
               <span>簡訊提醒</span>
@@ -681,6 +686,29 @@
             <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               已確認
             </span>
+          </div>
+        </div>
+
+        <!-- 🔗 主動連結 LINE@ 好友配對面板 (點擊「連結 LINE@」展開) -->
+        <div id="detailLineBindPanel" class="hidden p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-200 space-y-2.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-indigo-950 flex items-center gap-1.5">
+              <i data-lucide="link-2" class="w-4 h-4 text-indigo-600"></i>
+              <span>主動連結 LINE@ 好友（配對後將由 LINE 自動發送預約提醒）</span>
+            </span>
+            <button type="button" onclick="app.toggleLineBindPanel(false)" class="text-indigo-400 hover:text-indigo-700 text-xs font-bold">收起 ✕</button>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold text-indigo-900">方式一：從已互動過的 LINE@ 好友清單點選配對</label>
+            <div id="detailLineFriendsList" class="max-h-36 overflow-y-auto space-y-1 pr-1"></div>
+          </div>
+          <div class="pt-2 border-t border-indigo-200/80 space-y-1.5">
+            <label class="block text-[11px] font-bold text-indigo-900">方式二：直接輸入客人的 LINE 顯示暱稱（例如：Amy、阿豪）或 LINE ID</label>
+            <div class="flex items-center gap-1.5">
+              <input type="text" id="detailLineCustomInput" placeholder="輸入客人在 LINE 上的顯示名稱 (例: Amy) 或 U 開頭代碼..." class="flex-1 bg-white border border-indigo-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600">
+              <button type="button" onclick="app.bindLineByCustomInput()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-subtle transition whitespace-nowrap">確認連結</button>
+            </div>
+            <p class="text-[10px] text-indigo-700 leading-relaxed">💡 提示：只要客人已加官方 LINE，填入他的 LINE 顯示名稱後，系統在發送提醒或客人互動時會自動核對暱稱並永久綁定！</p>
           </div>
         </div>
 
@@ -1436,6 +1464,8 @@
         localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
         localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
 
+        this.lineFriends = JSON.parse(localStorage.getItem('jiangxia_line_friends_v1') || '[]');
+        this.bookings = this.bookings.filter(b => !(b.customerName && b.customerName.includes('LINE好友名冊')));
         this.syncQueue = JSON.parse(localStorage.getItem('jiangxia_sync_queue_v2') || '[]');
         this.gasUrl = localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
         this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
@@ -1470,6 +1500,7 @@
           if (match) {
             let notePart = match[1].trim();
             notePart = notePart.replace(/建立時間：[\s\S]*$/, '').trim();
+            notePart = notePart.replace(/\[?LINE_USER_ID:[a-zA-Z0-9_-]+\]?\s*/g, '').replace(/\[?LINE_DISPLAY_NAME:[^\n\r\]]+\]?\s*/g, '').trim();
             // 若只是系統通用字串或預約來源標記，直接清空，留給師傅填寫真正病歷
             if (notePart === '顧客預約' || notePart === '電話預約' || notePart === '線上預約' || notePart === '現場預約' || 
                 notePart === '無備註' || notePart === '無' || notePart === '無特殊主訴' || 
@@ -1491,7 +1522,7 @@
           return '';
         }
 
-        return t;
+        return t.replace(/\[?LINE_USER_ID:[a-zA-Z0-9_-]+\]?\s*/g, '').replace(/\[?LINE_DISPLAY_NAME:[^\n\r\]]+\]?\s*/g, '').trim();
       }
 
       // ==========================================
@@ -1896,11 +1927,14 @@
           this.renderReports();
           this.showToast('✅ 已儲存主訴備忘並累積更新至顧客 CRM 記憶庫！', 'success');
 
-          // 雲端同步更新 Google 日曆事件與試算表
+          // 雲端同步更新 Google 日曆事件與試算表 (自動保留 LINE_USER_ID 與 LINE_DISPLAY_NAME 綁定標籤)
           const targetEventId = b.cloudSyncedId || b.id;
           if (this.gasUrl && !this.simulateOffline) {
             try {
-              const updateUrl = `${this.gasUrl}?action=updateNotes&eventId=${encodeURIComponent(targetEventId || '')}&id=${encodeURIComponent(targetEventId || '')}&notes=${encodeURIComponent(newNotes)}&phone=${encodeURIComponent(b.phone || '')}&customerName=${encodeURIComponent(b.customerName || '')}&startTime=${encodeURIComponent(b.start || '')}&secret=${encodeURIComponent(this.gasSecret)}`;
+              let cloudNotesPayload = newNotes || '';
+              if (b.lineUserId) cloudNotesPayload = `[LINE_USER_ID:${b.lineUserId}] ` + cloudNotesPayload;
+              else if (b.lineDisplayName) cloudNotesPayload = `[LINE_DISPLAY_NAME:${b.lineDisplayName}] ` + cloudNotesPayload;
+              const updateUrl = `${this.gasUrl}?action=updateNotes&eventId=${encodeURIComponent(targetEventId || '')}&id=${encodeURIComponent(targetEventId || '')}&notes=${encodeURIComponent(cloudNotesPayload.trim())}&phone=${encodeURIComponent(b.phone || '')}&customerName=${encodeURIComponent(b.customerName || '')}&startTime=${encodeURIComponent(b.start || '')}&secret=${encodeURIComponent(this.gasSecret)}`;
               fetch(updateUrl).catch(e => console.warn('雲端備註非同步更新發送:', e));
             } catch(syncErr) {
               console.warn('雲端備註更新失敗:', syncErr);
@@ -3184,7 +3218,36 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
             let addedCount = 0;
             let updatedCount = 0;
+            if (!Array.isArray(this.lineFriends)) this.lineFriends = [];
             result.data.forEach(evt => {
+              const rawEvtTitle = evt.customerName || '';
+              const rawEvtNotes = evt.notes || '';
+              // 攔截雲端【系統同步】LINE好友名冊_勿刪，更新本地 LINE 好友清單並略過不顯示於排程表
+              if (rawEvtTitle.includes('LINE好友名冊') || rawEvtNotes.includes('LINE_FRIENDS_JSON:')) {
+                const jm = rawEvtNotes.match(/LINE_FRIENDS_JSON:(\[[^\n\r]*\])/);
+                if (jm) {
+                  try {
+                    const parsedFriends = JSON.parse(jm[1]);
+                    if (Array.isArray(parsedFriends)) {
+                      parsedFriends.forEach(pf => {
+                        if (!pf.userId) return;
+                        const ex = this.lineFriends.find(f => f.userId === pf.userId);
+                        if (ex) {
+                          ex.lineDisplayName = pf.lineDisplayName || ex.lineDisplayName;
+                          ex.name = pf.name || ex.name;
+                          ex.phone = pf.phone || ex.phone;
+                          ex.updatedAt = pf.updatedAt || ex.updatedAt;
+                        } else {
+                          this.lineFriends.push(pf);
+                        }
+                      });
+                      localStorage.setItem('jiangxia_line_friends_v1', JSON.stringify(this.lineFriends));
+                    }
+                  } catch (e) {}
+                }
+                return;
+              }
+
               // 0. 墓碑名冊防禦：凡是在後台刪除過的事件，絕對不重新加回！
               if (this.deletedEventIds) {
                 if (evt.id && this.deletedEventIds.includes(evt.id)) return;
@@ -3209,6 +3272,34 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               const sItem = evt.serviceItem || '';
               let price = this.getServiceDefaultPrice(sItem);
 
+              const rawNotesStr = evt.notes || '';
+              const lineIdMatch = rawNotesStr.match(/LINE_USER_ID:([a-zA-Z0-9_-]+)/);
+              const lineDispMatch = rawNotesStr.match(/LINE_DISPLAY_NAME:([^\n\r\]]+)/);
+              let detectedLineUid = lineIdMatch ? lineIdMatch[1].trim() : '';
+              let detectedLineDisp = lineDispMatch ? lineDispMatch[1].trim() : '';
+              if (!detectedLineUid && cleanPhone && Array.isArray(this.lineFriends)) {
+                const matchedF = this.lineFriends.find(f => f.phone && f.phone.replace(/[^0-9]/g, '') === cleanPhone);
+                if (matchedF) {
+                  detectedLineUid = matchedF.userId;
+                  detectedLineDisp = matchedF.lineDisplayName || matchedF.name || '';
+                }
+              }
+              if (detectedLineUid) {
+                const exF = this.lineFriends.find(f => f.userId === detectedLineUid);
+                if (!exF) {
+                  this.lineFriends.push({
+                    userId: detectedLineUid,
+                    lineDisplayName: detectedLineDisp || (evt.customerName || '').trim(),
+                    name: (evt.customerName || '').trim(),
+                    phone: cleanPhone || '',
+                    updatedAt: new Date().toISOString()
+                  });
+                } else {
+                  if (cleanPhone && !exF.phone) exF.phone = cleanPhone;
+                  if (evt.customerName && !exF.name) exF.name = evt.customerName.trim();
+                }
+                localStorage.setItem('jiangxia_line_friends_v1', JSON.stringify(this.lineFriends));
+              }
               const cleanNotes = this.cleanNoteText(evt.notes);
               
               // 顧客姓名淨化與 CRM 關聯強化
@@ -3237,6 +3328,8 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                   status: evt.status || '已確認',
                   syncStatus: 'synced',
                   cloudSyncedId: evt.id,
+                  lineUserId: detectedLineUid || '',
+                  lineDisplayName: detectedLineDisp || '',
                   notes: cleanNotes,
                   symptoms: cleanNotes,
                   start: evt.start.slice(0, 19),
@@ -3304,6 +3397,8 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 exists.start = evt.start.slice(0, 19);
                 exists.end = evt.end.slice(0, 19);
                 
+                if (detectedLineUid) exists.lineUserId = detectedLineUid;
+                if (detectedLineDisp) exists.lineDisplayName = detectedLineDisp;
                 exists.cloudSyncedId = evt.id;
                 updatedCount++;
               }
@@ -4220,6 +4315,9 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
         document.getElementById('detailCustomerName').textContent = resolvedName;
         document.getElementById('detailPhone').textContent = b.phone || (matchedCust ? matchedCust.phone : '未留電話');
+        this.renderDetailLineBindStatus(b, matchedCust);
+        const bindPanel = document.getElementById('detailLineBindPanel');
+        if (bindPanel) bindPanel.classList.add('hidden');
         
         // 1. 渲染調理方案按鈕 (金額自動帶入)
         this.renderDetailServiceButtons(b.serviceItem, b.price);
@@ -4328,6 +4426,161 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
         this.openModal('detailModal');
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+      }
+
+      // ==========================================
+      // 🔗 排程看板「主動連結 LINE@ 好友」配對系統
+      // ==========================================
+      renderDetailLineBindStatus(b, matchedCust) {
+        const badge = document.getElementById('detailLineBindBadge');
+        if (!badge || !b) return;
+        const cleanP = String(b.phone || '').replace(/[^0-9]/g, '');
+        let boundUid = b.lineUserId || (matchedCust && matchedCust.lineUserId) || '';
+        let boundDisp = b.lineDisplayName || (matchedCust && matchedCust.lineDisplayName) || '';
+        if (!boundUid && cleanP && Array.isArray(this.lineFriends)) {
+          const mf = this.lineFriends.find(f => f.phone && f.phone.replace(/[^0-9]/g, '') === cleanP);
+          if (mf) {
+            boundUid = mf.userId;
+            boundDisp = mf.lineDisplayName || mf.name || '';
+            b.lineUserId = boundUid;
+            b.lineDisplayName = boundDisp;
+          }
+        }
+        if (boundUid || boundDisp) {
+          const fObj = Array.isArray(this.lineFriends) ? this.lineFriends.find(f => f.userId === boundUid) : null;
+          const label = boundDisp || (fObj && (fObj.lineDisplayName || fObj.name)) || (boundUid ? 'ID:' + boundUid.slice(-4) : '已設定');
+          badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+          badge.textContent = `🟢 已連結 LINE@ (${label})`;
+        } else {
+          badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600';
+          badge.textContent = '⚪ 未連結 LINE@';
+        }
+      }
+
+      toggleLineBindPanel(forceState) {
+        const panel = document.getElementById('detailLineBindPanel');
+        if (!panel) return;
+        const willShow = (typeof forceState === 'boolean') ? forceState : panel.classList.contains('hidden');
+        if (!willShow) {
+          panel.classList.add('hidden');
+          return;
+        }
+        panel.classList.remove('hidden');
+        this.renderLineFriendsSelector();
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+      }
+
+      renderLineFriendsSelector() {
+        const listEl = document.getElementById('detailLineFriendsList');
+        if (!listEl) return;
+        const b = this.bookings.find(item => item.id === this.currentDetailId);
+        const friends = Array.isArray(this.lineFriends) ? this.lineFriends : [];
+        if (friends.length === 0) {
+          listEl.innerHTML = '<div class="p-2.5 rounded-lg bg-white border border-indigo-200 text-slate-500 text-[11px]">目前尚無從雲端同步的 LINE 好友清單，您可直接使用下方「方式二」輸入客人的 LINE 顯示暱稱完成連結！</div>';
+          return;
+        }
+        listEl.innerHTML = friends.map(f => {
+          const disp = f.lineDisplayName || f.name || ('LINE好友 ' + (f.userId || '').slice(-4));
+          const sub = f.name && f.name !== disp ? `(${f.name} ${f.phone || ''})` : (f.phone ? `(${f.phone})` : `(ID末碼: ${(f.userId || '').slice(-4)})`);
+          const isCurrent = b && b.lineUserId === f.userId;
+          return `
+            <div class="flex items-center justify-between p-2 rounded-lg bg-white border ${isCurrent ? 'border-emerald-400 bg-emerald-50/40' : 'border-indigo-200'}">
+              <div class="truncate pr-2">
+                <span class="font-bold text-slate-900 text-xs">💬 ${disp}</span>
+                <span class="text-[11px] text-slate-500 ml-1">${sub}</span>
+              </div>
+              <button type="button" onclick="app.confirmBindLineFriend('${f.userId}', '${disp.replace(/'/g, '')}')" class="px-2.5 py-1 rounded-md text-[11px] font-bold ${isCurrent ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} transition whitespace-nowrap">
+                ${isCurrent ? '✓ 已配對' : '🔗 點此配對'}
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      confirmBindLineFriend(userId, lineDisplayName) {
+        const b = this.bookings.find(item => item.id === this.currentDetailId);
+        if (!b || !userId) return;
+        this.applyLineBindingToBooking(b, userId, lineDisplayName);
+      }
+
+      bindLineByCustomInput() {
+        const b = this.bookings.find(item => item.id === this.currentDetailId);
+        const inputEl = document.getElementById('detailLineCustomInput');
+        if (!b || !inputEl) return;
+        const val = inputEl.value.trim();
+        if (!val) {
+          this.showToast('請先輸入客人的 LINE 顯示暱稱或 LINE ID', 'warning');
+          return;
+        }
+        if (/^U[a-fA-F0-9]{32}$/.test(val)) {
+          this.applyLineBindingToBooking(b, val, '');
+        } else {
+          const matchedF = (this.lineFriends || []).find(f => (f.lineDisplayName && f.lineDisplayName.toLowerCase() === val.toLowerCase()) || (f.name && f.name === val));
+          if (matchedF) {
+            this.applyLineBindingToBooking(b, matchedF.userId, matchedF.lineDisplayName || val);
+          } else {
+            this.applyLineBindingToBooking(b, '', val);
+          }
+        }
+        inputEl.value = '';
+      }
+
+      applyLineBindingToBooking(b, lineUserId, lineDisplayName) {
+        const cleanP = String(b.phone || '').replace(/[^0-9]/g, '');
+        b.lineUserId = lineUserId || b.lineUserId || '';
+        b.lineDisplayName = lineDisplayName || b.lineDisplayName || '';
+
+        // 同步綁定同一手機號碼的所有預約與 CRM 客戶檔案
+        if (cleanP) {
+          this.bookings.forEach(item => {
+            if (String(item.phone || '').replace(/[^0-9]/g, '') === cleanP) {
+              if (lineUserId) item.lineUserId = lineUserId;
+              if (lineDisplayName) item.lineDisplayName = lineDisplayName;
+            }
+          });
+          const cust = this.customers.find(c => String(c.phone || '').replace(/[^0-9]/g, '') === cleanP);
+          if (cust) {
+            if (lineUserId) cust.lineUserId = lineUserId;
+            if (lineDisplayName) cust.lineDisplayName = lineDisplayName;
+          }
+        }
+
+        if (lineUserId) {
+          if (!Array.isArray(this.lineFriends)) this.lineFriends = [];
+          const exF = this.lineFriends.find(f => f.userId === lineUserId);
+          if (exF) {
+            exF.name = b.customerName || exF.name;
+            exF.phone = cleanP || exF.phone;
+            if (lineDisplayName) exF.lineDisplayName = lineDisplayName;
+          } else {
+            this.lineFriends.push({
+              userId: lineUserId,
+              lineDisplayName: lineDisplayName || b.customerName || '',
+              name: b.customerName || '',
+              phone: cleanP || '',
+              updatedAt: new Date().toISOString()
+            });
+          }
+          localStorage.setItem('jiangxia_line_friends_v1', JSON.stringify(this.lineFriends));
+        }
+
+        localStorage.setItem('jiangxia_bookings_v2', JSON.stringify(this.bookings));
+        localStorage.setItem('jiangxia_customers_v2', JSON.stringify(this.customers));
+
+        // 推播至 Google 日曆事件備註 (讓 LINE 伺服器自動讀取並永久綁定)
+        const targetEventId = b.cloudSyncedId || b.id;
+        if (this.gasUrl && !this.simulateOffline) {
+          let prefix = '';
+          if (b.lineUserId) prefix += `[LINE_USER_ID:${b.lineUserId}] `;
+          if (b.lineDisplayName) prefix += `[LINE_DISPLAY_NAME:${b.lineDisplayName}] `;
+          const cloudNotes = (prefix + (b.notes || '')).trim();
+          const updateUrl = `${this.gasUrl}?action=updateNotes&eventId=${encodeURIComponent(targetEventId || '')}&id=${encodeURIComponent(targetEventId || '')}&notes=${encodeURIComponent(cloudNotes)}&phone=${encodeURIComponent(b.phone || '')}&customerName=${encodeURIComponent(b.customerName || '')}&startTime=${encodeURIComponent(b.start || '')}&secret=${encodeURIComponent(this.gasSecret)}`;
+          fetch(updateUrl).catch(e => console.warn('雲端綁定 LINE 同步失敗:', e));
+        }
+
+        this.renderDetailLineBindStatus(b, null);
+        this.toggleLineBindPanel(false);
+        this.showToast(`🔗 已成功將「${b.customerName}」連結至 LINE@ 好友 (${lineDisplayName || lineUserId.slice(-6)})！`, 'success');
       }
 
       // 一鍵從預約詳情彈窗喚起手機原生簡訊 (65字黃金精簡版)

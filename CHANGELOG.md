@@ -1,6 +1,116 @@
-# 📝 江夏傳統整復推拿 板橋館｜專案版本更新紀錄 (CHANGELOG)
+﻿# 📝 江夏傳統整復推拿 板橋館｜專案版本更新紀錄 (CHANGELOG)
 
 本文檔記錄「江夏傳統整復推拿 板橋館」AI 客服機器人、Prompt 集中倉庫與自動化工具的所有版本演進、功能修復與 Git 變更紀錄。
+
+## 📌 [v2.5.0] - 2026-10-21 15:35:00
+### 🔗 新增「方法 B：後台排程看板主動連結 LINE@ 好友」＆「雲端 LINE 好友名冊自動同步機制」
+- **核心升級與解決問題**：
+  1. **解決「老客戶已加過 LINE@ 好友，但未在 LINE 留過電話，師傅想直接從後台主動幫客戶綁定 LINE 帳號」之需求**：
+     - 雖然 LINE 官方 API 禁止直接用「手機號碼」硬查未互動陌生人的 LINE，但只要客戶**曾經加入過店裡 LINE@ 好友（或傳過貼圖、問過問題）**，後台現在支援由師傅**主動從排程看板一鍵點選配對**！
+  2. **排程看板「預約詳情彈窗」新增【🔗 連結 LINE@】主動配對面板 (ooking-dashboard/index.html)**：
+     - 點開任何一筆預約詳情時，客戶資訊卡會即時顯示 🟢 已連結 LINE@ (...) 或 ⚪ 未連結 LINE@ 狀態徽章與 **「🔗 連結 LINE@」** 按鈕。
+     - 點擊「🔗 連結 LINE@」展開配對面板，提供雙模式主動綁定：
+       - **方式一（從已互動 LINE@ 好友清單一鍵選取）**：直接列出所有曾加過 LINE@ 好友的客戶名單（含 LINE 顯示暱稱、曾留姓名與電話），支援關鍵字即時篩選，點一下即可將該 LINE 帳號 LINE_USER_ID 綁定至該筆預約與客戶電話。
+       - **方式二（直接輸入客戶 LINE 顯示名稱或 ID）**：若師傅在 LINE Official Account Manager 後台看到客戶的 LINE 暱稱（例如 Amy、陳先生），直接輸入並按「綁定」，系統即寫入 [LINE_DISPLAY_NAME:XXX] 至雲端日曆，由 LINE 伺服器自動比對 LINE 暱稱並升級為永久 LINE_USER_ID 綁定！
+  3. **LINE 伺服器 ⇄ Google 日曆「雲端 LINE 好友名冊」自動同步橋樑 (line_server.js)**：
+     - 新增 syncLineFriendsToCalendar()：每當有客戶新加入 LINE 好友 (ollow)、傳貼圖 (sticker)、傳圖片或發訊息時，自動抓取其 lineDisplayName，並將所有已知 LINE@ 好友名冊同步至 Google 日曆隱藏系統事件 【系統同步】LINE好友名冊_勿刪（排定於未來週日 05:00~05:15 凌晨時段，不佔用營業空檔且免改動 GAS 後端即可讓排程看板秒讀）。
+     - 升級 cleanNoteText() 與 saveDetailChanges()：確保前端調理備註乾淨不顯示底層 [LINE_USER_ID:...] 標籤，同時在師傅修改備註並儲存時 100% 自動保留綁定標籤不遺失。
+- **Git Commit**：zach258/my-line-bot (1bf2e8)
+## 📌 [v2.4.0] - 2026-10-20 20:17:00
+### 📱 新增「未綁定 LINE 客戶雙軌簡訊提醒系統（方案一：Telegram/看板一鍵喚起手機原生簡訊 ＆ 方案二：全自動商用簡訊 API 接口）」＋「新加好友/貼圖/手機末三碼自動認親」
+- **核心升級與解決問題**：
+  1. **解決「後台排程／官網預約客戶未綁定 LINE 帳號」之提醒斷點**：當客戶由師傅於後台看板手動建檔或官網填表、尚未在 LINE 留過電話時，系統無法發送 LINE 通知。現新增「雙軌簡訊兜底機制」，確保 100% 不漏接任何一位預約客。
+  2. **方案一（0 元立即可用・Telegram 與排程看板「一鍵喚起手機簡訊 (`sms:`)」按鈕）**：
+     - 在每日 20:00 與 09:00 發送給師傅的 Telegram 報表中，針對每一位「⚠️ 尚未綁定 LINE 帳號」之客戶，直接生成 **【📲 點此一鍵喚起手機簡訊發給 XXX】** 專屬按鈕與一鍵點擊複製之 65 字精簡簡訊。
+     - 點擊按鈕後，透過看板 `?quick_sms=1` 橋樑於 **0.1 秒內自動喚起 iPhone/Android 內建簡訊 App**，自動填好收件電話與 65 字提醒文案（嚴守台灣單則 70 字計費上限、純文字地址防電信商攔截），按「傳送」即完成提醒。
+     - 同步於師傅排程看板（`booking-dashboard/index.html`）的「預約詳情彈窗」新增翠綠色 **「📲 簡訊提醒」** 按鈕（`sendSmsFromDetail`），隨時可手動一鍵發簡訊。
+  3. **方案二（100% 全自動無人值守・商用簡訊 API 雙向接口 `sendSmsViaApi`）**：
+     - 內建支援台灣主流 **Every8D (互動資通)**、**Mitake (三竹簡訊)**、**Twilio** 與自訂 **SMS Webhook**，只需於 Zeabur 設定環境變數帳密，系統即自動對無 LINE 帳號之客戶發送簡訊並寫入防重鎖。
+  4. **新加 LINE 好友 (`follow`)、傳貼圖 (`sticker`) 與手機末 3 碼自動認親**：
+     - 客戶新加入 LINE 好友或傳貼圖時，自動讀取其 LINE 顯示暱稱 (`lineDisplayName`) 比對未來 30 天 Google 日曆，同名者直接 1 秒自動綁定 `LINE_USER_ID` 並回寫日曆；亦支援客戶直接輸入手機末 3 碼快速認親。
+- **Git Commit**：`azach258/my-line-bot` (`e9c7531`)、`azach258/jiangxia-banqiao` (`cc8d6ff`)
+
+## 📌 [v2.3.0] - 2026-10-19 18:35:00
+### 🚀 新增「客戶永久識別與本人預約預載查詢」＆「LINE 預約前一天 20:00 主動提醒＋當日 09:00 晚鳥補漏雙引擎」
+- **核心升級與修復問題**：
+  1. **解決超過 14 天回訪客戶「客服失憶」漏洞**：原本 `line_server.js` 的 `getSession(userId)` 設有 14 天過期機制，會在清除對話 `history` 時連同客戶 `profile`（姓名、電話）一併洗掉；且 Render 雲端重啟時會遺失本地記憶體。
+  2. **解決跨管道預約（官網網頁預約／師傅後台排程）電話破折號格式斷鏈**：官網與 GAS 日曆寫入電話為 `0912-345-678`（含破折號），而 LINE 機器人原本僅比對純數字或 `LINE_USER_ID`，導致官網預約客戶進 LINE 查不到本人預約、也收不到提醒。
+  3. **解決客戶進場未預載預約導致「重複詢問姓名電話」或「忘記已預約過」**：原本機器人只有在客戶明確觸發工具時才查日曆，導致已預約客戶進來發問時，AI 不知道客戶已有未來有效預約。
+  4. **修復原提醒排程「台中大墩十街錯誤地址」與「單一早上 09:00 提醒太晚」問題**：原 `runMorningReminders` 內殘留台中館地址（`台中市南屯區大墩十街177號`），且僅在當日 09:00 發送，若客戶前一天臨時有事無法提前一天改期釋出空檔。
+- **解決方案與架構實裝**：
+  1. **永久客戶識別綁定庫 (`data/customer_bindings.json` + 雲端日曆自癒啟動 `bootstrapBindingsFromCalendar`)**：
+     - 建立 `byUserId` 與 `byPhone` 雙向永久索引，並在 `getSession` 中確保超過 14 天僅清理舊對話 `history`，100% 永久保留客戶 `profile`（姓名、電話、LINE 暱稱與調理備註）。
+     - 伺服器啟動時自動掃描 Google 日曆過去 90 天至未來 60 天行程，從日曆重建 `LINE_USER_ID ⇄ 姓名/電話` 綁定，免疫容器重啟失憶。
+  2. **跨管道電話正規化與日曆自動回寫 (`normalizePhone` & `patchEventWithLineUserId`)**：
+     - 實裝 `normalizePhone()` 統一剝除破折號與空白（支援完整手機號碼與電話末三碼比對）。
+     - 當官網或電話預約客戶首次在 LINE 詢問或貼上官網 `【預約明細】` 時，`findCustomerBooking` 即時比對成功並自動將 `LINE_USER_ID:<userId>` 回寫烙印至 Google 日曆事件 Description。
+  3. **進場零延遲自動預載本人預約 (`scanCustomerActiveBookings`)**：
+     - 客戶發送任何 LINE 訊息進場時，後端自動預掃描該客戶未來 30 天內的 Google 日曆有效預約，並注入 System Prompt 頂部 `【系統即時日曆核實之未來有效預約】`。
+     - 客戶詢問「我約幾點？」時免留資料秒答；已預約客戶若又說「我想預約」，機器人主動提醒現有預約時段，詢問是要改期還是幫親友加約。
+  4. **雙階段防爽約 LINE 提醒引擎 (`runDayBeforeReminders` @ 20:00 + `runMorningReminders` @ 09:00)**：
+     - **第一階段（前一天晚上 20:00 主力提醒）**：自動掃描「明天」所有預約，透過 `LINE_USER_ID` 或 `lookupLineUserIdByPhoneOrName()` 跨管道反查發送提醒，更正為板橋館正確地址（`新北市板橋區館前西路152之1號1樓` + Google Maps 導航）。
+     - **第二階段（當日早上 09:00 晚鳥補漏提醒 - 方案 A）**：僅針對昨晚 20:00 之後才臨時預約今日時段、尚未收到提醒的客戶補發，透過 `data/reminders_log.json` 與日曆 `[LINE提醒已發送:YYYY-MM-DD]` 雙重防重鎖，絕不重複打擾已提醒客戶。
+     - **改期自動重置提醒標籤**：更新 `Code.gs` 與 `gas_calendar_api.js` 之 `handleUpdateBookingTime`，改期時自動清除舊日期的 `[LINE提醒已發送:...]` 標記，確保新預約日期前一天 20:00 能再次準時提醒。
+
+## 📌 [v2.2.2] - 2026-10-14 19:55:00
+### 🛡️ 徹底修復變更服務內容與金額後「過一下又跳回編輯前舊資料」之背景輪詢覆寫漏洞 (Custom Edit Guard & Cloud Bi-directional Sync)
+- **修復問題**：
+  在後台排程看板點選預約詳情，變更調理方案（例如由免費評估切換為自費調理，或調整部位）與應收金額並儲存後，等待約 20 秒以內（「過一下」），畫面與資料又自動跳回編輯前的舊方案與舊金額。
+- **根本原因**：
+  1. **背景 20 秒無感輪詢機制 (`_cloudPollTimer`)**：系統每 20 秒自動執行 `fetchFromCloud(true)` 向 Google Apps Script 拉取最新雲端日曆行程。
+  2. **本地物件缺乏方案與金額保護標記**：師傅手動點擊方案按鈕（`selectDetailService`）或修改金額（`saveDetailChanges`）時，系統僅將變更寫入 `localStorage`，未標記手動保護標籤（對比備忘欄位有 `_customEdited`，方案與金額完全無防沖洗旗標）。
+  3. **雲端合流無條件覆蓋（Overriding Loop）**：在 `fetchFromCloud()` 迴圈中，系統執行 `exists.serviceItem = evt.serviceItem || exists.serviceItem;`。由於 Google 日曆上仍留存原本的預約項目字串，每次輪詢皆將師傅剛改好的方案強制替換回日曆舊值；若舊值包含「免費/評估」，更連帶觸發 `exists.price = 0; exists.isCustomPrice = false;`，將師傅改好的金額直接歸零！
+  4. **缺乏方案與金額之雙向雲端推播**：修改時段（`updateBookingTime`）與備忘（`updateNotes`）皆有發送遠端 API，但方案與金額修改時未推播至 Google 日曆與試算表，導致日曆永遠維持舊資料。
+- **解決方案**：
+  1. **實裝方案與金額防沖洗雙保護守衛 (`_customServiceEdited` & `_customPriceEdited`)**：
+     - 在 `selectDetailService`、`onDetailPriceChanged`、`saveDetailChanges` 統一設置保護標記。
+     - 在 `fetchFromCloud()` 中加入嚴格防禦：若 `exists._customServiceEdited === true`，絕不被雲端舊項目覆寫；若 `exists._customPriceEdited === true` 或 `exists.isCustomPrice === true`，100% 豁免雲端歸零邏輯，守護師傅設定之真實金額。
+  2. **實裝雲端方案與金額雙向推播引擎 (`syncServiceChangeToCloud`)**：
+     - 點擊方案或儲存變更時，自動非同步推播 `action: 'updateService'` 至 Google Apps Script。
+  3. **GAS 雲端橋樑全面升級支援 `updateService`**：
+     - 在 `google_apps_script/Code.gs` 與 `gas_calendar_api.js` 中新增 `handleUpdateService`，即時同步更新 Google 日曆 Description 中的 `預約項目`、`應收金額` 與 `調理部位`，並同步修訂 Google 試算表 `預約紀錄名冊`。
+     - `getEvents` 擴充支援解析日曆描述中的 `應收金額`，達成全平台單一真相源 (SSOT) 雙向閉環。
+  4. **全端語法與單元測試校驗**：
+     - 通過 Node.js 腳本語法檢測與輪詢抗沖洗單元測試，並完成 GitHub Pages 發布。
+
+## 📌 [v2.2.1] - 2026-10-13 15:45:00
+### 🛡️ 徹底修復歷史就診紀錄（如 10/2）儲存後重新整理 (F5) 消失之雙向同步刪除過濾盲區 (Query Window Safety Guard)
+- **修復問題**：
+  在後台排程看板輸入過去的就診紀錄（例如 10/2 預約），儲存時有顯示紀錄，但瀏覽器一旦重新整理 (F5)，該筆 10/2 客戶紀錄便徹底消失；重複輸入同一個客戶資料亦會重複發生消失現象（而 10/1 初始假資料則不受影響）。
+- **根本原因**：
+  1. **GAS 雲端查詢區間過窄**：`google_apps_script/Code.gs` 與 `gas_calendar_api.js` 之 `getEvents` 舊代碼硬編碼只抓取過去 3 天至未來 30 天（`now - 3 days` 到 `now + 30 days`）。以系統當前日期 10/13 為基準，查詢起點為 10/10，任何早於 10/10 的歷史行程（包括 10/2）均不在雲端日曆回傳資料中。
+  2. **雙向刪除過濾器缺乏時間視窗安全守衛**：看板在 `fetchFromCloud()` 執行與 Google 日曆雙向刪除對齊時，直接以 `if (b.cloudSyncedId && !cloudIds.has(b.cloudSyncedId)) return false;` 判斷本地預約是否已被雲端刪除，**未核對該行程之時間是否屬於本次雲端查詢的時間範圍**。
+  3. **抹除連鎖反應**：使用者登入 10/2 資料時，前端成功將預約推播至 Google 日曆並獲取 `cloudSyncedId` 寫入本地 `localStorage`；但在重新整理 (F5) 時，`fetchFromCloud()` 收到僅含 10/10 以後資料的 `result.data`，過濾器誤判「雲端已無此 10/2 行程，代表師傅已在日曆上刪除」，強行從 `this.bookings` 剔除並覆寫 `localStorage`，導致歷史紀錄永久丟失。而 10/1 剛好屬於初始假資料無 `cloudSyncedId`，因而未觸發該過濾條件。
+- **解決方案**：
+  1. **前端實裝時間視窗安全守衛 (`Query Window Safety Guard`)**：
+     - 在 `fetchFromCloud()` 中解析查詢區間（`cloudQueryStart` ~ `cloudQueryEnd`），**只有當預約時間明確落在本次雲端查詢視窗內時**，雲端找不到該 ID 才判定為被日曆手動刪除。
+     - 凡是落在查詢視窗外的所有歷史舊帳或超遠期預約，100% 豁免核對，絕不誤刪！
+  2. **GAS 雲端 API 查詢範圍擴增至 365 天**：
+     - `google_apps_script/Code.gs` 與 `booking-dashboard/gas_calendar_api.js` 之 `getEvents` 預設查詢範圍擴大為過去 365 天（一年）至未來 180 天（半年），並支援前端傳入 `startTime` 與 `endTime` 自訂區間，回傳標準 `queryStartTime` 與 `queryEndTime`。
+  3. **ID 雙向容錯去重比對**：
+     - `cloudIds` Set 同時收錄含 `@google.com` 與去除後之純 ID；並在 `exists` 比對時納入純 ID 與時間+號碼匹配，徹底免疫 ID 格式差異。
+  4. **全端測試與雙倉庫自動同步部署**：
+     - 通過 Node.js 語法校驗與 3 大情境單元測試（舊版 GAS 兼容、新版 GAS 覆蓋、真實日曆手動刪除連動），並完成 GitHub Pages 部署。
+
+## 📌 [v2.2.0] - 2026-10-13 15:25:00
+### 🛠️ 徹底修復「免費檢查評估」金額無法更改為 0、短路運算回退 1500 與歷史快取自動自我校正 (Auto-Heal)
+- **修復問題**：
+  1. 調理方案／部位顯示為「【免費】檢查評估諮詢」或「免費檢查評估」，但其預約應收金額始終為 $1,500，無法正確儲存或更新為 $0。
+  2. 師傅在預約詳情彈窗點選「【免費】評估 ($0)」按鈕時，受限於自訂價格防呆機制（`isCustomPrice`），系統彈出保留自訂金額並強行維持 1500 元。
+  3. 官網線上自主預約前台初始變數與 radio 選項脫鉤，若訪客未手動切換項目直接送出，金額被賦予預設旗艦價 1500。
+  4. 歷史快取資料庫（localStorage）中已儲存了過去誤記為 1500 的免費預約紀錄，無法自動校正。
+- **根本原因**：
+  1. **短路邏輯 Bug**：JavaScript 判斷 `b.price ? b.price : 1500` 或 `b.price || 1500`，因 `0` 為 Falsy，導致 $0 被強制回退為預設 $1,500。
+  2. **自訂價格鎖定攔截**：`selectDetailService` 在 `isCustomPrice = true` 時直接跳過金額更新，導致點擊免費方案按鈕無效。
+  3. **方案名稱模糊匹配限制**：舊代碼在比對「免費檢查評估」與「【免費】檢查評估諮詢」時因特殊括號 `【】` 導致匹配失敗，無法正確高亮按鈕與帶入 $0。
+  4. **缺乏開機自動自我校正機制**：`initStorage()` 載入既有快取時未針對「免費方案但金額為 1500」的歷史異常數據進行主動修復。
+- **解決方案**：
+  1. **實裝全域智慧定價引擎 (`getServiceDefaultPrice`)**：凡項目包含「免費/評估/諮詢」者，預設標準金額一律為 0 元，徹底移除寫死 1500 的回退。
+  2. **實裝開機自動自我修復 (`initStorage` Auto-Heal)**：系統初始化載入快取時，自動掃描並將所有調理項目為免費檢查評估、但金額曾誤記為 1500 的預約，100% 自動重設為 0 元並清除鎖定。
+  3. **解除方案切換攔截 (`selectDetailService`)**：只要師傅主動點擊方案按鈕（包括【免費】評估），一律無條件切換項目名稱、同步金額為 $0，並即時連動刷新時間軸與應收統計。
+  4. **升級方案模糊比對演算法 (`renderDetailServiceButtons`)**：自動濾除括號與空白符號，確保各種名稱變體皆能精準高亮對應按鈕。
+  5. **前台官網狀態對齊 (`JiangxiaFrontBooking`)**：修正建構子預設值為免費檢查評估（$0, 15分鐘），並於開窗時自動同步 DOM 單選狀態。
+  6. **一鍵同步發布**：全站程式碼通過 Node.js 語法校驗，並已部署發布至 GitHub Pages 雙端（官網與看板）。
 
 ## 📌 [v1.5.3] - 2026-09-29 16:50:00
 ### 🛡️ 實裝客戶真實姓名防呆過濾器、問候語阻斷機制與改時間姓名鎖定鐵律
