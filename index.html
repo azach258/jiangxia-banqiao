@@ -650,12 +650,12 @@
                     </button>
                 </div>
 
-                <!-- Item 3: 骨盆調理 -->
+                <!-- Item 3: 骨盆調理 (修正為精確官方定價 NT$ 800) -->
                 <div class="p-6 rounded-3xl bg-white border border-amber-200/80 card-shadow-sm flex flex-col justify-between hover:border-amber-400 hover:shadow-md transition">
                     <div>
                         <div class="flex justify-between items-center mb-3">
                             <span class="text-[11px] font-bold text-jx-sealRed tracking-wider">體態平衡核心</span>
-                            <span class="text-[10px] bg-red-100 text-jx-sealRed px-2 py-0.5 rounded-full font-bold">核心支柱</span>
+                            <span class="text-[10px] bg-red-100 text-jx-sealRed px-2 py-0.5 rounded-full font-bold">約 15~20 分鐘</span>
                         </div>
                         <div class="w-10 h-10 rounded-xl bg-red-50 text-jx-sealRed flex items-center justify-center text-lg mb-3">
                             <i class="fa-solid fa-universal-access"></i>
@@ -666,7 +666,7 @@
                         <div class="mb-4 p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-center">
                             <div class="flex items-baseline justify-center gap-1 text-jx-wood">
                                 <span class="text-xs font-bold text-jx-amber">NT$</span>
-                                <span class="text-2xl font-black text-jx-amber">1,200</span>
+                                <span class="text-2xl font-black text-jx-amber">800</span>
                             </div>
                             <div class="text-[10px] text-slate-500 mt-0.5">骨盆重心校正與深層筋骨舒緩</div>
                         </div>
@@ -678,8 +678,8 @@
                         </ul>
                     </div>
 
-                    <button type="button" onclick="frontApp.openBookingModal('骨盆調理', 30, 1200)" class="w-full py-2.5 bg-jx-paper hover:bg-amber-100/70 active:scale-[0.98] text-jx-wood font-bold text-xs rounded-xl text-center border border-amber-300 transition">
-                        預約此部位 ($1,200)
+                    <button type="button" onclick="frontApp.openBookingModal('骨盆調理', 20, 800)" class="w-full py-2.5 bg-jx-paper hover:bg-amber-100/70 active:scale-[0.98] text-jx-wood font-bold text-xs rounded-xl text-center border border-amber-300 transition">
+                        預約此部位 ($800)
                     </button>
                 </div>
 
@@ -1180,16 +1180,16 @@
                 <span class="font-bold text-sm text-slate-800">$800</span>
               </label>
 
-              <!-- Option 3: 骨盆調理 -->
+              <!-- Option 3: 骨盆調理 (NT$ 800) -->
               <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition service-option">
                 <div class="flex items-center gap-2.5">
-                  <input type="radio" name="frontService" value="骨盆調理" data-duration="30" data-price="1200" onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-rose-600 accent-rose-600">
+                  <input type="radio" name="frontService" value="骨盆調理" data-duration="20" data-price="800" onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-rose-600 accent-rose-600">
                   <div>
                     <span class="font-bold text-xs sm:text-sm text-slate-900 block">骨盆調理</span>
                     <span class="text-[10px] text-slate-500">骨盆前傾、翹腳長短腳、下半身重心平衡</span>
                   </div>
                 </div>
-                <span class="font-bold text-sm text-slate-800">$1,200</span>
+                <span class="font-bold text-sm text-slate-800">$800</span>
               </label>
 
               <!-- Option 4: 手指、手腕、腳踝 -->
@@ -1374,8 +1374,8 @@
         customerName: "李小姐",
         phone: "0988-765-432",
         serviceItem: "骨盆調理",
-        durationMin: 60,
-        price: 1200,
+        durationMin: 20,
+        price: 800,
         paymentMethod: "LINE Pay",
         status: "已到店",
         syncStatus: "synced",
