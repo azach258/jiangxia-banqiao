@@ -161,24 +161,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-  <!-- Step 2 Staging Test Banner -->
-  <aside aria-label="測試沙盒工具列" class="bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs text-emerald-900 sticky top-0 z-50 shadow-sm">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2 font-medium">
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-200 text-emerald-950 border border-emerald-300">
-          🧪 Step 2 前端測試環境
-        </span>
-        <span>顧客線上自助預約模組 ✕ 後台核心資料庫 即時雙向對接</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <a href="http://localhost:8090/booking-dashboard/test_dashboard_v2.html" target="_blank" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 rounded-lg border border-slate-300 font-semibold shadow-sm transition flex items-center gap-1 text-[11px]">
-          <i data-lucide="external-link" class="w-3.5 h-3.5 text-brand-600"></i>
-          <span>開啟店家後台儀表板 (比對排程)</span>
-        </a>
-      </div>
-    </div>
-  </aside>
-
 <body class="mobile-safe-bottom md:pb-0 antialiased selection:bg-jx-amber selection:text-white">
 
     <!-- 1. Top Announcement Bar (合規宣告與品牌背景) -->
@@ -213,17 +195,17 @@
                 <a href="#location" class="hover:text-jx-amber transition">門市交通</a>
             </nav>
 
-            <!-- Desktop CTAs & Mobile Dial -->
-            <div class="flex items-center gap-3">
+            <!-- Header Quick Action: 電話直撥 + 加 LINE 預約 + 自助排程 -->
+            <div class="flex items-center gap-2 sm:gap-3">
                 <a href="tel:0989879614" onclick="trackConversion('Header Dial', 'tel:0989879614'); return false;" class="hidden lg:inline-flex bg-amber-50 hover:bg-amber-100 text-jx-wood px-3.5 py-2 rounded-xl border border-amber-200 items-center gap-2 text-xs font-bold transition">
                     <i class="fa-solid fa-phone text-jx-amber"></i> 0989 879 614
                 </a>
-                <button type="button" onclick="frontApp.openBookingModal()" class="hidden sm:inline-flex bg-jx-lineGreen hover:bg-green-600 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl items-center gap-1.5 shadow-md shadow-green-900/15 transition">
-                    <i class="fa-solid fa-calendar-check text-base"></i> 線上即時預約
-                </button>
-                <a href="tel:0989879614" onclick="trackConversion('Mobile Header Dial', 'tel:0989879614'); return false;" class="sm:hidden w-9 h-9 rounded-full bg-amber-50 border border-amber-300 text-jx-amber flex items-center justify-center text-sm shadow-sm">
-                    <i class="fa-solid fa-phone"></i>
+                <a href="https://lin.ee/nS9fKjy" target="_blank" onclick="trackConversion('Header LINE', 'https://lin.ee/nS9fKjy', true); return false;" class="inline-flex bg-jx-lineGreen hover:bg-green-600 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 rounded-xl items-center gap-1.5 shadow-md shadow-green-900/15 transition">
+                    <i class="fa-brands fa-line text-base"></i> 加 LINE 預約諮詢
                 </a>
+                <button type="button" onclick="frontApp.openBookingModal()" class="hidden md:inline-flex bg-white hover:bg-amber-50 text-jx-wood text-xs font-bold px-3 py-2 rounded-xl border border-amber-300 items-center gap-1 shadow-sm transition">
+                    <i class="fa-solid fa-calendar-check text-jx-amber"></i> 自助排程
+                </button>
             </div>
         </div>
     </header>
@@ -263,25 +245,34 @@
                 <span class="px-3.5 py-1.5 bg-white border border-amber-200/80 rounded-full shadow-sm">✓ 消除日常緊繃代償</span>
             </div>
 
-            <!-- Dual CTA Action Block: 零防禦主 CTA + 電話預約 -->
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 max-w-lg mx-auto">
-                <button type="button" onclick="frontApp.openBookingModal()" class="w-full sm:w-auto px-7 py-3.5 md:py-4 bg-jx-lineGreen hover:bg-green-600 active:scale-[0.98] text-white font-black text-sm md:text-base rounded-2xl shadow-lg shadow-green-900/15 flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-calendar-check text-xl"></i>
-                    <span>立即線上預約排程 (免等待)</span>
-                </button>
+            <!-- High-Conversion Action Block: LINE 免費諮詢預約 + 電話直撥 + 自助排程 -->
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 max-w-xl mx-auto">
+                <a href="https://lin.ee/nS9fKjy" target="_blank" onclick="trackConversion('Hero LINE CTA', 'https://lin.ee/nS9fKjy', true); return false;" class="w-full sm:w-auto px-7 py-3.5 md:py-4 bg-jx-lineGreen hover:bg-green-600 active:scale-[0.98] text-white font-black text-sm md:text-base rounded-2xl shadow-lg shadow-green-900/20 flex items-center justify-center gap-2.5 transition">
+                    <i class="fa-brands fa-line text-2xl"></i>
+                    <span>加 LINE 免費諮詢・預約排程</span>
+                </a>
                 <a href="tel:0989879614" onclick="trackConversion('Hero Call CTA', 'tel:0989879614'); return false;" class="w-full sm:w-auto px-6 py-3.5 md:py-4 bg-white hover:bg-amber-50 active:scale-[0.98] text-jx-wood font-bold text-xs md:text-sm rounded-2xl border border-amber-300 shadow-sm flex items-center justify-center gap-2 transition">
                     <i class="fa-solid fa-phone text-jx-amber"></i>
                     <span>電話洽詢：0989 879 614</span>
                 </a>
             </div>
 
-            <p class="text-[11px] sm:text-xs text-jx-slate/90 mt-3 flex items-center justify-center gap-1.5 font-medium">
-                <i class="fa-solid fa-stethoscope text-emerald-600"></i>
-                <span>不清楚症狀成因？現場提供【免費】檢查評估 ｜ 依部位計價透明公開</span>
+            <!-- 自助排程入口 -->
+            <div class="mt-3 flex items-center justify-center gap-2 text-xs text-jx-slate font-medium">
+                <span>習慣直接選手動時段？</span>
+                <button type="button" onclick="frontApp.openBookingModal()" class="text-jx-amber hover:underline font-bold inline-flex items-center gap-1">
+                    <i class="fa-solid fa-calendar-days text-[11px]"></i>
+                    <span>點此開啟「線上自助排程系統」</span>
+                </button>
+            </div>
+
+            <p class="text-[11px] sm:text-xs text-jx-slate/90 mt-2 flex items-center justify-center gap-1.5 font-medium">
+                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                <span>不清楚症狀成因？現場提供【免費】檢查評估 ｜ 賴師傅親施 ｜ 承諾絕不推銷</span>
             </p>
 
             <!-- Desktop QR Code Quick Scan Pill (電腦訪客直接掃碼) -->
-            <div class="hidden sm:inline-flex items-center gap-3 mt-5 p-2 pl-3 pr-4 rounded-2xl bg-white border border-amber-200/80 shadow-sm">
+            <div class="hidden sm:inline-flex items-center gap-3 mt-4 p-2 pl-3 pr-4 rounded-2xl bg-white border border-amber-200/80 shadow-sm">
                 <img src="https://qr-official.line.me/gs/M_429rnxzs_GW.png?oat_content=qr" alt="江夏傳統整復推拿板橋館 LINE 預約 QR Code" class="w-12 h-12 rounded-lg border border-amber-100 bg-white p-0.5 shadow-sm flex-shrink-0">
                 <div class="text-left">
                     <div class="text-xs font-bold text-jx-wood flex items-center gap-1">
@@ -291,9 +282,41 @@
                 </div>
             </div>
 
-            <p class="text-[11px] sm:text-xs text-jx-slate mt-3 font-medium">
-                ⚡ 本館為民俗調理服務・每日專屬時段有限・建議提前預約確認
-            </p>
+            <!-- Authentic Visual Showcase: 門面、環境與專業手法 3 大實拍照 -->
+            <div class="mt-8 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                <div class="bg-white rounded-2xl p-2.5 border border-amber-200/80 shadow-sm overflow-hidden group">
+                    <div class="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 relative mb-2.5">
+                        <img src="images/real_photo_A.jpg" alt="江夏傳統整復推拿板橋館 門面外觀" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                        <span class="absolute bottom-2 left-2 bg-jx-wood/85 text-amber-100 text-[10px] px-2 py-0.5 rounded font-bold backdrop-blur-sm">實體門市</span>
+                    </div>
+                    <div class="px-1.5 pb-1">
+                        <h4 class="font-bold text-xs sm:text-sm text-jx-wood">板橋館前西路 152-1 號</h4>
+                        <p class="text-[11px] text-jx-slate mt-0.5">近府中站步行 8 分鐘・對面即有收費停車場</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-2.5 border border-amber-200/80 shadow-sm overflow-hidden group">
+                    <div class="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 relative mb-2.5">
+                        <img src="images/real_photo_B.jpg" alt="江夏傳統整復推拿板橋館 乾淨明亮調理環境" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                        <span class="absolute bottom-2 left-2 bg-emerald-900/85 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-bold backdrop-blur-sm">乾淨衛生</span>
+                    </div>
+                    <div class="px-1.5 pb-1">
+                        <h4 class="font-bold text-xs sm:text-sm text-jx-wood">明亮採光・一人一床獨立隱私</h4>
+                        <p class="text-[11px] text-jx-slate mt-0.5">每客更換醫療級拋棄式面墊・全面清潔消毒</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-2.5 border border-amber-200/80 shadow-sm overflow-hidden group">
+                    <div class="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 relative mb-2.5">
+                        <img src="images/real_photo_C.jpg" alt="賴師傅太極內勁調理實拍" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                        <span class="absolute bottom-2 left-2 bg-jx-sealRed/85 text-white text-[10px] px-2 py-0.5 rounded font-bold backdrop-blur-sm">賴師傅親施</span>
+                    </div>
+                    <div class="px-1.5 pb-1">
+                        <h4 class="font-bold text-xs sm:text-sm text-jx-wood">武英門太極內勁深層理筋</h4>
+                        <p class="text-[11px] text-jx-slate mt-0.5">溫和滲透深層筋膜・絕不生硬拉扯扳折</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -427,12 +450,84 @@
     <!-- 6. Official Pricing Table (傳統整復推拿調理 服務價目表) -->
     <section id="pricing" class="py-12 md:py-20 bg-gradient-to-b from-amber-50/60 to-white border-b border-amber-900/10 px-4 sm:px-6">
         <div class="max-w-5xl mx-auto">
+            
+            <!-- 賴師傅 4 大安心守護承諾卡 (破除恐懼防線) -->
+            <div class="mb-10 max-w-4xl mx-auto p-5 sm:p-7 rounded-3xl bg-gradient-to-r from-amber-50 via-white to-orange-50 border-2 border-amber-300/80 shadow-md">
+                <div class="text-center mb-5">
+                    <span class="seal-stamp text-xs px-2.5 py-0.5 mb-1.5">無壓安心承諾</span>
+                    <h3 class="text-lg sm:text-2xl font-black font-classical text-jx-wood">江夏板橋館 賴師傅「4 大無痛無壓承諾」</h3>
+                    <p class="text-xs text-jx-slate mt-1">我們深知您對傳統整復推拿的擔憂，這裡給您最踏實的安全感</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-left">
+                    <div class="p-4 rounded-2xl bg-white border border-amber-200/90 shadow-sm">
+                        <div class="text-jx-amber text-xl mb-1.5"><i class="fa-solid fa-feather-pointed"></i></div>
+                        <h4 class="font-bold text-xs sm:text-sm text-jx-wood mb-1">絕不盲目強扳</h4>
+                        <p class="text-[11px] text-jx-slate leading-relaxed">太極柔和內勁循序理筋，依您的呼吸耐受度隨時微調，告別生硬恐懼。</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-amber-200/90 shadow-sm">
+                        <div class="text-emerald-600 text-xl mb-1.5"><i class="fa-solid fa-tags"></i></div>
+                        <h4 class="font-bold text-xs sm:text-sm text-jx-wood mb-1">透明公開定價</h4>
+                        <p class="text-[11px] text-jx-slate leading-relaxed">施作前充分溝通並清楚說明費用，絕無事後加價或隱形收費。</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-amber-200/90 shadow-sm">
+                        <div class="text-rose-600 text-xl mb-1.5"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h4 class="font-bold text-xs sm:text-sm text-jx-wood mb-1">承諾絕不推銷</h4>
+                        <p class="text-[11px] text-jx-slate leading-relaxed">不強迫推銷高額包套，只針對您日常工作體態提供真實放鬆建議。</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-amber-200/90 shadow-sm">
+                        <div class="text-blue-600 text-xl mb-1.5"><i class="fa-solid fa-pump-medical"></i></div>
+                        <h4 class="font-bold text-xs sm:text-sm text-jx-wood mb-1">衛生一人一墊</h4>
+                        <p class="text-[11px] text-jx-slate leading-relaxed">每位顧客皆使用拋棄式不織布面墊，環境全天定期紫外線清潔消毒。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新客初次體驗・旗艦破冰專案 (大幅降低決策門檻) -->
+            <div class="mb-12 max-w-4xl mx-auto rounded-3xl bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 p-1 shadow-xl">
+                <div class="bg-white rounded-[22px] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="flex-1 text-center md:text-left">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-black mb-2">
+                            <i class="fa-solid fa-fire text-rose-500"></i>
+                            <span>新客初次預約限定 ｜ 每日限額 3 位</span>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-black font-classical text-jx-wood mb-2">
+                            【新客破冰首選】全身體態初評 ＋ 核心深層筋膜舒緩專案
+                        </h3>
+                        <p class="text-xs sm:text-sm text-jx-slate leading-relaxed mb-4">
+                            專為初次來店、久坐僵硬或受反覆卡頓困擾的您設計。先由賴師傅親自進行關節活動度與體態檢測，再以太極內勁溫和理筋，深層釋放緊繃代償！
+                        </p>
+                        <div class="flex flex-wrap gap-2 text-xs text-jx-wood font-medium justify-center md:justify-start">
+                            <span class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg">⏱ 約 30~40 分鐘</span>
+                            <span class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg">👤 賴師傅親自施作</span>
+                            <span class="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg">🎯 體態檢測＋肩頸腰背深層理筋</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center justify-center p-6 rounded-2xl bg-amber-50/70 border border-amber-200 min-w-[240px] text-center flex-shrink-0">
+                        <div class="text-[11px] text-slate-400 line-through">門市原價 NT$ 1,500</div>
+                        <div class="flex items-baseline justify-center gap-1 text-jx-wood my-1">
+                            <span class="text-xs font-bold text-rose-600">首遇體驗價 NT$</span>
+                            <span class="text-4xl font-black text-rose-600">799</span>
+                        </div>
+                        <div class="text-[10px] text-emerald-700 font-bold mb-4">現省 $701 ｜ 承諾絕不推銷</div>
+                        
+                        <a href="https://lin.ee/nS9fKjy" target="_blank" onclick="trackConversion('Pricing New Customer LINE', 'https://lin.ee/nS9fKjy', true); return false;" class="w-full py-3 px-5 bg-jx-lineGreen hover:bg-green-600 active:scale-[0.98] text-white font-black text-xs sm:text-sm rounded-xl text-center shadow-md flex items-center justify-center gap-2 transition mb-2">
+                            <i class="fa-brands fa-line text-lg"></i>
+                            <span>加 LINE 搶約體驗</span>
+                        </a>
+                        <button type="button" onclick="frontApp.openBookingModal('【新客破冰首選】全身體態初評＋深層舒緩', 40, 799)" class="text-[11px] text-jx-slate hover:text-jx-amber font-semibold underline">
+                            或使用線上自助排程 ($799)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="text-center mb-10 md:mb-12">
                 <span class="inline-block px-3.5 py-1 rounded-full bg-jx-amber/10 border border-jx-amber/30 text-jx-amber text-xs font-black tracking-wide mb-2">
                     ★ 專業整復 ｜ 價格透明公開
                 </span>
                 <h2 class="text-2xl md:text-4xl font-black font-classical text-jx-wood">
-                    傳統整復推拿調理 服務價目表
+                    常態傳統整復推拿 服務價目表
                 </h2>
                 <!-- 核心提醒：依部位計價 -->
                 <div class="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100/90 border border-amber-300 text-jx-wood text-xs md:text-sm font-bold shadow-sm">
@@ -877,16 +972,26 @@
         </div>
     </footer>
 
-    <!-- 11. Mobile Sticky Floating Bottom Bar (行動端專屬雙按鈕，桌面自動隱藏) -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/98 backdrop-blur-lg border-t border-amber-900/15 p-2.5 floating-bar-safe flex gap-2 shadow-2xl">
-        <a href="tel:0989879614" onclick="trackConversion('Floating Call', 'tel:0989879614'); return false;" class="w-1/3 py-3 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-jx-wood font-bold text-xs rounded-xl border border-amber-300 flex items-center justify-center gap-1 transition">
-            <i class="fa-solid fa-phone text-jx-amber text-xs"></i>
-            <span>撥電話</span>
-        </a>
-        <button type="button" onclick="frontApp.openBookingModal()" class="w-2/3 py-3 bg-jx-lineGreen hover:bg-green-600 active:scale-[0.98] text-white font-black text-sm rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-green-950/20 transition">
-            <i class="fa-solid fa-calendar-check text-lg"></i>
-            <span>立即線上預約</span>
-        </button>
+    <!-- 11. Mobile Sticky Floating Bottom Bar (行動端高轉換雙引擎) -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/98 backdrop-blur-lg border-t border-amber-900/15 p-2 floating-bar-safe shadow-2xl">
+        <div class="flex items-center justify-between text-[10px] text-jx-slate px-2 pb-1.5 font-medium border-b border-slate-100 mb-1.5">
+            <span class="flex items-center gap-1 text-emerald-700 font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 今日營業中 ｜ 賴師傅親施
+            </span>
+            <button type="button" onclick="frontApp.openBookingModal()" class="text-jx-amber hover:underline flex items-center gap-1 font-semibold">
+                <i class="fa-solid fa-calendar-check text-[10px]"></i> 線上自助排程表單
+            </button>
+        </div>
+        <div class="flex gap-2">
+            <a href="tel:0989879614" onclick="trackConversion('Floating Call', 'tel:0989879614'); return false;" class="w-[35%] py-2.5 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-jx-wood font-bold text-xs rounded-xl border border-amber-300 flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-phone text-jx-amber text-xs"></i>
+                <span>撥打電話</span>
+            </a>
+            <a href="https://lin.ee/nS9fKjy" target="_blank" onclick="trackConversion('Floating LINE CTA', 'https://lin.ee/nS9fKjy', true); return false;" class="w-[65%] py-2.5 bg-jx-lineGreen hover:bg-green-600 active:scale-[0.98] text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-green-950/20 transition">
+                <i class="fa-brands fa-line text-lg"></i>
+                <span>加 LINE 預約諮詢 (免等待)</span>
+            </a>
+        </div>
     </div>
 
     <!-- Privacy Policy Modal -->
@@ -973,16 +1078,34 @@
             </div>
             <div class="grid grid-cols-1 gap-2" id="serviceOptionsContainer">
               
-              <!-- Option 5: 免費檢查評估 (預設首選) -->
-              <label class="flex items-center justify-between p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 cursor-pointer hover:bg-emerald-100/50 transition service-option">
+              <!-- Option 0: 新客破冰體驗款 (超值首選) -->
+              <label class="flex items-center justify-between p-3 rounded-xl border-2 border-rose-500 bg-rose-50/50 cursor-pointer hover:bg-rose-100/40 transition service-option">
                 <div class="flex items-center gap-2.5">
-                  <input type="radio" name="frontService" value="【免費】檢查評估諮詢" data-duration="15" data-price="0" checked onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-emerald-600 accent-emerald-600">
+                  <input type="radio" name="frontService" value="【新客破冰首選】全身體態初評＋深層舒緩" data-duration="40" data-price="799" checked onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-rose-600 accent-rose-600">
                   <div>
                     <div class="flex items-center gap-1.5">
-                      <span class="font-bold text-xs sm:text-sm text-emerald-950">【免費】檢查評估諮詢</span>
-                      <span class="text-[9px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-bold">預約首選</span>
+                      <span class="font-bold text-xs sm:text-sm text-rose-950">【新客破冰首選】全身體態初評＋深層舒緩</span>
+                      <span class="text-[9px] bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded font-bold">新客限時 $799</span>
                     </div>
-                    <span class="text-[10px] text-emerald-700">不清楚症狀是由什麼狀況引起的？由賴師傅親自評估說明 ｜ 約 15 分鐘</span>
+                    <span class="text-[10px] text-rose-700">全身體態檢測 ＋ 肩頸胸腰背太極深層理筋 ｜ 約 30~40 分鐘 (原價 $1500)</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] text-slate-400 line-through block">$1,500</span>
+                  <span class="font-black text-sm text-rose-600">$799</span>
+                </div>
+              </label>
+
+              <!-- Option 5: 免費檢查評估 -->
+              <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition service-option">
+                <div class="flex items-center gap-2.5">
+                  <input type="radio" name="frontService" value="【免費】檢查評估諮詢" data-duration="15" data-price="0" onchange="frontApp.handleServiceChange()" class="w-4 h-4 text-emerald-600 accent-emerald-600">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-xs sm:text-sm text-slate-800">【免費】檢查評估諮詢</span>
+                      <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">免費諮詢</span>
+                    </div>
+                    <span class="text-[10px] text-slate-500">不清楚症狀成因？由賴師傅親自評估說明 ｜ 約 15 分鐘</span>
                   </div>
                 </div>
                 <span class="font-bold text-sm text-emerald-700">$0 免費</span>
@@ -1269,9 +1392,9 @@
         const d = String(now.getDate()).padStart(2, '0');
         this.selectedDateStr = `${y}-${m}-${d}`;
         this.selectedTimeStr = "14:00";
-        this.selectedService = "頸、背、腰 (含整體結構調整)";
-        this.selectedDuration = 60;
-        this.selectedPrice = 1500;
+        this.selectedService = "【新客破冰首選】全身體態初評＋深層舒緩";
+        this.selectedDuration = 40;
+        this.selectedPrice = 799;
 
         // 雲端 API 設定 (支援 URL 參數 ?api= 或共用 localStorage)
         this.gasUrl = new URLSearchParams(window.location.search).get('api') || localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
@@ -1282,6 +1405,7 @@
       }
 
       init() {
+        this.handleServiceChange();
         this.renderDateTabs();
         this.listenStorageChanges();
         if (this.gasUrl) {
@@ -1512,8 +1636,9 @@
           const card = r.closest('label');
           if (r.checked) {
             this.selectedService = r.value;
-            this.selectedDuration = 60; // 每次預約占用 1 小時
-            this.selectedPrice = parseInt(r.dataset.price || 1500, 10);
+            this.selectedDuration = parseInt(r.dataset.duration || 60, 10);
+            const p = r.dataset.price;
+            this.selectedPrice = (p !== undefined && p !== null && p !== '') ? parseInt(p, 10) : 0;
             if (card) {
               card.classList.remove('border-slate-200', 'bg-white');
               if (r.value.includes('免費')) {
@@ -1541,8 +1666,8 @@
               break;
             }
           }
-          this.handleServiceChange();
         }
+        this.handleServiceChange();
         this.renderDateTabs();
         if (this.gasUrl) {
           this.fetchCloudBookings();
