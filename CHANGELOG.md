@@ -2,6 +2,15 @@
 
 本文檔記錄「江夏傳統整復推拿 板橋館」AI 客服機器人、Prompt 集中倉庫與自動化工具的所有版本演進、功能修復與 Git 變更紀錄。
 
+## 📌 [v2.5.3] - 2026-10-22 15:21:00
+### 🛡️ 修復 AI 預約調用 ookEvent 時 endTime 格式不完整導致崩潰報錯「日曆系統連線異常」之漏洞
+- **根本原因**：
+  當 Gemini AI 模型在對話中調用 ookEvent 時，若傳入的 endTime 為空字串、純時間格式（如 17:00）或帶空格格式（如 2026-10-23 17:00:00），未標準化為帶 T 的 ISO 格式，後續在執行 endTime.split("T")[1] 時直接引發 TypeError: Cannot read properties of undefined (reading 'split') 拋出例外，觸發 Prompt 兜底話術「目前日曆系統連線有些異常」。
+- **修復方案**：
+  1. 在 ookEvent 內對 startTime 與 endTime 實裝格式清洗與補位防護（支援自動將空格轉 T、純時間補日期、缺秒數自動補 :00）。
+  2. 若 endTime 格式非標準日期字串，一律自動改以 startTime 往後推算 1 小時補全，徹底杜絕 undefined 切割崩潰。
+  3. 全面對 split("T") 與 split(":") 加上安全鏈與預設值備援。
+- **Git Commit**：zach258/my-line-bot (53a2912)
 ## 📌 [v2.5.0] - 2026-10-21 15:35:00
 ### 🔗 新增「方法 B：後台排程看板主動連結 LINE@ 好友」＆「雲端 LINE 好友名冊自動同步機制」
 - **核心升級與解決問題**：
