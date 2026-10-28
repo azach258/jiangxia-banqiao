@@ -482,6 +482,7 @@
                 <th class="px-2">費用</th>
                 <th class="px-2">支付方式</th>
                 <th class="px-2">狀態</th>
+                <th class="px-2 text-right">操作</th>
               </tr>
             </thead>
             <tbody id="reportTableBody" class="divide-y divide-slate-100">
@@ -602,6 +603,8 @@
               <option value="手指、手腕、腳踝" data-duration="60" data-price="600">手指、手腕、腳踝 ｜ NT$ 600</option>
               <option value="鬆筋按摩 (60分鐘)" data-duration="60" data-price="1300">鬆筋按摩 (60分鐘) ｜ NT$ 1,300</option>
               <option value="鬆筋按摩 (30分鐘)" data-duration="30" data-price="700">鬆筋按摩 (30分鐘) ｜ NT$ 700</option>
+              <option value="首客禮(一) 買2送1" data-duration="60" data-price="3000">首客禮(一) 買2送1 ｜ NT$ 3,000</option>
+              <option value="首客禮(二) 買4送2" data-duration="60" data-price="6000">首客禮(二) 買4送2 ｜ NT$ 6,000</option>
             </select>
           </div>
           <div>
@@ -1352,6 +1355,8 @@
       { name: "手指、手腕、腳踝", shortName: "手腕腳踝", price: 600 },
       { name: "鬆筋按摩 (60分鐘)", shortName: "鬆筋60分", price: 1300 },
       { name: "鬆筋按摩 (30分鐘)", shortName: "鬆筋30分", price: 700 },
+      { name: "首客禮(一) 買2送1", shortName: "首客禮(一) 買2送1", price: 3000 },
+      { name: "首客禮(二) 買4送2", shortName: "首客禮(二) 買4送2", price: 6000 },
       { name: "【免費】檢查評估諮詢", shortName: "【免費】評估", price: 0 }
     ];
 
@@ -1395,22 +1400,19 @@
           this.deletedCustomerPhones = JSON.parse(localStorage.getItem('jiangxia_deleted_customers_v2') || '[]');
         } catch(e) { this.deletedCustomerPhones = []; }
 
-        // 清理殘留之測試假資料 (王大偉/李小姐/張經理/QA測試員等) 以及已刪除的行程
-        storedBookings = (storedBookings || []).filter(b => {
-          const id = b.id || '';
-          const cId = b.cloudSyncedId || '';
-          if (this.deletedEventIds.includes(id) || (cId && this.deletedEventIds.includes(cId))) {
+        // 清理殘留之測試假資料、店休/光復節全天事件以及已刪除的行程
+        storedBookings = (storedBookings || []).filter((b, idx) => {
+          if (!b) return false;
+          if (!b.id) b.id = 'b-legacy-' + idx;
+          if (this.isNonCustomerEvent(b)) return false;
+          const id = String(b.id || '');
+          const cId = String(b.cloudSyncedId || '');
+          const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
+          if (this.deletedEventIds.includes(id) || (cId && this.deletedEventIds.includes(cId)) || this.deletedEventIds.includes(sig)) {
             return false;
           }
           const pureId = id.replace('@google.com', '');
           if (pureId && this.deletedEventIds.includes(pureId)) {
-            return false;
-          }
-          const name = b.customerName || '';
-          if (name.includes('QA') || name.includes('測試') || name === '王大偉' || name === '李小姐' || name === '張經理') {
-            return false;
-          }
-          if (b.id === 'b-1' || b.id === 'b-2' || b.id === 'b-3') {
             return false;
           }
           return true;
@@ -1485,15 +1487,64 @@
         this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
       }
 
+      isNonCustomerEvent(b) {
+        if (!b) return true;
+        const name = String(b.customerName || b.name || '').trim();
+        const notes = String(b.notes || b.symptoms || b.health_notes || '');
+        const startStr = String(b.start || '').replace(' ', 'T');
+        const idStr = String(b.id || b.cloudSyncedId || '');
+
+        // 1. 排除系統同步名冊、店休、公休、光復節、颱風假、私人行程與測試假資料
+        if (
+          name.includes('LINE好友名冊') ||
+          notes.includes('LINE_FRIENDS_JSON:') ||
+          name.includes('店休') ||
+          name.includes('公休') ||
+          name.includes('休假') ||
+          name.includes('停診') ||
+          name.includes('光復節') ||
+          name.includes('颱風假') ||
+          name.includes('牙醫') ||
+          name.includes('QA') ||
+          name.includes('測試') ||
+          name === '王大偉' ||
+          name === '李小姐' ||
+          name === '張經理' ||
+          idStr === 'b-1' || idStr === 'b-2' || idStr === 'b-3' ||
+          idStr.includes('6oo6cchn65imab9o75hmcb9k68rjabb2cko3ib9g6sp62phmcgqm4opj64') ||
+          idStr === '8082CA60-D2A7-4903-A5F6-D99251BAD257'
+        ) {
+          return true;
+        }
+
+        // 2. 排除全天跨日事件 (00:00:00 為國定假日或店休標記，非客戶預約)
+        if (startStr.endsWith('T00:00:00')) {
+          return true;
+        }
+
+        // 3. 排除光復節連假店休 (2026-10-25 週日公休/光復節、2026-10-26 光復節店休一日) 與 2026-10-23 颱風假店休之誤植紀錄
+        if (
+          startStr.startsWith('2026-10-23') ||
+          startStr.startsWith('2026-10-25') ||
+          startStr.startsWith('2026-10-26')
+        ) {
+          return true;
+        }
+
+        return false;
+      }
+
       getServiceDefaultPrice(serviceItem) {
         if (!serviceItem) return 0;
         const s = String(serviceItem);
-        if (s.includes('免費') || s.includes('0') || s.includes('諮詢') || s.includes('評估')) return 0;
+        if (s.includes('免費') || s.includes('諮詢') || s.includes('評估')) return 0;
+        if (s.includes('首客禮(二)') || s.includes('買4送2') || s.includes('買四送二') || s.includes('6000') || s.includes('6,000')) return 6000;
+        if (s.includes('首客禮(一)') || s.includes('買2送1') || s.includes('買二送一') || s.includes('3000') || s.includes('3,000')) return 3000;
         if (s.includes('600')) return 600;
-        if (s.includes('700')) return 700;
+        if (s.includes('700') || s.includes('30分')) return 700;
         if (s.includes('800')) return 800;
         if (s.includes('1200') || s.includes('1,200')) return 1200;
-        if (s.includes('1300') || s.includes('1,300')) return 1300;
+        if (s.includes('1300') || s.includes('1,300') || s.includes('60分')) return 1300;
         if (s.includes('1500') || s.includes('1,500')) return 1500;
         if (s.includes('手指') || s.includes('手腕') || s.includes('腳踝')) return 600;
         if (s.includes('四肢') || s.includes('肩膀') || s.includes('膝蓋')) return 800;
@@ -2327,19 +2378,21 @@
       // 刪除 / 取消預約 (Delete Booking)
       // ==========================================
       async deleteBooking(bookingId) {
-        const b = this.bookings.find(x => x.id === bookingId);
+        const b = this.bookings.find(x => String(x.id) === String(bookingId));
         if (!b) return;
-        if (!confirm(`確定要刪除【${b.customerName}】於 ${b.start.slice(0, 16).replace('T', ' ')} 的預約排程嗎？\n（刪除後將同步自 Google 日曆移除，且絕不再被重複抓回）`)) {
+        if (!confirm(`確定要刪除【${b.customerName}】於 ${(b.start || '').slice(0, 16).replace('T', ' ')} 的預約排程嗎？\n（刪除後將同步自 Google 日曆移除，且絕不再被重複抓回）`)) {
           return;
         }
 
-        // 1. 取得關聯 Event ID
+        // 1. 取得關聯 Event ID 與特徵簽章
         const targetEventId = b.cloudSyncedId || b.id;
-        const bId = b.id;
+        const bId = String(b.id || '');
+        const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
 
         // 2. 登記至永久墓碑名冊 (Tombstone)，徹底杜絕輪詢重新拉回
         if (!this.deletedEventIds) this.deletedEventIds = [];
         if (bId && !this.deletedEventIds.includes(bId)) this.deletedEventIds.push(bId);
+        if (sig && !this.deletedEventIds.includes(sig)) this.deletedEventIds.push(sig);
         if (targetEventId && !this.deletedEventIds.includes(targetEventId)) this.deletedEventIds.push(targetEventId);
         if (targetEventId && targetEventId.includes('@google.com')) {
           const pureId = targetEventId.replace('@google.com', '');
@@ -2351,20 +2404,19 @@
         localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
 
         // 3. 本地立即徹底移除並存檔渲染
-        this.bookings = this.bookings.filter(x => x.id !== bookingId);
+        this.bookings = this.bookings.filter(x => String(x.id) !== String(bookingId));
         this.saveState();
         this.renderTimeline();
+        this.renderCustomers();
         this.renderReports();
         this.showToast(`🗑️ 已刪除【${b.customerName}】的預約排程`, 'info');
 
         // 4. 發送刪除請求給 GAS (同步刪除 Google 日曆事件)
         if (this.gasUrl && !this.simulateOffline && targetEventId) {
           try {
-            // GET 請求 (action=deleteEvent & action=delete)
             const delUrl = `${this.gasUrl}?action=deleteEvent&eventId=${encodeURIComponent(targetEventId)}&id=${encodeURIComponent(targetEventId)}&secret=${encodeURIComponent(this.gasSecret)}`;
             fetch(delUrl).catch(e => console.warn('雲端日曆 GET 刪除發送:', e));
 
-            // POST 備援 (使用 text/plain 防止 CORS preflight OPTIONS 阻擋)
             fetch(this.gasUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -2375,8 +2427,6 @@
                 secret: this.gasSecret
               })
             }).catch(e => console.warn('雲端日曆 POST 刪除發送:', e));
-
-            console.log('✅ Google 日曆刪除指令已發送:', targetEventId);
           } catch (delErr) {
             console.warn('⚠️ Google 日曆刪除請求失敗:', delErr);
           }
@@ -2390,9 +2440,15 @@
         const container = document.getElementById('timelineContainer');
         container.innerHTML = '';
 
-        // 營業時間 14:00 ~ 22:00，最晚預約 21:00 (共 8 個 1 小時時段)
-        const hours = [14, 15, 16, 17, 18, 19, 20, 21];
-        const dayBookings = this.bookings.filter(b => b.start.startsWith(this.currentDateStr));
+        // 營業時間 14:00 ~ 22:00，最晚預約 21:00 (若當日有特殊時段預約亦自動納入顯示，杜絕幽靈隱藏排程)
+        const hourSet = new Set([14, 15, 16, 17, 18, 19, 20, 21]);
+        const dayBookings = this.bookings.filter(b => b.start && b.start.startsWith(this.currentDateStr) && !this.isNonCustomerEvent(b));
+        dayBookings.forEach(b => {
+          if (b.status === '已取消') return;
+          const h = new Date(b.start.replace(' ', 'T')).getHours();
+          if (!isNaN(h) && h >= 0 && h <= 23) hourSet.add(h);
+        });
+        const hours = Array.from(hourSet).sort((a, b) => a - b);
 
         // 判斷週末公休提示
         const dayOfWeek = this.currentDate.getDay();
@@ -2410,10 +2466,8 @@
 
         hours.forEach(hour => {
           const hourStr = String(hour).padStart(2, '0') + ':00';
-          const nextHourStr = String(hour + 1).padStart(2, '0') + ':00';
-
           const slotStart = new Date(`${this.currentDateStr}T${hourStr}:00`);
-          const slotEnd = new Date(`${this.currentDateStr}T${nextHourStr}:00`);
+          const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
 
           // 1. 查找開始時間落在該小時時段內的預約 (單一呈現原則：絕不重複跨格顯示)
           const matches = dayBookings.filter(b => {
@@ -3226,21 +3280,15 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
             const queryEndMs = cloudQueryEnd.getTime();
 
             this.bookings = this.bookings.filter(b => {
+              if (this.isNonCustomerEvent(b)) return false;
               // 0. 墓碑機制檢查：若此事件已在後台被刪除，徹底排除
               if (this.deletedEventIds) {
+                const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
+                if (this.deletedEventIds.includes(sig)) return false;
                 if (b.id && this.deletedEventIds.includes(b.id)) return false;
                 if (b.cloudSyncedId && this.deletedEventIds.includes(b.cloudSyncedId)) return false;
                 const pureId = (b.id || '').replace('@google.com', '');
                 if (pureId && this.deletedEventIds.includes(pureId)) return false;
-              }
-
-              // 歷史測試假資料與被刪除的測試人員自動剔除
-              const name = b.customerName || '';
-              if (name.includes('QA') || name.includes('測試') || name === '王大偉' || name === '李小姐' || name === '張經理') {
-                return false;
-              }
-              if (b.id === 'b-1' || b.id === 'b-2' || b.id === 'b-3') {
-                return false;
               }
 
               // 判斷行程時間是否落在本次雲端日曆查詢視窗內
@@ -3301,8 +3349,11 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 return;
               }
 
-              // 0. 墓碑名冊防禦：凡是在後台刪除過的事件，絕對不重新加回！
+              // 0. 排除店休/公休/光復節全天事件與私人行程，以及墓碑名冊防禦
+              if (this.isNonCustomerEvent(evt)) return;
               if (this.deletedEventIds) {
+                const evtSig = 'sig:' + String(evt.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(evt.customerName || '').trim();
+                if (this.deletedEventIds.includes(evtSig)) return;
                 if (evt.id && this.deletedEventIds.includes(evt.id)) return;
                 const pureId = (evt.id || '').replace('@google.com', '');
                 if (pureId && this.deletedEventIds.includes(pureId)) return;
@@ -3425,7 +3476,9 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 if (!exists._customServiceEdited) {
                   exists.serviceItem = evt.serviceItem || exists.serviceItem;
                 }
-                exists.status = evt.status || exists.status;
+                if (!exists._customStatusEdited) {
+                  exists.status = evt.status || exists.status;
+                }
 
                 // 2. 金額防沖洗保護：若師傅手動編輯或確認過金額，100% 保留師傅自訂金額，絕不被雲端預設邏輯歸零或沖洗
                 if (!exists._customPriceEdited && !exists.isCustomPrice) {
@@ -4265,7 +4318,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         const tbody = document.getElementById('reportTableBody');
         if (tbody) {
           if (periodBookings.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">目前 ${labelPrefix} 區間暫無任何預約紀錄</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400">目前 ${labelPrefix} 區間暫無任何預約紀錄</td></tr>`;
           } else {
             const sorted = [...periodBookings].sort((a, b) => new Date(b.start) - new Date(a.start));
             tbody.innerHTML = sorted.map(b => {
@@ -4297,6 +4350,12 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                   <td class="px-2 text-slate-600 whitespace-nowrap">${b.paymentMethod || '現金'}</td>
                   <td class="px-2 whitespace-nowrap">
                     <span class="px-2 py-0.5 rounded-full text-[10px] border ${badgeClass} font-semibold">${b.status}</span>
+                  </td>
+                  <td class="px-2 text-right whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1">
+                      <button type="button" onclick="app.showBookingDetail('${b.id}')" class="px-2 py-1 text-[11px] font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition active:scale-95">編輯</button>
+                      <button type="button" onclick="app.deleteBooking('${b.id}')" class="px-2 py-1 text-[11px] font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition active:scale-95">刪除</button>
+                    </div>
                   </td>
                 </tr>
               `;
@@ -5098,15 +5157,30 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
       updateBookingStatus(newStatus) {
         if (!this.activeDetailId) return;
-        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        const b = this.bookings.find(x => String(x.id) === String(this.activeDetailId));
         if (b) {
           b.status = newStatus;
+          b._customStatusEdited = true;
+          if (newStatus === '已取消') {
+            const targetEventId = b.cloudSyncedId || b.id;
+            const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
+            if (!this.deletedEventIds) this.deletedEventIds = [];
+            if (b.id && !this.deletedEventIds.includes(b.id)) this.deletedEventIds.push(b.id);
+            if (sig && !this.deletedEventIds.includes(sig)) this.deletedEventIds.push(sig);
+            if (targetEventId && !this.deletedEventIds.includes(targetEventId)) this.deletedEventIds.push(targetEventId);
+            localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
+            if (this.gasUrl && !this.simulateOffline && targetEventId) {
+              const delUrl = `${this.gasUrl}?action=deleteEvent&eventId=${encodeURIComponent(targetEventId)}&id=${encodeURIComponent(targetEventId)}&secret=${encodeURIComponent(this.gasSecret)}`;
+              fetch(delUrl).catch(() => {});
+            }
+          }
           if (this.simulateOffline) {
             b.syncStatus = 'pending';
             this.syncQueue.push({ id: b.id, type: 'update_status', newStatus: newStatus });
           }
           this.saveState();
           this.renderTimeline();
+          this.renderCustomers();
           this.renderReports();
           this.closeModal('detailModal');
           this.showToast(`已將【${b.customerName}】預約狀態更新為「${newStatus}」`, 'info');
