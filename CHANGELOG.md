@@ -2,6 +2,16 @@
 
 本文檔記錄「江夏傳統整復推拿 板橋館」AI 客服機器人、Prompt 集中倉庫與自動化工具的所有版本演進、功能修復與 Git 變更紀錄。
 
+## 📌 [v2.6.2] - 2026-10-28 17:53:00
+### 🚨 緊急修復「預約後台排程看板 (`booking-dashboard/index.html`) 介面跑版與無法初始化」之 JS 語法崩潰漏洞
+- **根本原因**：
+  - 於 `v2.5.4` (`eb2d35f` / `cf73896`) 更新 `bindLineByCustomInput()` 智慧匹配提示時，PowerShell 字串轉義吃掉了 Template Literal 的反引號（`` ` ``）與 `${...}`，導致 `booking-dashboard/index.html` 主 `<script>` 區塊第 4671 與 4674 行出現 `this.showToast(\🔗 智慧匹配成功！...)` 之致命 `SyntaxError: Invalid or unexpected token`。
+  - 該語法錯誤導致整個 `JiangxiaBookingApp` 類別與 `lucide.createIcons()` 無法執行，造成整個預約後台介面元件與圖示跑版失效。
+- **修復方案**：
+  1. 修復 `bindLineByCustomInput()` 中的兩處 `showToast` 字串拼接語法，並全面正規化檔案 CRLF 換行符。
+  2. 透過 `node --check` 對 `booking-dashboard/index.html` 與 `index.html` 內所有 `<script>` 區塊進行 100% 語法靜態驗證（全數 `rc=0` 零報錯通過）。
+  3. 執行 `deploy_to_pages.ps1` 同步更新 `dist/dashboard/index.html` 與 `dist/booking-dashboard/index.html`，推送至 GitHub Pages (`main` 分支 Commit `d2e955c` & Tag `v2.6.2`)。
+
 ## 📌 [v2.6.1] - 2026-10-28 16:08:00
 ### 🛡️ 修復「客戶指定預約時段已額滿時，AI 客服未經客戶同意擅自順延改訂其他空檔」之雙層防呆硬鎖 (Strict Slot-Shift Consent Guard)
 - **事件還原（楊紫翔 `0965810800` 14:00 ➔ 17:00 越權代訂事件）**：
