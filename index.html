@@ -1273,7 +1273,7 @@
                 <input type="text" id="frontCustName" required placeholder="您的姓名 *" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 focus:bg-white transition">
               </div>
               <div>
-                <input type="tel" id="frontCustPhone" required placeholder="手機號碼 (如 0912-345-678) *" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 focus:bg-white transition">
+                <input type="tel" id="frontCustPhone" required placeholder="手機號碼 (如 0952321456) *" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 focus:bg-white transition">
               </div>
             </div>
 
@@ -1358,7 +1358,7 @@
       {
         id: "b-1",
         customerName: "王大偉",
-        phone: "0912-345-678",
+        phone: "0912345678",
         serviceItem: "頸、背、腰 (含整體結構調整)",
         durationMin: 60,
         price: 1500,
@@ -1372,7 +1372,7 @@
       {
         id: "b-2",
         customerName: "李小姐",
-        phone: "0988-765-432",
+        phone: "0988765432",
         serviceItem: "骨盆調理",
         durationMin: 20,
         price: 800,
@@ -1386,7 +1386,7 @@
       {
         id: "b-3",
         customerName: "張經理",
-        phone: "0933-222-111",
+        phone: "0933222111",
         serviceItem: "頸、背、腰 (含整體結構調整)",
         durationMin: 60,
         price: 1500,
@@ -1403,7 +1403,7 @@
       {
         id: "c-1",
         name: "王大偉",
-        phone: "0912-345-678",
+        phone: "0912345678",
         visit_count: 5,
         last_visited_at: "2026-09-15",
         health_notes: "長期久坐，肩頸重度僵硬，腰部曾有輕微拉傷忌大力扭轉；偏好中偏重力道。"
@@ -1411,7 +1411,7 @@
       {
         id: "c-2",
         name: "李小姐",
-        phone: "0988-765-432",
+        phone: "0988765432",
         visit_count: 3,
         last_visited_at: "2026-09-08",
         health_notes: "常抱小孩致右手腕酸脹（媽媽手）、右肩胛骨內側緊繃；喜好熱敷輔助。"
@@ -1419,7 +1419,7 @@
       {
         id: "c-3",
         name: "張經理",
-        phone: "0933-222-111",
+        phone: "0933222111",
         visit_count: 8,
         last_visited_at: "2026-09-22",
         health_notes: "定期全身保養，膏肓處特別緊繃，下背久坐僵硬；對推拿油微敏，以乾推為主。"
@@ -1775,7 +1775,7 @@
         const newBooking = {
           id: newId,
           customerName: name,
-          phone: phone,
+          phone: cleanPhone,
           serviceItem: this.selectedService,
           symptoms: notes,
           durationMin: 60,
@@ -1806,7 +1806,7 @@
           customers.push({
             id: 'c-' + Date.now(),
             name: name,
-            phone: phone,
+            phone: cleanPhone,
             visit_count: 1,
             last_visited_at: this.selectedDateStr,
             health_notes: notes || '官網首次預約'
@@ -1818,7 +1818,7 @@
         this.cloudBookings.push({
           id: newBooking.id,
           customerName: name,
-          phone: phone,
+          phone: cleanPhone,
           serviceItem: this.selectedService,
           start: `${this.selectedDateStr}T${this.selectedTimeStr}:00`,
           status: '已確認'
