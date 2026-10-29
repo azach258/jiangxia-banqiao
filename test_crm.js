@@ -22,7 +22,7 @@
     if (!rawPhone) return '';
     const digits = String(rawPhone).replace(/[^0-9]/g, '');
     if (digits.length === 10 && digits.startsWith('09')) {
-      return digits.slice(0, 4) + '-' + digits.slice(4, 7) + '-' + digits.slice(7);
+      return digits;
     }
     return rawPhone;
   }
