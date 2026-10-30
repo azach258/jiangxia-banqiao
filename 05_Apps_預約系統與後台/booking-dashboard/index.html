@@ -1355,8 +1355,8 @@
       { name: "手指、手腕、腳踝", shortName: "手腕腳踝", price: 600 },
       { name: "鬆筋按摩 (60分鐘)", shortName: "鬆筋60分", price: 1300 },
       { name: "鬆筋按摩 (30分鐘)", shortName: "鬆筋30分", price: 700 },
-      { name: "首客禮(一) 買2送1", shortName: "首客禮(一) 買2送1", price: 3000 },
-      { name: "首客禮(二) 買4送2", shortName: "首客禮(二) 買4送2", price: 6000 },
+      { name: "首客禮(一) 買2送1", shortName: "買2送1 ($3K)", price: 3000 },
+      { name: "首客禮(二) 買4送2", shortName: "買4送2 ($6K)", price: 6000 },
       { name: "【免費】檢查評估諮詢", shortName: "【免費】評估", price: 0 }
     ];
 
@@ -4877,7 +4877,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           } else if (!matched && cleanCurrent) {
             const cleanOpt = opt.name.replace(/[【】\[\]\s]/g, '');
             const cleanShort = opt.shortName.replace(/[【】\[\]\s]/g, '');
-            if (cleanCurrent.includes(cleanShort) || cleanOpt.includes(cleanCurrent) || cleanCurrent.includes(cleanOpt) || ((cleanCurrent.includes('免費') || cleanCurrent.includes('評估')) && cleanOpt.includes('免費'))) {
+            if (cleanCurrent.includes(cleanShort) || cleanOpt.includes(cleanCurrent) || cleanCurrent.includes(cleanOpt) || ((cleanCurrent.includes('免費') || cleanCurrent.includes('評估')) && cleanOpt.includes('免費')) || (cleanCurrent.includes('買2送1') && cleanOpt.includes('買2送1')) || (cleanCurrent.includes('買4送2') && cleanOpt.includes('買4送2'))) {
               isSelected = true;
             }
           }
