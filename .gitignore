@@ -13,6 +13,8 @@ __pycache__/
 # Large Generated Images / Poster Outputs
 fb_charity_posters/
 meta_ads_creatives/
+07_Assets_多媒體視覺庫/fb_charity/
+07_Assets_多媒體視覺庫/meta_creatives/
 *.tmp
 *.log
 

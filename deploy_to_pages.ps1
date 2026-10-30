@@ -4,23 +4,26 @@
 Write-Host "🚀 開始部署至 GitHub Pages..." -ForegroundColor Cyan
 
 # 1. 複製前台最新代碼至根目錄 index.html 與 dist/index.html
-Copy-Item -Path "test_front_booking.html" -Destination "index.html" -Force
-Copy-Item -Path "test_front_booking.html" -Destination "dist\index.html" -Force
-Write-Host "✅ 已同步前台 (test_front_booking.html -> index.html & dist/index.html)" -ForegroundColor Green
+$frontSource = "05_Apps_預約系統與後台\test_front_booking.html"
+$dashDir = "05_Apps_預約系統與後台\booking-dashboard"
+
+Copy-Item -Path $frontSource -Destination "index.html" -Force
+Copy-Item -Path $frontSource -Destination "dist\index.html" -Force
+Write-Host "✅ 已同步前台 ($frontSource -> index.html & dist/index.html)" -ForegroundColor Green
 
 # 2. 複製後台最新代碼至 dist/dashboard/ 與 test_dashboard_v2.html
-Copy-Item -Path "booking-dashboard\index.html" -Destination "booking-dashboard\test_dashboard_v2.html" -Force
+Copy-Item -Path "$dashDir\index.html" -Destination "$dashDir\test_dashboard_v2.html" -Force
 
 if (-not (Test-Path "dist\dashboard")) {
     New-Item -ItemType Directory -Path "dist\dashboard" -Force | Out-Null
 }
-Copy-Item -Path "booking-dashboard\index.html" -Destination "dist\dashboard\index.html" -Force
+Copy-Item -Path "$dashDir\index.html" -Destination "dist\dashboard\index.html" -Force
 
 if (-not (Test-Path "dist\booking-dashboard")) {
     New-Item -ItemType Directory -Path "dist\booking-dashboard" -Force | Out-Null
 }
-Copy-Item -Path "booking-dashboard\index.html" -Destination "dist\booking-dashboard\index.html" -Force
-Write-Host "✅ 已同步後台 (booking-dashboard/index.html -> dist/dashboard/ & dist/booking-dashboard/)" -ForegroundColor Green
+Copy-Item -Path "$dashDir\index.html" -Destination "dist\booking-dashboard\index.html" -Force
+Write-Host "✅ 已同步後台 ($dashDir/index.html -> dist/dashboard/ & dist/booking-dashboard/)" -ForegroundColor Green
 
 # 3. 進入 dist 目錄進行 git commit 與 push
 Push-Location "dist"

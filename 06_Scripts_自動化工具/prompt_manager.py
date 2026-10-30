@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 =============================================================================
@@ -37,8 +37,8 @@ MAGENTA = "\033[95m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
 
-PROJECT_ROOT = Path(__file__).resolve().parent
-PROMPTS_DIR = PROJECT_ROOT / "prompts"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROMPTS_DIR = PROJECT_ROOT / "02_Marketing_廣告投放" / "prompts"
 
 # 外部 LINE Bot 服務同步目標路徑
 EXTERNAL_SYNC_TARGETS = [
