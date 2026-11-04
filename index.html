@@ -63,14 +63,20 @@
       // 轉換追蹤觸發器 (點擊 LINE / 撥打電話)
       function trackConversion(actionName, targetUrl, isExternal) {
           if (typeof gtag === 'function') {
+              // 1. Google Ads 原生轉換 (LINE預約與電話點擊)
               gtag('event', 'conversion', {
-                  'send_to': 'AW-18290344841',
+                  'send_to': 'AW-18290344841/vA9XCJ7m67EdEImHwpFE',
                   'event_category': 'Engagement',
                   'event_label': actionName,
                   'value': 1.0,
                   'currency': 'TWD'
               });
+              // 2. 備用與 GA4 事件
               gtag('event', 'generate_lead', {
+                  'event_category': 'Contact',
+                  'event_label': actionName
+              });
+              gtag('event', 'add_friend', {
                   'event_category': 'Contact',
                   'event_label': actionName
               });
