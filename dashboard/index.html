@@ -664,31 +664,93 @@
       </div>
 
       <div class="p-6 space-y-4 text-sm">
-        <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h4 id="detailCustomerName" class="text-base font-bold text-slate-900">顧客姓名</h4>
-              <span id="detailVisitBadge" class="text-xs"></span>
-              <span id="detailLineBindBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600">⚪ 未連結 LINE@</span>
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="cursor-pointer group" onclick="app.toggleDetailEditCustomerPanel()" title="點擊直接展開編輯顧客基本資料">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 id="detailCustomerName" class="text-base font-bold text-slate-900 group-hover:text-brand-600 transition flex items-center gap-1">顧客姓名</h4>
+                <span id="detailGenderBadge" class="hidden px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-200 text-slate-700"></span>
+                <span id="detailVisitBadge" class="text-xs"></span>
+                <span id="detailLineBindBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600">⚪ 未連結 LINE@</span>
+              </div>
+              <p class="text-xs text-slate-500 font-mono mt-0.5 flex items-center gap-1.5">
+                <span id="detailPhone">0952321456</span>
+                <span class="text-[10px] text-brand-600 font-sans font-semibold underline opacity-80 group-hover:opacity-100">✏️ 點此修改姓名/電話</span>
+              </p>
             </div>
-            <p id="detailPhone" class="text-xs text-slate-500 font-mono mt-0.5">0952321456</p>
+            <div class="flex items-center gap-1.5 flex-wrap justify-end">
+              <button type="button" onclick="app.toggleDetailEditCustomerPanel()" id="btnDetailEditCustomer" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 shadow-subtle transition flex items-center gap-1 active:scale-95" title="直接展開編輯顧客姓名、電話、到店次數與基本資料">
+                <i data-lucide="user-cog" class="w-3.5 h-3.5 text-amber-700"></i>
+                <span id="btnDetailEditCustText">編輯客戶資料</span>
+              </button>
+              <button type="button" onclick="app.toggleLineBindPanel()" id="btnDetailBindLine" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95" title="從 LINE@ 官方帳號好友名單主動配對連結此顧客">
+                <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                <span>連結 LINE@</span>
+              </button>
+              <button type="button" onclick="app.sendSmsFromDetail()" id="btnDetailSendSms" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95" title="一鍵喚起手機簡訊發送預約提醒">
+                <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                <span>簡訊提醒</span>
+              </button>
+              <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                已確認
+              </span>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5 flex-wrap justify-end">
-            <button type="button" onclick="app.toggleLineBindPanel()" id="btnDetailBindLine" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95" title="從 LINE@ 官方帳號好友名單主動配對連結此顧客">
-              <i data-lucide="link" class="w-3.5 h-3.5"></i>
-              <span>連結 LINE@</span>
-            </button>
-            <button type="button" onclick="app.sendSmsFromDetail()" id="btnDetailSendSms" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-subtle transition flex items-center gap-1 active:scale-95" title="一鍵喚起手機簡訊發送預約提醒">
-              <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
-              <span>簡訊提醒</span>
-            </button>
-            <button type="button" onclick="app.editCustomerFromDetail()" id="btnDetailEditCustomer" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 shadow-subtle transition flex items-center gap-1 active:scale-95" title="編輯顧客檔案與健康備忘">
-              <i data-lucide="user-cog" class="w-3.5 h-3.5 text-amber-700"></i>
-              <span>客戶資料</span>
-            </button>
-            <span id="detailStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              已確認
-            </span>
+
+          <!-- ✏️ 內嵌式「編輯客戶基本資料」面板 (點擊「編輯客戶資料」或姓名/電話直接展開) -->
+          <div id="detailEditCustomerPanel" class="hidden pt-3 border-t border-slate-200/90 space-y-2.5 text-xs bg-white p-3.5 rounded-xl border shadow-subtle">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="user-check" class="w-4 h-4 text-brand-600"></i>
+                <span>編輯客戶基本資料（儲存後自動同步更新全排程與雲端名冊）</span>
+              </span>
+              <button type="button" onclick="app.toggleDetailEditCustomerPanel(false)" class="text-slate-400 hover:text-slate-600 text-xs font-bold">收起 ✕</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">顧客姓名 <span class="text-brand-600">*</span></label>
+                <input type="text" id="detailEditCustName" placeholder="請輸入顧客姓名" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">聯絡電話 <span class="text-brand-600">*</span></label>
+                <input type="tel" id="detailEditCustPhone" placeholder="例如：0912345678" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">稱呼 / 性別備註</label>
+                <select id="detailEditCustGender" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                  <option value="">不指定（依全名）</option>
+                  <option value="先生">先生 (男)</option>
+                  <option value="小姐">小姐 (女)</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">LINE 顯示名稱 / 備註暱稱</label>
+                <input type="text" id="detailEditCustLineName" placeholder="例如：Amy、阿豪 (選填)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">累計到店次數</label>
+                <input type="number" id="detailEditCustVisitCount" min="1" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+              </div>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">長期體質 ＆ 健康習慣備忘（跨次永久記憶）</label>
+              <textarea id="detailEditCustHealthNotes" rows="2" placeholder="例如：工程師久坐、偏好中重力道、右肩舊傷需避開..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition"></textarea>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <button type="button" onclick="app.editCustomerFromDetail()" class="text-[11px] text-brand-600 hover:text-brand-700 font-semibold underline flex items-center gap-1">
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+                <span>開啟獨立客戶檔案視窗</span>
+              </button>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="app.toggleDetailEditCustomerPanel(false)" class="px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-700 text-xs">取消</button>
+                <button type="button" onclick="app.saveCustomerFromDetailInline()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1">
+                  <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                  <span>儲存客戶基本資料</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -999,17 +1061,34 @@
         <form onsubmit="app.handleSaveCustomerProfile(event)" class="p-6 space-y-4 text-xs">
           <input type="hidden" id="editCustOrigPhone">
           <input type="hidden" id="editCustOrigName">
+          <input type="hidden" id="editCustTargetBookingId">
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">顧客姓名 <span class="text-brand-600">*</span></label>
-            <input type="text" id="editCustName" required placeholder="例如：陳大文" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">顧客姓名 <span class="text-brand-600">*</span></label>
+              <input type="text" id="editCustName" required placeholder="例如：陳大文" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">稱呼 / 性別</label>
+              <select id="editCustGender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                <option value="">不指定</option>
+                <option value="先生">先生 (男)</option>
+                <option value="小姐">小姐 (女)</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">手機號碼 <span class="text-brand-600">*</span></label>
-            <input type="tel" id="editCustPhone" required placeholder="例如：0952321456" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-mono">
-            <p class="text-[10px] text-slate-400 mt-1">※ 若變更手機號碼，過往預約關聯將一併同步轉移至新號碼</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">手機號碼 <span class="text-brand-600">*</span></label>
+              <input type="tel" id="editCustPhone" required placeholder="例如：0952321456" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">LINE 顯示名稱 / 備註暱稱</label>
+              <input type="text" id="editCustLineName" placeholder="例如：Amy、阿豪 (選填)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            </div>
           </div>
+          <p class="text-[10px] text-slate-400 -mt-2">※ 若變更姓名或手機號碼，所有歷史與未來排程將自動同步更新，並鎖定防止雲端舊資料覆寫</p>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -1474,6 +1553,17 @@
 
         this.lineFriends = JSON.parse(localStorage.getItem('jiangxia_line_friends_v1') || '[]');
         this.phoneLineMap = JSON.parse(localStorage.getItem('jiangxia_phone_line_map_v1') || '{}');
+        this.customerOverrides = { byPhone: {}, phoneRedirects: {}, byEventId: {} };
+        try {
+          const savedOv = JSON.parse(localStorage.getItem('jiangxia_customer_overrides_v1') || '{}');
+          if (savedOv && typeof savedOv === 'object') {
+            this.customerOverrides = {
+              byPhone: savedOv.byPhone || {},
+              phoneRedirects: savedOv.phoneRedirects || {},
+              byEventId: savedOv.byEventId || {}
+            };
+          }
+        } catch(e) {}
 
         // 以電話為單一真相源 (SSOT) 進行資料彙總與去重
         this.consolidateCustomersByPhone();
@@ -1787,13 +1877,28 @@
           }
         });
 
-        // 4. 校準到店次數：若以預約紀錄筆數計算較多，以真實有效排程筆數為準
+        // 4. 套用師傅手動修改之客戶基本資料覆寫保護 (customerOverrides)，並校準到店次數
+        const ovByPhone = (this.customerOverrides && this.customerOverrides.byPhone) ? this.customerOverrides.byPhone : {};
         phoneMap.forEach((cust, cleanPhone) => {
+          const ov = ovByPhone[cleanPhone];
           const actualBookingCount = (this.bookings || []).filter(b => {
             const bp = this.getCleanPhoneKey(b.phone);
             return bp === cleanPhone && b.status !== '已取消';
           }).length;
-          cust.visit_count = Math.max(cust.visit_count || 0, actualBookingCount, 1);
+          if (ov) {
+            if (ov.name) cust.name = ov.name;
+            if (ov.gender !== undefined) cust.gender = ov.gender;
+            if (ov.lineDisplayName !== undefined && ov.lineDisplayName !== '') cust.lineDisplayName = ov.lineDisplayName;
+            if (ov.last_visited_at) cust.last_visited_at = ov.last_visited_at;
+            if (ov.health_notes !== undefined) cust.health_notes = ov.health_notes;
+            if (ov.visit_count !== undefined && ov.visit_count !== null) {
+              cust.visit_count = Math.max(parseInt(ov.visit_count, 10) || 1, 1);
+            } else {
+              cust.visit_count = Math.max(cust.visit_count || 0, actualBookingCount, 1);
+            }
+          } else {
+            cust.visit_count = Math.max(cust.visit_count || 0, actualBookingCount, 1);
+          }
         });
 
         // 5. 整合 LINE@ 綁定狀態（從 phoneLineMap、lineFriends 與 bookings 雙向匯流）
@@ -2299,10 +2404,14 @@
       // ==========================================
       getVisitCount(phone) {
         if (!phone) return 1;
-        const clean = phone.replace(/[^0-9]/g, '');
-        const cust = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === clean);
+        const clean = this.getCleanPhoneKey(phone);
+        const ov = (this.customerOverrides && this.customerOverrides.byPhone && clean) ? this.customerOverrides.byPhone[clean] : null;
+        if (ov && ov.visit_count !== undefined && ov.visit_count !== null) {
+          return Math.max(parseInt(ov.visit_count, 10) || 1, 1);
+        }
+        const cust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === clean);
         let baseCount = cust ? (cust.visit_count || 1) : 0;
-        const bCount = this.bookings.filter(b => b.phone && b.phone.replace(/[^0-9]/g, '') === clean && b.status !== '已取消').length;
+        const bCount = this.bookings.filter(b => b.phone && this.getCleanPhoneKey(b.phone) === clean && b.status !== '已取消').length;
         return Math.max(baseCount, bCount, 1);
       }
 
@@ -3419,8 +3528,21 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 if (pureId && this.deletedEventIds.includes(pureId)) return;
               }
 
-              const cleanPhone = this.getCleanPhoneKey(evt.phone);
               const evtPureId = (evt.id || '').replace('@google.com', '');
+              const ovByEvent = (this.customerOverrides && this.customerOverrides.byEventId && evtPureId) ? this.customerOverrides.byEventId[evtPureId] : null;
+              if (ovByEvent) {
+                if (ovByEvent.name) evt.customerName = ovByEvent.name;
+                if (ovByEvent.phone) evt.phone = ovByEvent.phone;
+              }
+              let cleanPhone = this.getCleanPhoneKey(evt.phone);
+              if (cleanPhone && this.customerOverrides && this.customerOverrides.phoneRedirects && this.customerOverrides.phoneRedirects[cleanPhone]) {
+                cleanPhone = this.customerOverrides.phoneRedirects[cleanPhone];
+                evt.phone = cleanPhone;
+              }
+              const ovByPhone = (cleanPhone && this.customerOverrides && this.customerOverrides.byPhone) ? this.customerOverrides.byPhone[cleanPhone] : null;
+              if (ovByPhone && ovByPhone.name) {
+                evt.customerName = ovByPhone.name;
+              }
               const exists = this.bookings.find(b => {
                 if (b.id === evt.id || b.cloudSyncedId === evt.id) return true;
                 if (evtPureId) {
@@ -3574,28 +3696,35 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               }
             });
 
-            // 2. 跨設備顧客 CRM 雲端合流（從試算表名冊自動補足，換手機/跨瀏覽器永不失憶）
+            // 2. 跨設備顧客 CRM 雲端合流（從試算表名冊自動補足，同時保護師傅已手動編輯之 customerOverrides）
             if (Array.isArray(result.sheetCustomers) && result.sheetCustomers.length > 0) {
               result.sheetCustomers.forEach(sc => {
-                const cleanPhone = (sc.phone || '').replace(/[^0-9]/g, '');
+                let cleanPhone = this.getCleanPhoneKey(sc.phone || '');
+                if (cleanPhone && this.customerOverrides && this.customerOverrides.phoneRedirects && this.customerOverrides.phoneRedirects[cleanPhone]) {
+                  cleanPhone = this.customerOverrides.phoneRedirects[cleanPhone];
+                }
+                if (cleanPhone && this.deletedCustomerPhones && this.deletedCustomerPhones.includes(cleanPhone)) return;
                 if (!cleanPhone && !sc.name) return;
+                const ov = (cleanPhone && this.customerOverrides && this.customerOverrides.byPhone) ? this.customerOverrides.byPhone[cleanPhone] : null;
                 const scNotes = this.cleanNoteText(sc.health_notes);
-                let cust = this.customers.find(c => (cleanPhone && c.phone.replace(/[^0-9]/g, '') === cleanPhone) || (sc.name && c.name === sc.name));
+                let cust = this.customers.find(c => (cleanPhone && this.getCleanPhoneKey(c.phone) === cleanPhone) || (sc.name && c.name === sc.name));
                 if (cust) {
-                  if (sc.last_visited_at && (!cust.last_visited_at || sc.last_visited_at > cust.last_visited_at)) {
-                    cust.last_visited_at = sc.last_visited_at;
-                  }
-                  if (scNotes && (!cust.health_notes || !cust.health_notes.includes(scNotes))) {
-                    cust.health_notes = cust.health_notes ? `${cust.health_notes} ｜ ${scNotes}` : scNotes;
+                  if (!ov) {
+                    if (sc.last_visited_at && (!cust.last_visited_at || sc.last_visited_at > cust.last_visited_at)) {
+                      cust.last_visited_at = sc.last_visited_at;
+                    }
+                    if (scNotes && (!cust.health_notes || !cust.health_notes.includes(scNotes))) {
+                      cust.health_notes = cust.health_notes ? `${cust.health_notes} ｜ ${scNotes}` : scNotes;
+                    }
                   }
                 } else {
                   this.customers.push({
                     id: 'c-cloud-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                    name: sc.name || '老顧客',
-                    phone: sc.phone || '',
-                    visit_count: 1,
-                    last_visited_at: sc.last_visited_at || '',
-                    health_notes: scNotes || ''
+                    name: (ov && ov.name) ? ov.name : (sc.name || '老顧客'),
+                    phone: cleanPhone || sc.phone || '',
+                    visit_count: (ov && ov.visit_count) ? ov.visit_count : 1,
+                    last_visited_at: (ov && ov.last_visited_at) ? ov.last_visited_at : (sc.last_visited_at || ''),
+                    health_notes: (ov && ov.health_notes !== undefined) ? ov.health_notes : (scNotes || '')
                   });
                 }
               });
@@ -3715,7 +3844,10 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           if (cleanName && cleanName !== '預約顧客' && cleanName !== '新顧客') renderedNames.add(cleanName);
 
           const history = phoneKey ? this.getCustomerHistory(c.phone) : [];
-          const totalVisits = Math.max(c.visit_count || 0, history.length, 1);
+          const ovCust = (phoneKey && this.customerOverrides && this.customerOverrides.byPhone) ? this.customerOverrides.byPhone[phoneKey] : null;
+          const totalVisits = (ovCust && ovCust.visit_count !== undefined && ovCust.visit_count !== null)
+            ? Math.max(parseInt(ovCust.visit_count, 10) || 1, 1)
+            : Math.max(c.visit_count || 0, history.length, 1);
           
           // 初診與末診日期
           let firstVisitDate = '--';
@@ -3826,9 +3958,9 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                   <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
                   <span>➕ 新增本次排程/病歷</span>
                 </button>
-                <button type="button" onclick="app.openEditCustomerModal('${c.phone}')" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-subtle transition active:scale-95 flex items-center gap-1" title="編輯病歷基本資料">
-                  <i data-lucide="user-cog" class="w-3.5 h-3.5 text-slate-500"></i>
-                  <span>編輯檔案</span>
+                <button type="button" onclick="app.openEditCustomerModal('${String(c.phone || '').replace(/'/g, '')}', '${String(c.name || '').replace(/'/g, '')}')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1" title="編輯顧客姓名、電話、到店次數與健康備忘">
+                  <i data-lucide="user-cog" class="w-3.5 h-3.5 text-amber-700"></i>
+                  <span>✏️ 編輯客戶資料</span>
                 </button>
                 <button type="button" onclick="app.showCustomerHistory('${c.phone}')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold shadow-subtle transition active:scale-95 flex items-center gap-1" title="展開所有歷次就診明細">
                   <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-amber-700"></i>
@@ -4033,55 +4165,312 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
       }
 
       // ==========================================
-      // 8.1 顧客 CRM 檔案編輯與資料庫更新 (Edit Customer Profile)
+      // 8.1 顧客 CRM 檔案編輯與資料庫更新 (Edit Customer Profile & Inline Editor)
       // ==========================================
       openNewCustomerModal() {
         document.getElementById('editCustOrigPhone').value = '';
         document.getElementById('editCustOrigName').value = '';
+        const bIdEl = document.getElementById('editCustTargetBookingId');
+        if (bIdEl) bIdEl.value = '';
         document.getElementById('editCustName').value = '';
         document.getElementById('editCustPhone').value = '';
+        const genderEl = document.getElementById('editCustGender');
+        if (genderEl) genderEl.value = '';
+        const lineNameEl = document.getElementById('editCustLineName');
+        if (lineNameEl) lineNameEl.value = '';
         document.getElementById('editCustVisitCount').value = 1;
         document.getElementById('editCustLastVisit').value = this.currentDateStr;
         document.getElementById('editCustHealthNotes').value = '';
         this.openModal('customerEditModal');
       }
 
-      openEditCustomerModal(phone) {
-        if (!phone) return;
+      openEditCustomerModal(phone = '', fallbackName = '', bookingId = '') {
         const cleanKey = this.getCleanPhoneKey(phone);
-        const cust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanKey);
-        if (!cust) return;
+        let cust = null;
+        if (cleanKey) {
+          cust = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanKey);
+        }
+        if (!cust && fallbackName) {
+          cust = this.customers.find(c => c.name === fallbackName);
+        }
+        const targetBooking = bookingId ? this.bookings.find(b => String(b.id) === String(bookingId)) : null;
+        const ov = (cleanKey && this.customerOverrides && this.customerOverrides.byPhone) ? this.customerOverrides.byPhone[cleanKey] : null;
 
-        document.getElementById('editCustOrigPhone').value = cust.phone;
-        document.getElementById('editCustOrigName').value = cust.name;
-        document.getElementById('editCustName').value = cust.name;
-        document.getElementById('editCustPhone').value = cust.phone;
-        document.getElementById('editCustVisitCount').value = cust.visit_count || 1;
-        document.getElementById('editCustLastVisit').value = cust.last_visited_at || '';
-        document.getElementById('editCustHealthNotes').value = cust.health_notes || '';
+        const resolvedName = (ov && ov.name) || (cust && cust.name) || (targetBooking && targetBooking.customerName) || fallbackName || '';
+        const resolvedPhone = (ov && ov.phone) || (cust && cust.phone) || (targetBooking && targetBooking.phone) || (cleanKey ? this.formatStandardPhone(cleanKey) : '');
+        const resolvedGender = (ov && ov.gender) || (cust && cust.gender) || (targetBooking && targetBooking.gender) || '';
+        const resolvedLineName = (ov && ov.lineDisplayName) || (cust && cust.lineDisplayName) || (targetBooking && targetBooking.lineDisplayName) || '';
+        const resolvedVisitCount = (ov && ov.visit_count) || (cust ? (cust.visit_count || this.getVisitCount(resolvedPhone)) : (resolvedPhone ? this.getVisitCount(resolvedPhone) : 1));
+        const resolvedLastVisit = (ov && ov.last_visited_at) || (cust && cust.last_visited_at) || (targetBooking && targetBooking.start ? targetBooking.start.slice(0, 10) : this.currentDateStr);
+        const resolvedHealthNotes = (ov && ov.health_notes !== undefined) ? ov.health_notes : ((cust && cust.health_notes) || (targetBooking && targetBooking.notes) || '');
+
+        document.getElementById('editCustOrigPhone').value = resolvedPhone;
+        document.getElementById('editCustOrigName').value = resolvedName;
+        const bIdEl = document.getElementById('editCustTargetBookingId');
+        if (bIdEl) bIdEl.value = bookingId || '';
+        document.getElementById('editCustName').value = resolvedName;
+        document.getElementById('editCustPhone').value = resolvedPhone;
+        const genderEl = document.getElementById('editCustGender');
+        if (genderEl) genderEl.value = resolvedGender;
+        const lineNameEl = document.getElementById('editCustLineName');
+        if (lineNameEl) lineNameEl.value = resolvedLineName;
+        document.getElementById('editCustVisitCount').value = resolvedVisitCount;
+        document.getElementById('editCustLastVisit').value = resolvedLastVisit;
+        document.getElementById('editCustHealthNotes').value = resolvedHealthNotes;
 
         this.openModal('customerEditModal');
       }
 
       editCustomerFromHistory() {
-        const phone = document.getElementById('histCustomerPhone')?.textContent?.trim();
+        const phone = document.getElementById('histCustomerPhone')?.textContent?.trim() || '';
+        const name = document.getElementById('histCustomerName')?.textContent?.trim() || '';
         this.closeModal('customerHistoryModal');
-        if (phone) {
-          this.openEditCustomerModal(phone);
-        }
+        this.openEditCustomerModal(phone, name);
       }
 
       editCustomerFromDetail() {
         if (!this.activeDetailId) return;
-        const b = this.bookings.find(x => x.id === this.activeDetailId);
+        const b = this.bookings.find(x => String(x.id) === String(this.activeDetailId));
         if (!b) return;
         this.closeModal('detailModal');
-        if (b.phone) {
-          this.openEditCustomerModal(b.phone);
-        } else if (b.customerName) {
-          const cust = this.customers.find(c => c.name === b.customerName);
-          if (cust && cust.phone) {
-            this.openEditCustomerModal(cust.phone);
+        this.openEditCustomerModal(b.phone || '', b.customerName || '', b.id);
+      }
+
+      toggleDetailEditCustomerPanel(forceState) {
+        const panel = document.getElementById('detailEditCustomerPanel');
+        const btnText = document.getElementById('btnDetailEditCustText');
+        if (!panel) return;
+        const willShow = (typeof forceState === 'boolean') ? forceState : panel.classList.contains('hidden');
+        if (!willShow) {
+          panel.classList.add('hidden');
+          if (btnText) btnText.textContent = '編輯客戶資料';
+          return;
+        }
+        panel.classList.remove('hidden');
+        if (btnText) btnText.textContent = '收合編輯';
+        const b = this.getActiveDetailBooking();
+        if (b) {
+          const cleanP = this.getCleanPhoneKey(b.phone || '');
+          const cust = cleanP
+            ? this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanP)
+            : this.customers.find(c => c.name === b.customerName);
+          const ov = (cleanP && this.customerOverrides && this.customerOverrides.byPhone) ? this.customerOverrides.byPhone[cleanP] : null;
+
+          const nameEl = document.getElementById('detailEditCustName');
+          const phoneEl = document.getElementById('detailEditCustPhone');
+          const genderEl = document.getElementById('detailEditCustGender');
+          const lineEl = document.getElementById('detailEditCustLineName');
+          const visitEl = document.getElementById('detailEditCustVisitCount');
+          const notesEl = document.getElementById('detailEditCustHealthNotes');
+
+          if (nameEl) nameEl.value = (ov && ov.name) || b.customerName || (cust && cust.name) || '';
+          if (phoneEl) phoneEl.value = (ov && ov.phone) || b.phone || (cust && cust.phone) || '';
+          if (genderEl) genderEl.value = (ov && ov.gender) || b.gender || (cust && cust.gender) || '';
+          if (lineEl) lineEl.value = (ov && ov.lineDisplayName) || b.lineDisplayName || (cust && cust.lineDisplayName) || '';
+          if (visitEl) visitEl.value = (ov && ov.visit_count) || (b.phone ? this.getVisitCount(b.phone) : (cust && cust.visit_count) || 1);
+          if (notesEl) notesEl.value = (ov && ov.health_notes !== undefined) ? ov.health_notes : ((cust && cust.health_notes) || b.notes || '');
+        }
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+      }
+
+      saveCustomerFromDetailInline() {
+        const b = this.getActiveDetailBooking();
+        if (!b) return;
+        const newName = (document.getElementById('detailEditCustName')?.value || '').trim();
+        const newPhone = (document.getElementById('detailEditCustPhone')?.value || '').trim();
+        const gender = (document.getElementById('detailEditCustGender')?.value || '').trim();
+        const lineDisplayName = (document.getElementById('detailEditCustLineName')?.value || '').trim();
+        const visitCount = parseInt(document.getElementById('detailEditCustVisitCount')?.value || '1', 10) || 1;
+        const healthNotes = (document.getElementById('detailEditCustHealthNotes')?.value || '').trim();
+
+        if (!newName) {
+          alert('請填寫顧客姓名！');
+          return;
+        }
+        if (!newPhone) {
+          alert('請填寫聯絡電話！');
+          return;
+        }
+
+        const cleanP = this.getCleanPhoneKey(b.phone || '');
+        const cust = cleanP ? this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanP) : null;
+        const lastVisit = (cust && cust.last_visited_at) || (b.start ? b.start.slice(0, 10) : this.currentDateStr);
+
+        this.applyCustomerBasicInfoUpdate({
+          origPhone: b.phone || '',
+          origName: b.customerName || '',
+          bookingId: b.id,
+          newName,
+          newPhone,
+          gender,
+          lineDisplayName,
+          visitCount,
+          lastVisit,
+          healthNotes
+        });
+
+        this.toggleDetailEditCustomerPanel(false);
+        this.showBookingDetail(b.id);
+      }
+
+      applyCustomerBasicInfoUpdate({ origPhone = '', origName = '', bookingId = '', newName = '', newPhone = '', gender = '', lineDisplayName = '', visitCount = 1, lastVisit = '', healthNotes = '' }) {
+        const standardNewPhone = this.formatStandardPhone(newPhone);
+        const cleanOrig = this.getCleanPhoneKey(origPhone);
+        const cleanNew = this.getCleanPhoneKey(standardNewPhone);
+
+        // 0. 若該客戶曾被刪除隱藏，重新儲存或更新時自動解除封鎖
+        if (Array.isArray(this.deletedCustomerPhones)) {
+          const beforeCustDelLen = this.deletedCustomerPhones.length;
+          this.deletedCustomerPhones = this.deletedCustomerPhones.filter(p => p !== cleanOrig && p !== cleanNew);
+          if (this.deletedCustomerPhones.length !== beforeCustDelLen) {
+            localStorage.setItem('jiangxia_deleted_customers_v2', JSON.stringify(this.deletedCustomerPhones));
+          }
+        }
+
+        // 1. 寫入持久化客戶資料覆寫保護庫 (customerOverrides)，防止雲端輪詢把舊姓名/舊電話/舊備忘蓋回來
+        if (!this.customerOverrides) {
+          this.customerOverrides = { byPhone: {}, phoneRedirects: {}, byEventId: {} };
+        }
+        if (cleanOrig && cleanNew && cleanOrig !== cleanNew) {
+          this.customerOverrides.phoneRedirects[cleanOrig] = cleanNew;
+          delete this.customerOverrides.byPhone[cleanOrig];
+        }
+        if (cleanNew) {
+          this.customerOverrides.byPhone[cleanNew] = {
+            name: newName,
+            phone: standardNewPhone,
+            gender: gender || '',
+            lineDisplayName: lineDisplayName || '',
+            visit_count: visitCount,
+            last_visited_at: lastVisit || this.currentDateStr,
+            health_notes: healthNotes,
+            updatedAtMs: Date.now()
+          };
+        }
+
+        // 2. 更新所有關聯預約排程（匹配 bookingId、原電話、新電話或原姓名）
+        const matchedBookings = [];
+        this.bookings.forEach(b => {
+          const bp = this.getCleanPhoneKey(b.phone || '');
+          const isTargetBooking = bookingId && String(b.id) === String(bookingId);
+          const isPhoneMatch = (cleanOrig && bp === cleanOrig) || (cleanNew && bp === cleanNew);
+          const isNameMatch = !cleanOrig && origName && b.customerName === origName;
+
+          if (isTargetBooking || isPhoneMatch || isNameMatch) {
+            b.customerName = newName;
+            b.phone = standardNewPhone;
+            if (gender !== undefined) b.gender = gender;
+            if (lineDisplayName) b.lineDisplayName = lineDisplayName;
+            b._customCustomerEdited = true;
+            b._customerUpdatedAtMs = Date.now();
+            matchedBookings.push(b);
+
+            const pureId = String(b.cloudSyncedId || b.id || '').replace('@google.com', '');
+            if (pureId) {
+              this.customerOverrides.byEventId[pureId] = {
+                name: newName,
+                phone: standardNewPhone,
+                gender: gender || '',
+                lineDisplayName: lineDisplayName || '',
+                updatedAtMs: Date.now()
+              };
+            }
+          }
+        });
+        localStorage.setItem('jiangxia_customer_overrides_v1', JSON.stringify(this.customerOverrides));
+
+        // 3. 更新 LINE 綁定映射表 (phoneLineMap)
+        if (cleanNew && lineDisplayName) {
+          if (!this.phoneLineMap) this.phoneLineMap = {};
+          const curMap = this.phoneLineMap[cleanNew] || (cleanOrig ? this.phoneLineMap[cleanOrig] : {}) || {};
+          this.phoneLineMap[cleanNew] = {
+            lineUserId: curMap.lineUserId || '',
+            lineDisplayName: lineDisplayName
+          };
+          localStorage.setItem('jiangxia_phone_line_map_v1', JSON.stringify(this.phoneLineMap));
+        }
+
+        // 4. 更新或新增顧客 CRM 紀錄
+        let target = null;
+        if (cleanOrig) {
+          target = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanOrig);
+        }
+        if (!target && cleanNew) {
+          target = this.customers.find(c => c.phone && this.getCleanPhoneKey(c.phone) === cleanNew);
+        }
+        if (!target && origName) {
+          target = this.customers.find(c => c.name === origName);
+        }
+
+        if (target) {
+          target.name = newName;
+          target.phone = standardNewPhone;
+          target.gender = gender || '';
+          if (lineDisplayName) target.lineDisplayName = lineDisplayName;
+          target.visit_count = visitCount;
+          target.last_visited_at = lastVisit || target.last_visited_at || this.currentDateStr;
+          target.health_notes = healthNotes;
+          target._customProfileEdited = true;
+        } else {
+          this.customers.unshift({
+            id: 'c-' + Date.now(),
+            name: newName,
+            phone: standardNewPhone,
+            gender: gender || '',
+            lineDisplayName: lineDisplayName || '',
+            visit_count: visitCount,
+            last_visited_at: lastVisit || this.currentDateStr,
+            health_notes: healthNotes,
+            _customProfileEdited: true
+          });
+        }
+
+        // 若原電話變更為新電話，移除殘留的原電話重複客戶卡
+        if (cleanOrig && cleanNew && cleanOrig !== cleanNew) {
+          let seenNew = false;
+          this.customers = this.customers.filter(c => {
+            const ck = this.getCleanPhoneKey(c.phone);
+            if (ck === cleanOrig) return false;
+            if (ck === cleanNew) {
+              if (seenNew) return false;
+              seenNew = true;
+            }
+            return true;
+          });
+        }
+
+        this.saveState();
+        this.renderCustomers();
+        this.renderTimeline();
+        this.renderReports();
+        this.showToast(`✅ 已成功更新【${newName}】（${standardNewPhone}）的基本資料，全排程與雲端已同步！`, 'success');
+
+        // 5. 同步推送至 Google 試算表與 Google 日曆 (若有連結 GAS)
+        if (this.gasUrl && !this.simulateOffline) {
+          this._activeMutationCount = (this._activeMutationCount || 0) + 1;
+          try {
+            fetch(this.gasUrl, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'updateCustomer',
+                origPhone: origPhone || standardNewPhone,
+                origName: origName || newName,
+                name: newName,
+                phone: standardNewPhone,
+                health_notes: healthNotes,
+                secret: this.gasSecret
+              })
+            }).then(r => r.json()).then(res => {
+              if (res && res.success) {
+                console.log('Google 試算表與日曆顧客資料同步成功:', res);
+              }
+            }).catch(e => {
+              console.warn('Google 試算表更新非致命錯誤:', e);
+            }).finally(() => {
+              this._activeMutationCount = Math.max(0, (this._activeMutationCount || 1) - 1);
+            });
+          } catch(e) {
+            this._activeMutationCount = Math.max(0, (this._activeMutationCount || 1) - 1);
           }
         }
       }
@@ -4090,8 +4479,11 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         if (e) e.preventDefault();
         const origPhone = document.getElementById('editCustOrigPhone').value.trim();
         const origName = document.getElementById('editCustOrigName').value.trim();
+        const bookingId = document.getElementById('editCustTargetBookingId')?.value?.trim() || '';
         const newName = document.getElementById('editCustName').value.trim();
         const newPhone = document.getElementById('editCustPhone').value.trim();
+        const gender = document.getElementById('editCustGender')?.value?.trim() || '';
+        const lineDisplayName = document.getElementById('editCustLineName')?.value?.trim() || '';
         const visitCount = parseInt(document.getElementById('editCustVisitCount').value, 10) || 1;
         const lastVisit = document.getElementById('editCustLastVisit').value.trim();
         const healthNotes = document.getElementById('editCustHealthNotes').value.trim();
@@ -4101,94 +4493,20 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           return;
         }
 
-        const standardNewPhone = this.formatStandardPhone(newPhone);
-        const cleanOrig = origPhone.replace(/[^0-9]/g, '');
-        const cleanNew = standardNewPhone.replace(/[^0-9]/g, '');
+        this.applyCustomerBasicInfoUpdate({
+          origPhone,
+          origName,
+          bookingId,
+          newName,
+          newPhone,
+          gender,
+          lineDisplayName,
+          visitCount,
+          lastVisit,
+          healthNotes
+        });
 
-        // 若該客戶曾被刪除隱藏，重新儲存或新增時自動解除封鎖
-        if (Array.isArray(this.deletedCustomerPhones)) {
-          const beforeCustDelLen = this.deletedCustomerPhones.length;
-          this.deletedCustomerPhones = this.deletedCustomerPhones.filter(p => p !== cleanOrig && p !== cleanNew);
-          if (this.deletedCustomerPhones.length !== beforeCustDelLen) {
-            localStorage.setItem('jiangxia_deleted_customers_v2', JSON.stringify(this.deletedCustomerPhones));
-          }
-        }
-
-        let target = null;
-        if (cleanOrig) {
-          target = this.customers.find(c => c.phone && c.phone.replace(/[^0-9]/g, '') === cleanOrig);
-        }
-
-        if (target) {
-          // 更新既有顧客
-          target.name = newName;
-          target.phone = standardNewPhone;
-          target.visit_count = visitCount;
-          target.last_visited_at = lastVisit;
-          target.health_notes = healthNotes;
-
-          // 以電話為單一真相源：將符合原電話或新電話之所有歷史與未來排程，全面統一顧客姓名與 09xx-xxxxxx 電話
-          this.bookings.forEach(b => {
-            const bp = (b.phone || '').replace(/[^0-9]/g, '');
-            if ((cleanOrig && bp === cleanOrig) || (cleanNew && bp === cleanNew)) {
-              b.customerName = newName;
-              b.phone = standardNewPhone;
-            }
-          });
-
-          this.showToast(`✅ 已成功更新【${newName}】（${standardNewPhone}）的客戶檔案，全排程已完成統一彙總！`, 'success');
-        } else {
-          // 新增顧客至 CRM
-          const newCustomer = {
-            id: 'c-' + Date.now(),
-            name: newName,
-            phone: standardNewPhone,
-            visit_count: visitCount,
-            last_visited_at: lastVisit || this.currentDateStr,
-            health_notes: healthNotes
-          };
-          this.customers.unshift(newCustomer);
-
-          // 同步將相同電話之排程歸納
-          this.bookings.forEach(b => {
-            const bp = (b.phone || '').replace(/[^0-9]/g, '');
-            if (cleanNew && bp === cleanNew) {
-              b.customerName = newName;
-              b.phone = standardNewPhone;
-            }
-          });
-
-          this.showToast(`✨ 已成功新增顧客【${newName}】至 CRM 記憶庫！`, 'success');
-        }
-
-        this.saveState();
-        this.renderCustomers();
-        this.renderTimeline();
         this.closeModal('customerEditModal');
-
-        // 同步推送至 Google 試算表資料庫 (若有連結 GAS)
-        if (this.gasUrl && !this.simulateOffline) {
-          try {
-            fetch(this.gasUrl, {
-              method: 'POST',
-              body: JSON.stringify({
-                action: 'updateCustomer',
-                origPhone: origPhone,
-                origName: origName,
-                name: newName,
-                phone: newPhone,
-                health_notes: healthNotes,
-                secret: this.gasSecret
-              })
-            }).then(r => r.json()).then(res => {
-              if (res && res.success) {
-                console.log('Google 試算表顧客資料同步成功:', res);
-              }
-            }).catch(e => {
-              console.warn('Google 試算表更新非致命錯誤:', e);
-            });
-          } catch(e) {}
-        }
       }
 
       deleteCustomerConfirm() {
@@ -4502,6 +4820,17 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
         document.getElementById('detailCustomerName').textContent = resolvedName;
         document.getElementById('detailPhone').textContent = b.phone || (matchedCust ? matchedCust.phone : '未留電話');
+        const genderBadge = document.getElementById('detailGenderBadge');
+        const resolvedGender = b.gender || (matchedCust && matchedCust.gender) || '';
+        if (genderBadge) {
+          if (resolvedGender) {
+            genderBadge.textContent = resolvedGender;
+            genderBadge.classList.remove('hidden');
+          } else {
+            genderBadge.classList.add('hidden');
+          }
+        }
+        this.toggleDetailEditCustomerPanel(false);
         this.renderDetailLineBindStatus(b, matchedCust);
         const bindPanel = document.getElementById('detailLineBindPanel');
         if (bindPanel) bindPanel.classList.add('hidden');
@@ -5368,6 +5697,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         }
         if (id === 'detailModal') {
           this.toggleEditTimeMode(false);
+          this.toggleDetailEditCustomerPanel(false);
         }
       }
 
