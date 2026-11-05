@@ -343,7 +343,7 @@
           <div class="flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full bg-brand-600"></div>
             <h3 class="text-sm font-bold text-slate-900">江夏板橋館・賴師傅營業排程 (11~12月 週一至週四 14:00 ~ 22:00 ｜ 週五回總部支援)</h3>
-            <span class="text-xs text-slate-400 font-normal">｜ 最後預約 21:00</span>
+            <span class="text-xs text-slate-400 font-normal">｜ 支援 30 分鐘間隔・最後預約 21:30</span>
           </div>
           <div class="flex items-center gap-3 text-xs text-slate-600">
             <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>已確認</span>
@@ -586,8 +586,28 @@
             <input type="date" id="formDate" required onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">開始時間 <span class="text-brand-600">*</span></label>
-            <input type="time" id="formTime" required step="1800" onchange="app.checkTimeConflict()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">開始時間 <span class="text-[10px] text-brand-600">(支援半點/21:30)</span> <span class="text-brand-600">*</span></label>
+            <div class="flex items-center gap-1.5">
+              <select id="formTimeQuickSelect" onchange="app.onQuickTimeSelectChange(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition">
+                <option value="14:00">14:00 (下午 2:00)</option>
+                <option value="14:30">14:30 (下午 2:30)</option>
+                <option value="15:00">15:00 (下午 3:00)</option>
+                <option value="15:30">15:30 (下午 3:30)</option>
+                <option value="16:00">16:00 (下午 4:00)</option>
+                <option value="16:30">16:30 (下午 4:30)</option>
+                <option value="17:00">17:00 (下午 5:00)</option>
+                <option value="17:30">17:30 (下午 5:30)</option>
+                <option value="18:00">18:00 (晚上 6:00)</option>
+                <option value="18:30">18:30 (晚上 6:30)</option>
+                <option value="19:00">19:00 (晚上 7:00)</option>
+                <option value="19:30">19:30 (晚上 7:30)</option>
+                <option value="20:00">20:00 (晚上 8:00)</option>
+                <option value="20:30">20:30 (晚上 8:30)</option>
+                <option value="21:00">21:00 (晚上 9:00)</option>
+                <option value="21:30">21:30 (晚上 9:30)</option>
+              </select>
+              <input type="time" id="formTime" required step="1800" onchange="app.onFormTimeInputChanged(this.value)" class="w-28 bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-xs text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white transition" title="自訂時間">
+            </div>
           </div>
         </div>
 
@@ -812,8 +832,28 @@
                 <input type="date" id="detailNewDate" class="w-full bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 transition">
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-amber-900 mb-0.5">更改開始時間</label>
-                <input type="time" id="detailNewTime" step="1800" class="w-full bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 transition">
+                <label class="block text-[11px] font-bold text-amber-900 mb-0.5">更改開始時間 (含 21:30)</label>
+                <div class="flex items-center gap-1">
+                  <select id="detailNewTimeSelect" onchange="const t=document.getElementById('detailNewTime'); if(t) t.value=this.value;" class="w-full bg-white border border-amber-300 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 transition">
+                    <option value="14:00">14:00</option>
+                    <option value="14:30">14:30</option>
+                    <option value="15:00">15:00</option>
+                    <option value="15:30">15:30</option>
+                    <option value="16:00">16:00</option>
+                    <option value="16:30">16:30</option>
+                    <option value="17:00">17:00</option>
+                    <option value="17:30">17:30</option>
+                    <option value="18:00">18:00</option>
+                    <option value="18:30">18:30</option>
+                    <option value="19:00">19:00</option>
+                    <option value="19:30">19:30</option>
+                    <option value="20:00">20:00</option>
+                    <option value="20:30">20:30</option>
+                    <option value="21:00">21:00 (9:00)</option>
+                    <option value="21:30">21:30 (9:30)</option>
+                  </select>
+                  <input type="time" id="detailNewTime" step="1800" onchange="const s=document.getElementById('detailNewTimeSelect'); if(s) s.value=this.value;" class="w-24 bg-white border border-amber-300 rounded-lg px-1.5 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 transition">
+                </div>
               </div>
             </div>
             <div class="flex items-center justify-between pt-1">
@@ -2546,15 +2586,17 @@
         const container = document.getElementById('timelineContainer');
         container.innerHTML = '';
 
-        // 營業時間 14:00 ~ 22:00，最晚預約 21:00 (若當日有特殊時段預約亦自動納入顯示，杜絕幽靈隱藏排程)
-        const hourSet = new Set([14, 15, 16, 17, 18, 19, 20, 21]);
+        // 營業時間 14:00 ~ 22:00，預設包含整點與 21:30 (晚上 9:30)，且當日若有其他半點預約 (如 14:30~20:30) 亦自動獨立成列顯示
+        const slotSet = new Set(['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '21:30']);
         const dayBookings = this.bookings.filter(b => b.start && b.start.startsWith(this.currentDateStr) && !this.isNonCustomerEvent(b));
         dayBookings.forEach(b => {
           if (b.status === '已取消') return;
-          const h = new Date(b.start.replace(' ', 'T')).getHours();
-          if (!isNaN(h) && h >= 0 && h <= 23) hourSet.add(h);
+          const timePart = b.start.replace(' ', 'T').slice(11, 16);
+          if (/^\d{2}:\d{2}$/.test(timePart)) {
+            slotSet.add(timePart);
+          }
         });
-        const hours = Array.from(hourSet).sort((a, b) => a - b);
+        const slotTimes = Array.from(slotSet).sort();
 
         // 判斷週末公休與 115/11/1~12/31 週五師傅回總部支援提示
         const dayOfWeek = this.currentDate.getDay();
@@ -2579,24 +2621,21 @@
 
         let rowsHtml = '';
 
-        hours.forEach(hour => {
-          const hourStr = String(hour).padStart(2, '0') + ':00';
+        slotTimes.forEach((hourStr, idx) => {
           const slotStart = new Date(`${this.currentDateStr}T${hourStr}:00`);
-          const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+          const nextSlotStr = idx + 1 < slotTimes.length ? slotTimes[idx + 1] : null;
+          const nextSlotStart = nextSlotStr ? new Date(`${this.currentDateStr}T${nextSlotStr}:00`) : new Date(slotStart.getTime() + 60 * 60 * 1000);
+          const slotEnd = new Date(Math.min(slotStart.getTime() + 60 * 60 * 1000, nextSlotStart.getTime()));
 
-          // 1. 查找開始時間落在該小時時段內的預約 (單一呈現原則：絕不重複跨格顯示)
+          // 若為整點 (如 21:00)，計算對應的半點字串 (如 21:30)，方便師傅一鍵加排半點客人
+          const isWholeHour = hourStr.endsWith(':00');
+          const halfHourStr = isWholeHour ? hourStr.slice(0, 3) + '30' : null;
+
+          // 1. 查找開始時間落在該時段區間內的預約 (精準歸屬該列，21:00 與 21:30 各自獨立顯示)
           const matches = dayBookings.filter(b => {
             if (b.status === '已取消') return false;
-            const bStart = new Date(b.start);
+            const bStart = new Date(b.start.replace(' ', 'T'));
             return (bStart >= slotStart && bStart < slotEnd);
-          });
-
-          // 2. 查找是否有上一時段延續過來的進行中預約
-          const ongoing = dayBookings.find(b => {
-            if (b.status === '已取消') return false;
-            const bStart = new Date(b.start);
-            const bEnd = new Date(b.end);
-            return (bStart < slotStart && bEnd > slotStart);
           });
 
           if (matches.length > 0) {
@@ -2612,7 +2651,7 @@
               const syncDot = b.syncStatus === 'pending' ? '🟡' : '🟢';
               const visitCount = this.getVisitCount(b.phone);
               const visitBadge = this.formatVisitBadge(visitCount);
-const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price) : this.getServiceDefaultPrice(b.serviceItem);
+              const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price) : this.getServiceDefaultPrice(b.serviceItem);
               const priceDisplay = this.hidePrice 
                 ? '<span class="text-slate-400 font-mono tracking-widest font-bold">***</span>' 
                 : `<span class="font-bold text-slate-900">$${validPrice.toLocaleString()}</span>`;
@@ -2655,6 +2694,12 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                   </td>
                   <td class="py-3 px-3 text-right whitespace-nowrap">
                     <div class="flex items-center justify-end gap-1.5">
+                      ${halfHourStr ? `
+                        <button type="button" onclick="app.quickBookSlot('${halfHourStr}')" class="px-2 py-1 text-[11px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-0.5" title="加排 ${halfHourStr} 半點客人">
+                          <i data-lucide="plus" class="w-3 h-3 text-emerald-700"></i>
+                          <span>+${halfHourStr}</span>
+                        </button>
+                      ` : ''}
                       <button type="button" onclick="app.rebookNext('${b.id}')" class="px-2.5 py-1 text-[11px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle flex items-center gap-1" title="預約下次回訪">
                         <i data-lucide="calendar-plus" class="w-3 h-3 text-amber-700"></i>
                         <span>預約下次</span>
@@ -2670,53 +2715,13 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 </tr>
               `;
             });
-          } else if (ongoing) {
-            // 接續前段進行中預約 (避免重複畫人名，清楚標記調理至幾點，並提供空檔預約)
-            const ongoingEndT = ongoing.end.slice(11, 16);
-            const canBookNext = ongoingEndT < '22:00';
-            rowsHtml += `
-              <tr class="bg-amber-50/20 hover:bg-amber-50/40 transition duration-150 border-b border-amber-100/60">
-                <td class="py-3 px-3 font-bold text-slate-600 whitespace-nowrap">
-                  <div class="flex items-center gap-1.5">
-                    <i data-lucide="hourglass" class="w-3.5 h-3.5 text-amber-600"></i>
-                    <span>${hourStr}</span>
-                    <span class="text-[10px] text-amber-600 font-normal">~${ongoingEndT}</span>
-                  </div>
-                </td>
-                <td class="py-3 px-3 whitespace-nowrap">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">⏳ 接續調理中</span>
-                </td>
-                <td class="py-3 px-3 whitespace-nowrap text-slate-600">
-                  <span class="font-medium text-slate-700">延續【${ongoing.customerName}】</span>
-                </td>
-                <td class="py-3 px-3 text-slate-400 whitespace-nowrap font-mono text-[11px]">${ongoing.phone}</td>
-                <td class="py-3 px-3 text-slate-300 whitespace-nowrap">─</td>
-                <td class="py-3 px-3 text-amber-800 font-medium text-xs whitespace-nowrap">
-                  調理至 ${ongoingEndT} 結束
-                </td>
-                <td class="py-3 px-3 text-slate-400 text-xs italic whitespace-nowrap">
-                  ${canBookNext ? `（${ongoingEndT} 後可排預約）` : '（營業即將結束）'}
-                </td>
-                <td class="py-3 px-3 text-right text-slate-300 whitespace-nowrap">─</td>
-                <td class="py-3 px-3 text-right whitespace-nowrap">
-                  ${canBookNext ? `
-                    <button type="button" onclick="app.quickBookSlot('${ongoingEndT}')" class="px-2.5 py-1 text-[11px] font-bold bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 rounded-lg transition active:scale-95 shadow-subtle inline-flex items-center gap-1" title="排入 ${ongoingEndT} 預約">
-                      <i data-lucide="plus" class="w-3 h-3 text-amber-700"></i>
-                      <span>可約 ${ongoingEndT}</span>
-                    </button>
-                  ` : `
-                    <span class="text-[11px] text-slate-400">已客滿</span>
-                  `}
-                </td>
-              </tr>
-            `;
           } else {
-            // Free slot row
+            // Free slot row (包含 21:30 專屬空檔列，且整點列同時提供 +半點 快捷按鈕)
             rowsHtml += `
               <tr class="hover:bg-slate-50/50 transition duration-150 border-b border-slate-100/70">
-                <td class="py-3 px-3 font-bold text-slate-400 whitespace-nowrap">
+                <td class="py-3 px-3 font-bold ${hourStr === '21:30' ? 'text-amber-700' : 'text-slate-400'} whitespace-nowrap">
                   <div class="flex items-center gap-1.5">
-                    <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <i data-lucide="clock" class="w-3.5 h-3.5 ${hourStr === '21:30' ? 'text-amber-600' : 'text-slate-400'}"></i>
                     <span>${hourStr}</span>
                   </div>
                 </td>
@@ -2730,10 +2735,17 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 <td class="py-3 px-3 text-slate-300 whitespace-nowrap">─</td>
                 <td class="py-3 px-3 text-right text-slate-300 whitespace-nowrap">─</td>
                 <td class="py-3 px-3 text-right whitespace-nowrap">
-                  <button type="button" onclick="app.quickBookSlot('${hourStr}')" class="px-3 py-1 text-[11px] font-bold bg-white hover:bg-brand-50 text-brand-700 border border-brand-300 hover:border-brand-500 rounded-lg transition active:scale-95 shadow-subtle inline-flex items-center gap-1">
-                    <i data-lucide="plus" class="w-3 h-3 text-brand-600"></i>
-                    <span>新增</span>
-                  </button>
+                  <div class="flex items-center justify-end gap-1.5">
+                    ${(halfHourStr && halfHourStr !== '21:30') ? `
+                      <button type="button" onclick="app.quickBookSlot('${halfHourStr}')" class="px-2 py-1 text-[11px] font-semibold bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg transition active:scale-95 inline-flex items-center gap-0.5" title="新增 ${halfHourStr} 半點預約">
+                        <span>+${halfHourStr}</span>
+                      </button>
+                    ` : ''}
+                    <button type="button" onclick="app.quickBookSlot('${hourStr}')" class="px-3 py-1 text-[11px] font-bold bg-white hover:bg-brand-50 text-brand-700 border border-brand-300 hover:border-brand-500 rounded-lg transition active:scale-95 shadow-subtle inline-flex items-center gap-1">
+                      <i data-lucide="plus" class="w-3 h-3 text-brand-600"></i>
+                      <span>新增 ${hourStr}</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             `;
@@ -2744,7 +2756,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           <table class="w-full text-left text-xs text-slate-700 border-collapse min-w-[780px]">
             <thead>
               <tr class="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-bold text-[11px]">
-                <th class="py-3 px-3 w-28">時間 (1小時)</th>
+                <th class="py-3 px-3 w-28">時間 (含半點)</th>
                 <th class="py-3 px-3 w-24">狀態</th>
                 <th class="py-3 px-3 w-24">姓名</th>
                 <th class="py-3 px-3 w-28">電話</th>
@@ -2752,7 +2764,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 <th class="py-3 px-3 min-w-[150px]">調理部位</th>
                 <th class="py-3 px-3 min-w-[160px]">主訴症狀</th>
                 <th class="py-3 px-3 w-20 text-right">金額</th>
-                <th class="py-3 px-3 min-w-[160px] text-right">選項</th>
+                <th class="py-3 px-3 min-w-[190px] text-right">選項</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -2765,21 +2777,54 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         lucide.createIcons();
       }
 
+      onQuickTimeSelectChange(val) {
+        const timeInput = document.getElementById('formTime');
+        if (timeInput && val) {
+          timeInput.value = val;
+        }
+        this.checkTimeConflict();
+      }
+
+      onFormTimeInputChanged(val) {
+        const quickSelect = document.getElementById('formTimeQuickSelect');
+        if (quickSelect && val) {
+          const hasOpt = Array.from(quickSelect.options).some(o => o.value === val);
+          if (hasOpt) quickSelect.value = val;
+        }
+        this.checkTimeConflict();
+      }
+
       quickBookSlot(timeStr) {
         document.getElementById('formDate').value = this.currentDateStr;
         document.getElementById('formTime').value = timeStr;
+        const quickSelect = document.getElementById('formTimeQuickSelect');
+        if (quickSelect) {
+          const hasOpt = Array.from(quickSelect.options).some(o => o.value === timeStr);
+          if (hasOpt) quickSelect.value = timeStr;
+        }
         this.openModal('bookingModal');
+        document.getElementById('formTime').value = timeStr;
+        if (quickSelect) {
+          const hasOpt = Array.from(quickSelect.options).some(o => o.value === timeStr);
+          if (hasOpt) quickSelect.value = timeStr;
+        }
         this.checkTimeConflict();
       }
 
       // ==========================================
-      // 4. 排程防撞檢測 (Anti-Double Booking Guard)
+      // 4. 排程防撞檢測 (支援 30 分鐘半點接力排程，如 21:00 與 21:30 同時各排一位)
       // ==========================================
       checkTimeConflict() {
         const date = document.getElementById('formDate').value;
         const time = document.getElementById('formTime').value;
+        const quickSelect = document.getElementById('formTimeQuickSelect');
+        if (quickSelect && time) {
+          const hasOpt = Array.from(quickSelect.options).some(o => o.value === time);
+          if (hasOpt) quickSelect.value = time;
+        }
         const serviceSelect = document.getElementById('formService');
-        const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        const isHalfHourSlot = time && time.endsWith(':30');
+        const duration = isHalfHourSlot ? 30 : parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
         
         const box = document.getElementById('conflictStatusBox');
         const text = document.getElementById('conflictStatusText');
@@ -2796,20 +2841,34 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         const newStart = new Date(`${date}T${time}:00`);
         const newEnd = new Date(newStart.getTime() + duration * 60 * 1000);
 
-        const conflict = this.bookings.find(b => {
-          if (b.status === '已取消') return false;
-          const bStart = new Date(b.start);
-          const bEnd = new Date(b.end);
+        // 僅當「完全相同開始時間 (例如同為 21:00 或同為 21:30)」已有預約時才視為硬衝突鎖定；若為 21:00 與 21:30 半點接力，完全放行！
+        const exactConflict = this.bookings.find(b => {
+          if (b.status === '已取消' || this.isNonCustomerEvent(b)) return false;
+          const bStart = new Date(b.start.replace(' ', 'T'));
+          return Math.abs(bStart.getTime() - newStart.getTime()) < 60000;
+        });
+
+        const overlapAdjacent = !exactConflict && this.bookings.find(b => {
+          if (b.status === '已取消' || this.isNonCustomerEvent(b)) return false;
+          const bStart = new Date(b.start.replace(' ', 'T'));
+          const bEnd = new Date(b.end.replace(' ', 'T'));
           return (newStart < bEnd && newEnd > bStart);
         });
 
-        if (conflict) {
-          const cStartT = conflict.start.slice(11, 16);
-          const cEndT = conflict.end.slice(11, 16);
+        if (exactConflict) {
+          const cStartT = exactConflict.start.slice(11, 16);
+          const cEndT = exactConflict.end.slice(11, 16);
           box.className = 'p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs flex items-center gap-2 text-rose-800 animate-pulse-subtle';
-          text.innerHTML = `⛔ <strong>排程衝突警告！</strong> 該時段已與【${conflict.customerName}】的預約 (${cStartT} ~ ${cEndT}) 重疊！已鎖定送出按鈕。`;
+          text.innerHTML = `⛔ <strong>同時間已有預約！</strong> ${cStartT} 已排有【${exactConflict.customerName}】(${cStartT} ~ ${cEndT})。若要接力排程請改選半點（如 21:30）！`;
           btn.disabled = true;
           btn.classList.add("opacity-60");
+        } else if (overlapAdjacent) {
+          const adjStartT = overlapAdjacent.start.slice(11, 16);
+          const endTStr = newEnd.toTimeString().slice(0, 5);
+          box.className = 'p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800';
+          text.innerHTML = `✅ <strong>半點接力排程暢通！</strong> 將與【${overlapAdjacent.customerName} (${adjStartT})】以 30 分鐘間隔接力排入 (${time} ~ ${endTStr})！`;
+          btn.disabled = false;
+          btn.classList.remove("opacity-60");
         } else {
           const endTStr = newEnd.toTimeString().slice(0, 5);
           box.className = 'p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800';
@@ -2997,18 +3056,14 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
       isCurrentSlotConflict() {
         const date = document.getElementById('formDate').value;
         const time = document.getElementById('formTime').value;
-        const serviceSelect = document.getElementById('formService');
-        const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
         if (!date || !time) return false;
 
         const newStart = new Date(`${date}T${time}:00`);
-        const newEnd = new Date(newStart.getTime() + duration * 60 * 1000);
 
         return this.bookings.some(b => {
-          if (b.status === '已取消') return false;
-          const bStart = new Date(b.start);
-          const bEnd = new Date(b.end);
-          return (newStart < bEnd && newEnd > bStart);
+          if (b.status === '已取消' || this.isNonCustomerEvent(b)) return false;
+          const bStart = new Date(b.start.replace(' ', 'T'));
+          return Math.abs(bStart.getTime() - newStart.getTime()) < 60000;
         });
       }
 
@@ -3020,7 +3075,19 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         const time = document.getElementById('formTime').value;
         const serviceSelect = document.getElementById('formService');
         const service = serviceSelect.value;
-        const duration = parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        const startCheck = new Date(`${date}T${time}:00`);
+        const hasNextHalfHour = this.bookings.some(b => b.status !== '已取消' && Math.abs(new Date(b.start.replace(' ', 'T')).getTime() - (startCheck.getTime() + 30 * 60 * 1000)) < 60000);
+        const duration = (time.endsWith(':30') || hasNextHalfHour) ? 30 : parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        // 若本次新增為半點 (例如 21:30)，且前一個整點 (例如 21:00) 原本預設結束時間為 22:00，自動將前一個整點結束時間收斂為 21:30，讓 21:00~21:30 與 21:30~22:00 完美接力！
+        this.bookings.forEach(b => {
+          if (b.status === '已取消') return;
+          const bStart = new Date(b.start.replace(' ', 'T'));
+          const bEnd = new Date(b.end.replace(' ', 'T'));
+          if (bStart < startCheck && bEnd > startCheck) {
+            b.end = `${date}T${time}:00`;
+            b.durationMin = Math.max(15, Math.round((startCheck.getTime() - bStart.getTime()) / 60000));
+          }
+        });
         
         // 核心修復 3：讀取師傅手動輸入的預約應收金額，若自訂則標記 isCustomPrice
         const formPriceInput = document.getElementById('formPrice');
@@ -5411,6 +5478,8 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               const timeInput = document.getElementById('detailNewTime');
               if (dateInput) dateInput.value = b.start.slice(0, 10);
               if (timeInput) timeInput.value = b.start.slice(11, 16);
+              const timeSel = document.getElementById('detailNewTimeSelect');
+              if (timeSel) timeSel.value = b.start.slice(11, 16);
             }
           }
         } else {
@@ -5441,7 +5510,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           if (other.id === b.id || other.status === '已取消') return false;
           const otherStart = new Date(other.start);
           const otherEnd = new Date(other.end);
-          return (newStart < otherEnd && newEnd > otherStart);
+          return Math.abs(otherStart.getTime() - newStart.getTime()) < 60000;
         });
 
         if (conflict) {
