@@ -1390,10 +1390,12 @@
           storedBookings = JSON.parse(localStorage.getItem('jiangxia_bookings_v2') || '[]');
         } catch(e) { storedBookings = []; }
 
-        // 讀取永久刪除墓碑名冊 (Tombstone)
+        // 讀取永久刪除墓碑名冊 (Tombstone) — v2.7.5 自動清除舊版 sig: 複合簽章，僅保留唯一 Event ID，徹底根除「先刪後增同人同時段被舊墓碑誤殺」
         this.deletedEventIds = [];
         try {
-          this.deletedEventIds = JSON.parse(localStorage.getItem('jiangxia_deleted_events_v2') || '[]');
+          const rawDeleted = JSON.parse(localStorage.getItem('jiangxia_deleted_events_v2') || '[]');
+          this.deletedEventIds = (Array.isArray(rawDeleted) ? rawDeleted : []).filter(item => typeof item === 'string' && !item.startsWith('sig:'));
+          localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
         } catch(e) { this.deletedEventIds = []; }
         
         this.deletedCustomerPhones = [];
@@ -1401,15 +1403,14 @@
           this.deletedCustomerPhones = JSON.parse(localStorage.getItem('jiangxia_deleted_customers_v2') || '[]');
         } catch(e) { this.deletedCustomerPhones = []; }
 
-        // 清理殘留之測試假資料、店休/光復節全天事件以及已刪除的行程
+        // 清理殘留之測試假資料、店休/光復節全天事件以及已刪除的行程 (僅比對唯一 Event ID)
         storedBookings = (storedBookings || []).filter((b, idx) => {
           if (!b) return false;
           if (!b.id) b.id = 'b-legacy-' + idx;
           if (this.isNonCustomerEvent(b)) return false;
           const id = String(b.id || '');
           const cId = String(b.cloudSyncedId || '');
-          const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
-          if (this.deletedEventIds.includes(id) || (cId && this.deletedEventIds.includes(cId)) || this.deletedEventIds.includes(sig)) {
+          if (this.deletedEventIds.includes(id) || (cId && this.deletedEventIds.includes(cId))) {
             return false;
           }
           const pureId = id.replace('@google.com', '');
@@ -1431,12 +1432,9 @@
           storedCustomers = JSON.parse(localStorage.getItem('jiangxia_customers_v2') || '[]');
         } catch(e) { storedCustomers = []; }
 
-        // 清理殘留之測試顧客資料
+        // 清理殘留之預設種子顧客資料 (僅排除固定 Seed ID，避免誤殺同名真實客戶或師傅手動測試資料)
         storedCustomers = (storedCustomers || []).filter(c => {
-          const name = c.name || '';
-          if (name.includes('QA') || name.includes('測試') || name === '王大偉' || name === '李小姐' || name === '張經理') {
-            return false;
-          }
+          if (!c) return false;
           if (c.id === 'c-1' || c.id === 'c-2' || c.id === 'c-3') {
             return false;
           }
@@ -1495,7 +1493,7 @@
         const startStr = String(b.start || '').replace(' ', 'T');
         const idStr = String(b.id || b.cloudSyncedId || '');
 
-        // 1. 排除系統同步名冊、店休、公休、光復節、颱風假、私人行程與測試假資料
+        // 1. 排除系統同步名冊、店休、公休、光復節、颱風假、私人行程與固定種子 ID (不阻擋真實客戶姓名或手動測試單)
         if (
           name.includes('LINE好友名冊') ||
           notes.includes('LINE_FRIENDS_JSON:') ||
@@ -1506,12 +1504,8 @@
           name.includes('光復節') ||
           name.includes('颱風假') ||
           name.includes('牙醫') ||
-          name.includes('QA') ||
-          name.includes('測試') ||
-          name === '王大偉' ||
-          name === '李小姐' ||
-          name === '張經理' ||
           idStr === 'b-1' || idStr === 'b-2' || idStr === 'b-3' ||
+          idStr.includes('umm7gha9jlpu6rp8djmf05b2bg') ||
           idStr.includes('6oo6cchn65imab9o75hmcb9k68rjabb2cko3ib9g6sp62phmcgqm4opj64') ||
           idStr === '8082CA60-D2A7-4903-A5F6-D99251BAD257'
         ) {
@@ -1634,12 +1628,10 @@
           return rawName.replace(/^[-–—\s]+|[-–—\s]+$/g, '').trim();
         };
 
-        // 判斷是否為無效或測試假人名
+        // 判斷是否為通用預設代稱
         const isDummyName = (name) => {
           if (!name) return true;
-          return name.includes('QA') || name.includes('測試') || 
-                 name === '王大偉' || name === '李小姐' || name === '張經理' ||
-                 name === '線上預約顧客' || name === '新顧客' || name === '預約顧客' || 
+          return name === '線上預約顧客' || name === '新顧客' || name === '預約顧客' || 
                  /^[0-9-]+$/.test(name);
         };
 
@@ -1649,8 +1641,8 @@
           const phoneKey = this.getCleanPhoneKey(rawPhone);
           const rawName = sanitizeName(c.name);
 
-          // 排除測試人員
-          if (c.name && (c.name.includes('QA') || c.name.includes('測試') || c.name === '王大偉' || c.name === '李小姐' || c.name === '張經理')) {
+          // 排除舊種子資料 ID
+          if (c.id === 'c-1' || c.id === 'c-2' || c.id === 'c-3') {
             return;
           }
           if (!phoneKey) return;
@@ -1761,11 +1753,23 @@
 
         nameGroups.forEach((custList, name) => {
           if (custList.length > 1) {
-            // 挑選最佳主要記錄（優先選來訪次數最多、電話為標準10碼的）
-            custList.sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0));
+            // 挑選最佳主要記錄（優先選電話為標準10碼、來訪次數最多的）
+            custList.sort((a, b) => {
+              const aLen = this.getCleanPhoneKey(a.phone).length === 10 ? 1 : 0;
+              const bLen = this.getCleanPhoneKey(b.phone).length === 10 ? 1 : 0;
+              if (bLen !== aLen) return bLen - aLen;
+              return (b.visit_count || 0) - (a.visit_count || 0);
+            });
             const primary = custList[0];
+            const primaryKey = this.getCleanPhoneKey(primary.phone);
             for (let i = 1; i < custList.length; i++) {
               const duplicate = custList[i];
+              const dupKey = this.getCleanPhoneKey(duplicate.phone);
+              // 僅當其中一組電話為未滿 10 碼之末碼/舊碼且末碼相符時才合併，避免同名同姓但不同 10 碼手機之真實顧客被誤刪
+              const isPartialMatch = (primaryKey.length === 10 && dupKey.length < 10 && primaryKey.endsWith(dupKey)) ||
+                                     (dupKey.length === 10 && primaryKey.length < 10 && dupKey.endsWith(primaryKey)) ||
+                                     (dupKey === primaryKey);
+              if (!isPartialMatch) continue;
               // 合併來訪次數
               primary.visit_count = Math.max(primary.visit_count, duplicate.visit_count);
               // 合併備忘
@@ -1776,9 +1780,7 @@
               if (duplicate.last_visited_at && (!primary.last_visited_at || duplicate.last_visited_at > primary.last_visited_at)) {
                 primary.last_visited_at = duplicate.last_visited_at;
               }
-              // 從 phoneMap 移除重複次要鍵，將其重定向至 primary 的電話
-              const dupKey = this.getCleanPhoneKey(duplicate.phone);
-              if (dupKey && dupKey !== this.getCleanPhoneKey(primary.phone)) {
+              if (dupKey && dupKey !== primaryKey) {
                 phoneMap.delete(dupKey);
               }
             }
@@ -2376,15 +2378,13 @@
           return;
         }
 
-        // 1. 取得關聯 Event ID 與特徵簽章
+        // 1. 取得關聯唯一 Event ID (v2.7.5 不再寫入 sig: 時間姓名複合簽章，防止刪除後同人同時段重約被誤殺)
         const targetEventId = b.cloudSyncedId || b.id;
         const bId = String(b.id || '');
-        const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
 
-        // 2. 登記至永久墓碑名冊 (Tombstone)，徹底杜絕輪詢重新拉回
+        // 2. 登記唯一 Event ID 至永久墓碑名冊 (Tombstone)
         if (!this.deletedEventIds) this.deletedEventIds = [];
         if (bId && !this.deletedEventIds.includes(bId)) this.deletedEventIds.push(bId);
-        if (sig && !this.deletedEventIds.includes(sig)) this.deletedEventIds.push(sig);
         if (targetEventId && !this.deletedEventIds.includes(targetEventId)) this.deletedEventIds.push(targetEventId);
         if (targetEventId && targetEventId.includes('@google.com')) {
           const pureId = targetEventId.replace('@google.com', '');
@@ -2970,7 +2970,14 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           }
         }
 
-        // 1. 本地落庫
+        // 1. 本地落庫（同時清理同時段同人已取消之殘留舊單，防止幽靈狀態劫持）
+        this.bookings = (this.bookings || []).filter(b => {
+          if (b.status !== '已取消') return true;
+          const bStart16 = String(b.start || '').replace(' ', 'T').slice(0, 16);
+          const newStart16 = String(newBooking.start || '').replace(' ', 'T').slice(0, 16);
+          const bPhoneClean = this.getCleanPhoneKey(b.phone);
+          return !(bStart16 === newStart16 && ((cleanPhoneKey && bPhoneClean === cleanPhoneKey) || b.customerName === name));
+        });
         this.bookings.push(newBooking);
 
         // 2. 更新顧客 CRM
@@ -3052,7 +3059,11 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
         this.saveState();
         this.closeModal('bookingModal');
-        this.renderTimeline();
+        if (date && date !== this.currentDateStr) {
+          this.setDateFromPicker(date);
+        } else {
+          this.renderTimeline();
+        }
         this.renderCustomers();
         this.renderReports();
       }
@@ -3314,23 +3325,21 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
             const prevLen = this.bookings.length;
 
             // 若後端有回傳 queryStartTime / queryEndTime 則採用；
-            // 若為舊版 GAS（未回傳區間），則舊版 GAS 預設只抓取過去 3 天至未來 30 天
+            // 若為舊版 GAS（未回傳區間，僅抓過去 3 天至未來 30 天），內縮安全邊界為 2.5 天至 29 天，避免邊界時差誤刪
             const cloudQueryStart = result.queryStartTime 
               ? new Date(result.queryStartTime) 
-              : new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+              : new Date(fetchStartedAtMs - 2.5 * 24 * 60 * 60 * 1000);
             const cloudQueryEnd = result.queryEndTime 
               ? new Date(result.queryEndTime) 
-              : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+              : new Date(fetchStartedAtMs + 29 * 24 * 60 * 60 * 1000);
 
             const queryStartMs = cloudQueryStart.getTime();
             const queryEndMs = cloudQueryEnd.getTime();
 
             this.bookings = this.bookings.filter(b => {
               if (this.isNonCustomerEvent(b)) return false;
-              // 0. 墓碑機制檢查：若此事件已在後台被刪除，徹底排除
+              // 0. 墓碑機制檢查：僅核對唯一 Event ID，不以時間+姓名誤殺重約單
               if (this.deletedEventIds) {
-                const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
-                if (this.deletedEventIds.includes(sig)) return false;
                 if (b.id && this.deletedEventIds.includes(b.id)) return false;
                 if (b.cloudSyncedId && this.deletedEventIds.includes(b.cloudSyncedId)) return false;
                 const pureId = (b.id || '').replace('@google.com', '');
@@ -3364,10 +3373,10 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               return true;
             });
 
-            // 同步清理顧客 CRM 中的測試人員
+            // 同步清理顧客 CRM 中的舊版預設種子 ID
             this.customers = this.customers.filter(c => {
-              const name = c.name || '';
-              return !(name.includes('QA') || name.includes('測試') || name === '王大偉' || name === '李小姐' || name === '張經理');
+              if (!c) return false;
+              return !(c.id === 'c-1' || c.id === 'c-2' || c.id === 'c-3');
             });
 
             let addedCount = 0;
@@ -3402,11 +3411,9 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 return;
               }
 
-              // 0. 排除店休/公休/光復節全天事件與私人行程，以及墓碑名冊防禦
+              // 0. 排除店休/公休/光復節全天事件與私人行程，以及唯一 Event ID 墓碑防禦
               if (this.isNonCustomerEvent(evt)) return;
               if (this.deletedEventIds) {
-                const evtSig = 'sig:' + String(evt.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(evt.customerName || '').trim();
-                if (this.deletedEventIds.includes(evtSig)) return;
                 if (evt.id && this.deletedEventIds.includes(evt.id)) return;
                 const pureId = (evt.id || '').replace('@google.com', '');
                 if (pureId && this.deletedEventIds.includes(pureId)) return;
@@ -3420,6 +3427,8 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                   if (b.id && b.id.replace('@google.com', '') === evtPureId) return true;
                   if (b.cloudSyncedId && b.cloudSyncedId.replace('@google.com', '') === evtPureId) return true;
                 }
+                // 避免已取消的舊單攔截同人同時段的新預約
+                if (b.status === '已取消') return false;
                 const bPhoneClean = b.phone ? this.getCleanPhoneKey(b.phone) : '';
                 const bStart16 = (b.start || '').replace(' ', 'T').slice(0, 16);
                 const evtStart16 = (evt.start || '').replace(' ', 'T').slice(0, 16);
@@ -3631,6 +3640,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
             phone: newBooking.phone,
             serviceItem: newBooking.serviceItem,
             durationMin: newBooking.durationMin,
+            price: newBooking.price,
             startTime: newBooking.start,
             notes: (newBooking.symptoms ? `[主訴] ${newBooking.symptoms} ｜ ` : '') + (newBooking.notes || ''),
             staff: '賴師傅',
@@ -5243,12 +5253,15 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           b._customStatusEdited = true;
           if (newStatus === '已取消') {
             const targetEventId = b.cloudSyncedId || b.id;
-            const sig = 'sig:' + String(b.start || '').replace(' ', 'T').slice(0, 16) + '|' + String(b.customerName || '').trim();
             if (!this.deletedEventIds) this.deletedEventIds = [];
             if (b.id && !this.deletedEventIds.includes(b.id)) this.deletedEventIds.push(b.id);
-            if (sig && !this.deletedEventIds.includes(sig)) this.deletedEventIds.push(sig);
             if (targetEventId && !this.deletedEventIds.includes(targetEventId)) this.deletedEventIds.push(targetEventId);
+            if (targetEventId && targetEventId.includes('@google.com')) {
+              const pureId = targetEventId.replace('@google.com', '');
+              if (!this.deletedEventIds.includes(pureId)) this.deletedEventIds.push(pureId);
+            }
             localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
+            this.bookings = this.bookings.filter(x => String(x.id) !== String(b.id));
             if (this.gasUrl && !this.simulateOffline && targetEventId) {
               const delUrl = `${this.gasUrl}?action=deleteEvent&eventId=${encodeURIComponent(targetEventId)}&id=${encodeURIComponent(targetEventId)}&secret=${encodeURIComponent(this.gasSecret)}`;
               fetch(delUrl).catch(() => {});
@@ -5309,9 +5322,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
       openModal(id) {
         document.getElementById(id).classList.remove('hidden');
         if (id === 'bookingModal') {
-          if (!document.getElementById('formDate').value) {
-            document.getElementById('formDate').value = this.currentDateStr;
-          }
+          document.getElementById('formDate').value = this.currentDateStr;
           if (!document.getElementById('formTime').value) {
             document.getElementById('formTime').value = '14:00';
           }
