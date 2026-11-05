@@ -1,6 +1,108 @@
-﻿# 📝 江夏傳統整復推拿 板橋館｜專案版本更新紀錄 (CHANGELOG)
+# 📝 江夏傳統整復推拿 板橋館｜專案版本更新紀錄 (CHANGELOG)
 
 本文檔記錄「江夏傳統整復推拿 板橋館」AI 客服機器人、Prompt 集中倉庫與自動化工具的所有版本演進、功能修復與 Git 變更紀錄。
+
+## 📌 [v2.7.4] - 2026-11-05 20:15:00
+### 🛠️ 預約後台排程看板 (`booking-dashboard`) 修復：「刪除客戶/預約後再新增預約，新增部分會自動消失」三大根因徹底根治
+- **事故起因與三大根因定位 (Root Cause Analysis)**：
+  1. **墓碑簽章 (`sig:YYYY-MM-DDTHH:mm|顧客姓名`) 未在新增預約時解除封鎖 (`deletedEventIds`)**：
+     - 當師傅在後台排程表刪除預約 (`deleteBooking`) 或取消預約 (`updateBookingStatus('已取消')`) 時，系統會將 `sig:時段|姓名` 寫入 `this.deletedEventIds` (`localStorage: jiangxia_deleted_events_v2`) 防止雲端把舊資料拉回。
+     - 但當師傅接著點擊「新增預約」(`executeSaveBooking`) 重新排入該時段或該客戶時，`executeSaveBooking` **並未從 `this.deletedEventIds` 移除對應的 `sig:` 墓碑**。導致 20 秒後背景雲端同步 `fetchFromCloud(true)` 觸發（或重新整理網頁）時，墓碑過濾器直接將剛新增的預約誤判為已刪除事件而抹除！
+  2. **客戶刪除封鎖名冊 (`deletedCustomerPhones`) 未在新增預約時解除封鎖**：
+     - 當師傅在顧客病歷 (CRM) 刪除客戶 (`deleteCustomerConfirm`) 時，該客戶電話被寫入 `this.deletedCustomerPhones`。之後重新為該客戶新增預約或新增客戶檔案時，因電話仍在封鎖名冊內，`saveState()` 觸發 `consolidateCustomersByPhone()` 時直接跳過並抹除該客戶。
+  3. **新增預約非同步上傳 (`pushBookingToCloud`) 與 20 秒背景輪詢 (`fetchFromCloud`) 的時間差競態誤殺 (Race Condition)**：
+     - 新增預約時，`pushBookingToCloud` 會在背景呼叫 GAS 建立 Google 日曆事件並寫入 `newBooking.cloudSyncedId`。若此時剛好遇到 `fetchFromCloud(true)` 收到稍早的日曆快照（快照中尚無該新 `eventId`），`if (b.cloudSyncedId && !cloudIds.has(b.cloudSyncedId)) return false;` 會誤判該預約「已在 Google 日曆被刪除」，在新增後數秒內直接將新預約刪掉！
+- **三大核心修復**：
+  1. **新增預約與改期時自動解除墓碑與客戶封鎖**：於 `executeSaveBooking()`、`saveRescheduledTime()` 與 `handleSaveCustomerProfile()` 中，自動從 `this.deletedEventIds` 移除該時段 (`sig:YYYY-MM-DDTHH:mm|`) 與該客戶姓名之舊 `sig:` 墓碑，並從 `this.deletedCustomerPhones` 移除該客戶電話，同步寫入 `localStorage`。
+  2. **90 秒新預約保護罩 (New Booking Grace Period)**：新建立預約標記 `_createdAtMs`、上傳完成標記 `_syncedAtMs`；`fetchFromCloud()` 在執行雙向刪除比對時，凡處於 `syncing` / `pending` 或建立/同步未滿 90 秒之新預約，一律受到保護絕不誤刪。
+  3. **讀寫互斥鎖 (`_activeMutationCount`)**：當後台正進行新增、刪除或改期雲端請求時，自動暫停背景靜默輪詢 `fetchFromCloud(true)`，徹底消除雲端讀寫交錯競態。
+- **部署與同步**：
+  - 已更新 `05_Apps_預約系統與後台/booking-dashboard/index.html` 並同步推送至 GitHub Pages 倉庫 `azach258/jiangxia-banqiao` (`main` 分支 commit `20458b5`)。
+
+## 📌 [v2.7.3] - 2026-11-05 19:38:00
+### 🚨 LINE AI 客服「抱歉，目前系統較為繁忙...」三大根因徹底修復 ＆ 排查期間依指示暫停 AI 自動回覆
+- **排查期間安全處置**：
+  - 已依指示立即透過 LINE Messaging API 將 Webhook 端點切換至 `/webhook-paused` 並開啟 `GLOBAL_AI_AUTO_REPLY_PAUSED = true`，暫停 AI 自動回覆，方便真人客服接手，不會再跳出系統繁忙訊息干擾客戶。
+- **「目前系統較為繁忙」三大真正根因與修復 (`azach258/my-line-bot` commit `9f5f8d8`)**：
+  1. **根因一：`@google/generative-ai` SDK 原地污染 `userSession.history` 導致後續對話永久 400 報錯**：
+     - `model.startChat({ history: userSession.history })` 會直接將參考綁定至內部 `_history`，當觸發 `checkAvailability` 工具呼叫時，SDK 把 `functionCall` / `functionResponse` 直接塞進 `userSession.history`。下一輪客戶再傳訊息時，過濾掉純文字為空的工具回合後留下連續兩個 `user -> user` 角色，導致 Gemini API 嚴格交替檢查直接拒絕並拋出 400 錯誤。
+     - **修復**：新增 `buildCleanAlternatingHistory()` 深度拷貝與嚴格 `user -> model` 交替合併清洗，並加入自癒重試機制（若歷史紀錄異常自動以乾淨 `history: []` 重試）。
+  2. **根因二：Linode Docker 容器 IPv6 黑洞導致雙回合工具呼叫耗時 64 秒超時**：
+     - 容器連接 Google Gemini API 時優先嘗試失效的 IPv6 路由，每次請求卡住 30 秒才 fallback 到 IPv4。
+     - **修復**：於 `line_server.js` 第 1 行加入 `dns.setDefaultResultOrder("ipv4first")`，雙回合查日曆實測延遲從 **64 秒驟降至 6.4 秒**。
+  3. **根因三：`sendToolResponse` 覆蓋 `systemInstruction: undefined`**：
+     - **修復**：確保 `sendToolResponse` 完整繼承 `generativeModel.systemInstruction`。
+
+## 📌 [v2.7.2] - 2026-11-05 18:45:00
+### 🛡️ 全方位客服體驗與防呆大升級：7 大核心問題一次根治（姓名防誤判性別／單氣泡連貫去重／原生打字動畫／移除加好友追問／1500 封頂報價／防傷病鬼打牆／防連點重複回覆）
+- **排查根因與 7 大修復項目總覽**：
+  1. **【問題 1】看名字無法判定先生/小姐（女客戶被誤稱「先生」修復）**：
+     - **根因**：舊版 Prompt 範例中寫死 `陳先生`、`沈小姐`，且正則提取傾向抓取「姓氏+先生/小姐」，導致模型在客戶提供三字全名（如女性客戶名字偏中性）時，自行把全名改稱為「X先生」。
+     - **修復**：
+       - 升級 `extractCustomerInfo` 支援直接從「全名 + 手機號碼」（如 `林彗紜 0912345678`）精準提取完整全名。
+       - 後端新增 `sanitizeFinalReply` 與 `bookEvent` 稱呼守衛：若客戶未曾自稱「先生/小姐」，一旦 AI 輸出「X先生/X小姐」，後端強制自動還原為客戶「完整全名」或「您」。
+       - Prompt 新增「鐵律 5：嚴禁看名字猜測性別」，規定一律稱呼「[客戶全名] 您好」或「您」。
+  2. **【問題 2】訊息被拆開後不連貫、且前後重複訊息**：
+     - **根因**：舊版 `splitIntoNaturalLineBubbles` 將回覆強行以 `\n\n` 切成 2 個 LINE 氣泡，加上 Prompt 要求湊滿兩大段三明治公式（85~125 字），導致模型為湊第二段而重複第一段的話術，切開後語意斷裂。
+     - **修復**：廢除雙氣泡強行切斷機制，全面改為**單一則完整連貫氣泡**（破冰/報價精煉為 **50~85 字**、預約推進 **25~50 字**），並新增後端 `deduplicateAndCleanReply` 句子級去重引擎，自動掃除任何重複句子。
+  3. **【問題 3】2~4 秒延遲但拆斷文字同時發出無意義（升級 LINE 原生「正在輸入...」動畫 ＋ 動態感知延遲）**：
+     - **根因**：LINE Reply API 的 `replyToken` 只能呼叫一次，陣列 `[msg1, msg2]` 會在同一毫秒彈出，先睡 2~4 秒再同時噴出兩段文字毫無分段打字感。
+     - **修復**：整合 LINE 官方 `POST /v2/bot/chat/loading/start` API！客戶發訊第 0 秒立即在手機端顯示**原生「正在輸入...」三點跳動動畫**，並計算 Gemini API 已消耗的秒數，動態補足剩餘秒數（確保客戶總體感固定在最自然的 **1.6 ~ 2.9 秒**），動畫結束瞬間無縫彈出單一完整訊息。
+  4. **【問題 4】新增好友已有自動問候語，移除重複問候與索取姓名/末三碼**：
+     - **根因**：`line_server.js` 在 `event.type === "follow"` 額外發送了索取姓名與手機末三碼的歡迎詞，與 LINE Official Account 後台內建加好友歡迎語撞車。
+     - **修復**：移除 `follow` 事件的主動推播回覆，完全交由 LINE 官方帳號後台原生歡迎語接待。
+  5. **【問題 5】客戶問價格時，必提「最高收費 1500 元封頂，再調整其他部位不收費」**：
+     - **修復**：於 `getSystemInstruction` 與 `prompts/line_bot_prompt.md` 強制注入報價鐵律——凡客戶詢問價格/收費，必清楚說明：「全身放鬆 30分/700元、60分/1300元；筋骨調理單一部位 500元，**我們最高收費就是 1500 元，調理到頸、背、腰，再調整其他部位都是不收費的喔！**✨ 現場賴師傅也會先幫您做免費初步體態評估！」。
+  6. **【問題 6】有傷客戶無限循環提醒休息鬼打牆（改為溫暖接納評估/按摩放鬆 ＋ 單次提醒硬鎖）**：
+     - **根因**：舊版傷病免責範本寫得太死板（叫客人先去醫院治療等緩解再來），且無狀態記憶，導致只要對話出現「傷/痛」，AI 每輪都重複貼免責聲明把客人擋在門外。
+     - **修復**：
+       - 改寫溫暖接納範本：「有傷的部位建議先休息等恢復，不過**您可以先來讓賴師傅免費評估看看，也可以避開受傷處、做周邊肌肉的按摩放鬆喔！**」。
+       - 後端 `getSystemInstruction(userProfile, userHistory)` 新增歷史對話掃描：只要系統偵測到該客戶過去對話中**已經提醒過 1 次**休息恢復，立即注入 `🚨【防無限循環鬼打牆強制鎖定】`，嚴禁再次重複提醒，直接幫客戶查空檔完成預約！
+  7. **【問題 7】客戶誤觸價目表連點兩次，會重複回覆兩次一樣內容**：
+     - **根因**：客戶在圖文選單連按兩下時，LINE 會在數百毫秒內連發兩個相同 Webhook 事件，後端無防抖鎖。
+     - **修復**：新增 `recentUserMessages` 記憶體防抖鎖（`inFlight` 處理中排他鎖 ＋ **10 秒冷卻時間窗**），同一客戶 10 秒內誤觸連點兩次相同文字時，第 2 次請求直接靜默攔截不回覆。
+- **部署與雙端同步**：
+  - 代碼與 Prompt 已推送至 GitHub 倉庫 `azach258/my-line-bot` (`main` 分支 commit `2212733`)，並同步更新本地 Obsidian 知識庫 Prompt 與 CHANGELOG。
+
+## 📌 [v2.7.1] - 2026-11-05 18:15:00
+### 👥 功能升級與崩潰修復：支援「兩人同行同時預約（依序接力調理）」SOP ＆ 消滅 TDZ 引用與空日期 RangeError 系統錯誤
+- **事故起因與根因定位 (Root Cause Analysis)**：
+  - **客戶諮詢「可以兩個同時預約嗎？」**：客戶是在確認門店容納與服務機制，尚未提供日期與時間；而提示詞先前僅在「確認下訂」階段寫了多人範本，完全缺乏前期「能否兩人同時約」的黃金客服 Q&A，導致模型無法判定或陷入混亂。
+  - **空日期觸發 RangeError 崩潰**：當模型在未提供日期情況下觸發工具查詢，`getTaiwanDayInfo(undefined)` 在 `new Intl.DateTimeFormat` 處理 `NaN` 日期時拋出 `RangeError: Invalid time value`。
+  - **頂部 TDZ 變數引用崩潰 (ReferenceError)**：`GAS_ENDPOINT_URL` 於檔案中段宣告，在頂部函式執行時觸發 JavaScript ESM 暫態死區 (Temporal Dead Zone, TDZ) 引用錯誤，導致未捕獲異常直墜最外層 `catch (error)`，向客戶拋出「抱歉，目前系統較為繁忙，請稍候片刻再試...」的系統錯誤。
+- **三大核心升級與深度修復**：
+  1. **兩人同行「依序接力調理」標準話術與 SOP 入庫 (Prompt & Knowledge Grid)**：
+     - 正式注入「多人預約與接力規則」天條：明確告知客戶「**可以的！非常歡迎兩位一起來放鬆！因為店裡由賴師傅親自一對一服務，兩位同行會為您安排『接力調理』（依序預約兩個連續時段，例如第一位 14:00~15:00、第二位接續 15:00~16:00），同行者可在店內沙發區喝茶稍坐休息等候**」，並主動引導客戶提供想安排的日期。
+     - 嚴格規範在客戶未提供日期前，嚴禁呼叫任何工具或回報錯誤。
+  2. **日曆即時排程演算法升級：自動計算「兩人接力連續空檔」**：
+     - `checkAvailability` 演算法升級：查詢當日空檔時，自動比對相鄰整點（$H_2 = H_1 + 1$），於反饋訊息中精確計算並標註 `👥【兩人同行接力連續空檔】：15:00~17:00 (第1位 15:00、第2位 16:00)、16:00~18:00...`，徹底掃除 AI 心算連續空檔失誤的盲點。
+     - 若當日剩餘空檔皆為單獨零散小時，主動提示 AI 建議改約隔日或其他平日連續空檔。
+  3. **底層日期解析全域安全防呆 (Bulletproof Date Guard)**：
+     - `getTaiwanDayInfo(dateInput)`、`fetchCalendarEvents(date)`、`checkAvailability(date)` 全面注入安全兜底：若傳入 `undefined`、`null`、空字串或非日期字串，一律自動安全預設為當前台灣日期 (`twDateStr`)，徹底根絕 `RangeError: Invalid time value`。
+     - 將 `GAS_ENDPOINT_URL` 與 `GAS_API_SECRET` 調整至全域最頂部（模組導入後第一行），徹底消滅 TDZ `ReferenceError`。
+- **部署與雙端驗證**：
+  - 代碼已提交推送至 GitHub 倉庫 `azach258/my-line-bot` (`main` 分支 commit `aa1c7e8`)，Linode Coolify 自動熱重啟上線。
+  - 實測驗證：傳入 `undefined` 安全通過不報錯；查詢下週一自動輸出 6 組兩人接力連續時段。
+
+## 📌 [v2.7.0] - 2026-11-05 12:45:00
+### 🚨 緊急修復：雙軌打通 GAS 雲端日曆真實預約(SSOT) ＆ 查空檔天條 ＆ 出話衝突即時自動清洗硬鎖
+- **事故起因與根因定位 (Root Cause Analysis)**：
+  - **資料源孤島脫節**：門店官網著陸頁、排程看板與手機日曆皆直連 Google Apps Script (GAS) 之 `江夏傳統整復推拿_板橋館` 專屬日曆；而生產環境 `line_server.js` 僅依賴 Google Service Account 連線查詢。一旦服務帳號因權限限制返回 0 事件，系統誤判當日全天為「完全空檔」，導致無法察覺已被佔用時段。
+  - **Prompt 固定時段範本誘發幻覺**：提示詞中寫有固定範例（如「請問幫您安排今天 15:00 還是 19:00 比較方便呢？」），模型在被詢問「今天可以約嗎」時照抄範例輸出，造成與今日王大明（14:00~18:00）、楊文昌（19:00~20:00）已排定行程嚴重撞期。
+- **三大防護線核心修復**：
+  1. **雙軌融合日曆引擎 (Dual-Engine Calendar SSOT)**：
+     - 新增 `fetchCalendarEvents(date)` 引擎，同時拉取 Google Calendar API 與 GAS 雲端橋樑 (`action=getEvents`)，將所有門店預約（官網、後台看板、手機手動排程）納入單一真相源，以時間戳記精準去重融合。
+     - `checkAvailability` 與 `bookEvent` 全面改由該雙軌引擎驅動，100% 根除資訊孤島盲點。
+     - `bookEvent` 新增同步雙向寫入 GAS，保證預約即時寫入 Google 日曆、永久試算表名冊並即刻觸發 Telegram 叮咚通知師傅手機。
+  2. **出話衝突攔截清洗硬防線 (Post-Generation Collision Guard)**：
+     - 在發送 LINE 回覆前設置毫秒級過濾守衛 `sanitizeReplyAgainstOccupiedSlots(aiResponse, userText)`。
+     - 即時解析回覆中涉及的所有整點時段（如 15:00、下午3點、19:00 等），若命中任何已被佔用時段，自動強制替換為當日合法的綠色空檔（如 18:00、20:00），整日額滿則切換為委婉推隔日話術，出話 100% 免疫衝突！
+  3. **Prompt 範本徹底脫敏與查空檔天條鎖定**：
+     - 徹底清除提示詞中所有寫死之具體時段範例（全部替換為 `[綠色空檔A]` / `[綠色空檔B]` 變數）。
+     - 注入「日曆真實空檔唯一真相源天條」：嚴格規定任何時段推薦必須且只能從 `checkAvailability` 回傳的綠色空檔清單中挑選，嚴禁瞎猜或套用範本。
+- **生產環境部署與雙端驗證**：
+  - 核心程式碼已推送至 GitHub 倉庫 `azach258/my-line-bot` (`main` 分支 commit `8ed2a5f`)，Linode Coolify 自動重啟上線。
+  - 經單元測試驗證：2026-11-05 王大明 4 筆預約及晚間預約均被 100% 識別，出話衝突自動將 15:00/19:00 替換為真實可用空檔 18:00/20:00。
 
 ## 📌 [v2.6.9] - 2026-11-04 16:55:00
 ### 🎯 廣告著陸頁 (Landing Page) Google Ads 轉換追蹤代碼升級 ＆ 初診特惠方案同步

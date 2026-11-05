@@ -1355,8 +1355,8 @@
       { name: "手指、手腕、腳踝", shortName: "手腕腳踝", price: 600 },
       { name: "鬆筋按摩 (60分鐘)", shortName: "鬆筋60分", price: 1300 },
       { name: "鬆筋按摩 (30分鐘)", shortName: "鬆筋30分", price: 700 },
-      { name: "首客禮(一) 買2送1", shortName: "首客禮(一) 買2送1", price: 3000 },
-      { name: "首客禮(二) 買4送2", shortName: "首客禮(二) 買4送2", price: 6000 },
+      { name: "首客禮(一) 買2送1", shortName: "買2送1 ($3K)", price: 3000 },
+      { name: "首客禮(二) 買4送2", shortName: "買4送2 ($6K)", price: 6000 },
       { name: "【免費】檢查評估諮詢", shortName: "【免費】評估", price: 0 }
     ];
 
@@ -1376,6 +1376,7 @@
         this.currentView = 'timeline';
         this.activeDetailId = null;
         this.simulateOffline = false;
+        this._activeMutationCount = 0;
         this.hidePrice = localStorage.getItem('jiangxia_hide_price') === 'true';
         this.reportPeriod = 'week';
 
@@ -2404,6 +2405,10 @@
 
         // 4. 發送刪除請求給 GAS (同步刪除 Google 日曆事件)
         if (this.gasUrl && !this.simulateOffline && targetEventId) {
+          this._activeMutationCount = (this._activeMutationCount || 0) + 1;
+          const decMutation = () => {
+            this._activeMutationCount = Math.max(0, (this._activeMutationCount || 1) - 1);
+          };
           try {
             const delUrl = `${this.gasUrl}?action=deleteEvent&eventId=${encodeURIComponent(targetEventId)}&id=${encodeURIComponent(targetEventId)}&secret=${encodeURIComponent(this.gasSecret)}`;
             fetch(delUrl).catch(e => console.warn('雲端日曆 GET 刪除發送:', e));
@@ -2417,8 +2422,9 @@
                 eventId: targetEventId,
                 secret: this.gasSecret
               })
-            }).catch(e => console.warn('雲端日曆 POST 刪除發送:', e));
+            }).catch(e => console.warn('雲端日曆 POST 刪除發送:', e)).finally(decMutation);
           } catch (delErr) {
+            decMutation();
             console.warn('⚠️ Google 日曆刪除請求失敗:', delErr);
           }
         }
@@ -2923,6 +2929,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         const end = new Date(start.getTime() + duration * 60 * 1000);
 
         const newId = 'b-' + Date.now();
+        const nowTs = Date.now();
         const newBooking = {
           id: newId,
           customerName: name,
@@ -2934,11 +2941,34 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           isCustomPrice: isCustomPrice,
           paymentMethod: '現金',
           status: '已確認',
-          syncStatus: this.simulateOffline ? 'pending' : 'synced',
+          syncStatus: this.simulateOffline ? 'pending' : (this.gasUrl ? 'syncing' : 'synced'),
+          _createdAtMs: nowTs,
           notes: notes,
           start: `${date}T${time}:00`,
           end: `${date}T${end.toTimeString().slice(0, 5)}:00`
         };
+
+        // 0. 解除墓碑簽章與客戶封鎖名冊（防止「先刪除客戶/預約、再新增預約」時被舊墓碑或舊客戶黑名單誤殺）
+        const cleanPhoneKey = this.getCleanPhoneKey(phone);
+        if (Array.isArray(this.deletedCustomerPhones) && cleanPhoneKey && this.deletedCustomerPhones.includes(cleanPhoneKey)) {
+          this.deletedCustomerPhones = this.deletedCustomerPhones.filter(p => p !== cleanPhoneKey);
+          localStorage.setItem('jiangxia_deleted_customers_v2', JSON.stringify(this.deletedCustomerPhones));
+        }
+        const slotSigPrefix = `sig:${date}T${time}|`;
+        const exactSig = `sig:${date}T${time}|${name}`;
+        if (Array.isArray(this.deletedEventIds) && this.deletedEventIds.length > 0) {
+          const beforeDelLen = this.deletedEventIds.length;
+          this.deletedEventIds = this.deletedEventIds.filter(item => {
+            if (!item || typeof item !== 'string') return false;
+            if (item === exactSig) return false;
+            if (item.startsWith(slotSigPrefix)) return false;
+            if (item.startsWith('sig:') && item.endsWith(`|${name}`)) return false;
+            return true;
+          });
+          if (this.deletedEventIds.length !== beforeDelLen) {
+            localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
+          }
+        }
 
         // 1. 本地落庫
         this.bookings.push(newBooking);
@@ -2947,6 +2977,13 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         const crmNotes = notes;
         let customer = this.customers.find(c => c.phone.replace(/[^0-9]/g, '') === phone.replace(/[^0-9]/g, ''));
         if (customer) {
+          if (customer.name && Array.isArray(this.deletedEventIds)) {
+            const custExactSig = `sig:${date}T${time}|${customer.name.trim()}`;
+            if (this.deletedEventIds.includes(custExactSig)) {
+              this.deletedEventIds = this.deletedEventIds.filter(x => x !== custExactSig);
+              localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
+            }
+          }
           customer.visit_count = (customer.visit_count || 1) + 1;
           customer.last_visited_at = date;
           if (crmNotes) {
@@ -2978,12 +3015,21 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           });
           this.showToast('⚠️ Google 日曆離線中，已本機安全入庫並存入同步佇列！', 'warning');
         } else if (this.gasUrl) {
+          this._activeMutationCount = (this._activeMutationCount || 0) + 1;
           this.pushBookingToCloud(newBooking).then(result => {
             if (result && result.success) {
+              newBooking.syncStatus = 'synced';
+              newBooking._syncedAtMs = Date.now();
               if (result.eventId) {
                 newBooking.cloudSyncedId = result.eventId;
-                this.saveState();
+                if (Array.isArray(this.deletedEventIds) && this.deletedEventIds.includes(result.eventId)) {
+                  const pureId = result.eventId.replace('@google.com', '');
+                  this.deletedEventIds = this.deletedEventIds.filter(x => x !== result.eventId && x !== pureId && x !== (pureId + '@google.com'));
+                  localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
+                }
               }
+              this.saveState();
+              this.renderTimeline();
               this.showToast(`✨ 預約成功！已同步至 Google 日曆與試算表 (${time})！`, 'success');
             } else {
               newBooking.syncStatus = 'pending';
@@ -2994,8 +3040,11 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                 queuedAt: new Date().toISOString()
               });
               this.saveState();
+              this.renderTimeline();
               this.showToast(`⚠️ 雲端連線失敗，已本機儲存並加入補傳佇列！`, 'warning');
             }
+          }).finally(() => {
+            this._activeMutationCount = Math.max(0, (this._activeMutationCount || 1) - 1);
           });
         } else {
           this.showToast(`✨ 預約成功！已為【${name}】完成排程 (${time})！`, 'success');
@@ -3234,9 +3283,12 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
 
       async fetchFromCloud(silent = false) {
         if (!this.gasUrl || this.simulateOffline) return;
+        // 若目前正有新增/刪除/改期雲端請求進行中，暫停背景靜默輪詢，避免讀寫時間差競態誤刪新預約
+        if (silent && this._activeMutationCount > 0) return;
 
         try {
-          const nowMs = Date.now();
+          const fetchStartedAtMs = Date.now();
+          const nowMs = fetchStartedAtMs;
           const qStart = new Date(nowMs - 365 * 24 * 60 * 60 * 1000).toISOString();
           const qEnd = new Date(nowMs + 180 * 24 * 60 * 60 * 1000).toISOString();
           const fetchUrl = `${this.gasUrl}?action=getEvents&secret=${encodeURIComponent(this.gasSecret)}&startTime=${encodeURIComponent(qStart)}&endTime=${encodeURIComponent(qEnd)}`;
@@ -3291,7 +3343,14 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               const inQueryWindow = !isNaN(bTime) && bTime >= queryStartMs && bTime <= queryEndMs;
 
               // ⚠️ 雙向刪除檢驗：只有在本次查詢時間範圍內的預約，才進行雲端存在性核對
-              if (inQueryWindow) {
+              // 🛡️ 新預約保護罩 (Grace Period)：剛建立 90 秒內、或正在同步中 (syncing/pending)、或晚於本次查詢發起時間才建立的預約，絕不因雲端快照時間差而誤刪！
+              const isRecentlyCreatedOrSyncing =
+                b.syncStatus === 'syncing' ||
+                b.syncStatus === 'pending' ||
+                (b._createdAtMs && (Date.now() - b._createdAtMs < 90000 || b._createdAtMs >= fetchStartedAtMs - 5000)) ||
+                (b._syncedAtMs && (Date.now() - b._syncedAtMs < 90000 || b._syncedAtMs >= fetchStartedAtMs - 5000));
+
+              if (inQueryWindow && !isRecentlyCreatedOrSyncing) {
                 // 來自 Google 日曆的行程 (以 @google.com 結尾)
                 if (b.id && b.id.includes('@google.com') && !cloudIds.has(b.id)) {
                   return false;
@@ -3493,9 +3552,11 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
                   exists.symptoms = cleanNotes;
                 }
                 
-                // 【核心修復】：時間(start/end)永遠以 Google Calendar (SSOT) 為準，確保改時間不殘留舊時段
-                exists.start = evt.start.slice(0, 19);
-                exists.end = evt.end.slice(0, 19);
+                // 【核心修復】：時間(start/end)永遠以 Google Calendar (SSOT) 為準，確保改時間不殘留舊時段（但若剛於 45 秒內在後台改期，保護本地最新時段不被舊快照覆蓋）
+                if (!(exists._timeUpdatedAtMs && (Date.now() - exists._timeUpdatedAtMs < 45000))) {
+                  exists.start = evt.start.slice(0, 19);
+                  exists.end = evt.end.slice(0, 19);
+                }
                 
                 if (detectedLineUid) exists.lineUserId = detectedLineUid;
                 if (detectedLineDisp) exists.lineDisplayName = detectedLineDisp;
@@ -4033,6 +4094,15 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         const standardNewPhone = this.formatStandardPhone(newPhone);
         const cleanOrig = origPhone.replace(/[^0-9]/g, '');
         const cleanNew = standardNewPhone.replace(/[^0-9]/g, '');
+
+        // 若該客戶曾被刪除隱藏，重新儲存或新增時自動解除封鎖
+        if (Array.isArray(this.deletedCustomerPhones)) {
+          const beforeCustDelLen = this.deletedCustomerPhones.length;
+          this.deletedCustomerPhones = this.deletedCustomerPhones.filter(p => p !== cleanOrig && p !== cleanNew);
+          if (this.deletedCustomerPhones.length !== beforeCustDelLen) {
+            localStorage.setItem('jiangxia_deleted_customers_v2', JSON.stringify(this.deletedCustomerPhones));
+          }
+        }
 
         let target = null;
         if (cleanOrig) {
@@ -4877,7 +4947,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
           } else if (!matched && cleanCurrent) {
             const cleanOpt = opt.name.replace(/[【】\[\]\s]/g, '');
             const cleanShort = opt.shortName.replace(/[【】\[\]\s]/g, '');
-            if (cleanCurrent.includes(cleanShort) || cleanOpt.includes(cleanCurrent) || cleanCurrent.includes(cleanOpt) || ((cleanCurrent.includes('免費') || cleanCurrent.includes('評估')) && cleanOpt.includes('免費'))) {
+            if (cleanCurrent.includes(cleanShort) || cleanOpt.includes(cleanCurrent) || cleanCurrent.includes(cleanOpt) || ((cleanCurrent.includes('免費') || cleanCurrent.includes('評估')) && cleanOpt.includes('免費')) || (cleanCurrent.includes('買2送1') && cleanOpt.includes('買2送1')) || (cleanCurrent.includes('買4送2') && cleanOpt.includes('買4送2'))) {
               isSelected = true;
             }
           }
@@ -5047,6 +5117,17 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         b.start = newStartIso;
         b.end = newEndIso;
         b._customEdited = true;
+        b._timeUpdatedAtMs = Date.now();
+
+        // 若改期後的新時段曾有舊墓碑簽章，自動解除該時段的 sig 墓碑
+        if (Array.isArray(this.deletedEventIds) && this.deletedEventIds.length > 0) {
+          const newSlotPrefix = `sig:${newDate}T${newTime}|`;
+          const beforeLen = this.deletedEventIds.length;
+          this.deletedEventIds = this.deletedEventIds.filter(item => !(item && typeof item === 'string' && item.startsWith(newSlotPrefix)));
+          if (this.deletedEventIds.length !== beforeLen) {
+            localStorage.setItem('jiangxia_deleted_events_v2', JSON.stringify(this.deletedEventIds));
+          }
+        }
 
         this.saveState();
         this.renderTimeline();
@@ -5062,6 +5143,7 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
         // 同步推播至 Google 日曆 (透過 GAS updateBookingTime)
         const targetEventId = b.cloudSyncedId || b.id;
         if (this.gasUrl && !this.simulateOffline && targetEventId) {
+          this._activeMutationCount = (this._activeMutationCount || 0) + 1;
           try {
             fetch(this.gasUrl, {
               method: 'POST',
@@ -5079,8 +5161,12 @@ const validPrice = (b.price !== undefined && b.price !== null) ? Number(b.price)
               }
             }).catch(e => {
               console.warn('Google 日曆改期遠端請求失敗:', e);
+            }).finally(() => {
+              this._activeMutationCount = Math.max(0, (this._activeMutationCount || 1) - 1);
             });
-          } catch(e) {}
+          } catch(e) {
+            this._activeMutationCount = Math.max(0, (this._activeMutationCount || 1) - 1);
+          }
         }
       }
 
