@@ -1576,7 +1576,7 @@
 
         // 雲端 API 設定 (支援 URL 參數 ?api= 或共用 localStorage)
         this.gasUrl = new URLSearchParams(window.location.search).get('api') || localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
-        this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
+        this.gasSecret = '';
         this.cloudBookings = [];
 
         this.init();
@@ -1601,7 +1601,7 @@
       async fetchCloudBookings() {
         if (!this.gasUrl) return;
         try {
-          const url = `${this.gasUrl}?action=getEvents&secret=${encodeURIComponent(this.gasSecret)}`;
+          const url = `${this.gasUrl}?action=getBusySlots`;
           const res = await fetch(url);
           const data = await res.json();
           if (data && data.success && Array.isArray(data.data)) {
@@ -1781,7 +1781,7 @@
         const dayBookings = allBookings.filter(b => b.start && b.start.startsWith(this.selectedDateStr) && b.status !== '已取消');
 
         // 營業時間 14:00 ~ 22:00 (含 21:30 時段選項)
-        const slotTimes = ['14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'];
+        const slotTimes = ['14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00'];
 
         slotTimes.forEach(hourStr => {
           
@@ -1790,7 +1790,9 @@
           const slotEnd = new Date(slotStart.getTime() + this.selectedDuration * 60 * 1000);
 
           // 碰撞檢測 (日曆或本地已被預約)
-          const isConflict = dayBookings.some(b => {
+          // 已過去的時段、或服務結束時間超過 22:00 打烊 → 視為不可預約
+          const isPastOrOver = slotStart.getTime() < Date.now() || (slotEnd.getHours() * 60 + slotEnd.getMinutes() > 22 * 60) || slotEnd.getDate() !== slotStart.getDate();
+          const isConflict = isPastOrOver || dayBookings.some(b => {
             const bStart = new Date(b.start);
             const bEnd = new Date(b.end);
             return (slotStart < bEnd && slotEnd > bStart);
@@ -1802,7 +1804,7 @@
           if (isConflict) {
             btn.disabled = true;
             btn.className = 'py-2 px-2 rounded-xl text-xs font-medium bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed text-center';
-            btn.innerHTML = `<span>${hourStr}</span><span class="block text-[10px] text-slate-400">已客滿</span>`;
+            btn.innerHTML = `<span>${hourStr}</span><span class="block text-[10px] text-slate-400">不可約</span>`;
           } else {
             const isSelected = this.selectedTimeStr === hourStr;
             btn.className = `py-2 px-2 rounded-xl text-xs font-semibold text-center transition border ${
@@ -1875,8 +1877,9 @@
       // ==========================================
       // 送出預約 (同步寫入後台資料庫 ＆ Google 雲端 ＆ CRM)
       // ==========================================
-      handleSubmit(e) {
+      async handleSubmit(e) {
         e.preventDefault();
+        if (this._submitting) return;
         const name = document.getElementById('frontCustName').value.trim();
         const phone = document.getElementById('frontCustPhone').value.trim();
         const notes = document.getElementById('frontCustNotes').value.trim();
@@ -1893,6 +1896,11 @@
           return;
         }
 
+        if (!this.selectedTimeStr || !/^\d{2}:\d{2}$/.test(this.selectedTimeStr)) {
+          alert('請先選擇預約時段！');
+          return;
+        }
+
         const checkDt = new Date(this.selectedDateStr + 'T00:00:00');
         if (this.selectedDateStr >= '2026-11-01' && this.selectedDateStr <= '2026-12-31' && checkDt.getDay() === 5) {
           alert('📌 115/11/1 ~ 115/12/31 每週五賴師傅回總部支援（板橋館週五休息），請選擇週一至週四 14:00~21:00 的時段預約喔！');
@@ -1906,6 +1914,17 @@
         const start = new Date(`${this.selectedDateStr}T${this.selectedTimeStr}:00`);
         const end = new Date(start.getTime() + this.selectedDuration * 60 * 1000);
 
+        if (start.getTime() < Date.now()) {
+          alert('⚠️ 此時段已經過去，請重新選擇其他時段！');
+          this.renderSlots();
+          return;
+        }
+        if (end.getHours() * 60 + end.getMinutes() > 22 * 60 || end.getDate() !== start.getDate()) {
+          alert('⚠️ 此服務時長會超過 22:00 打烊時間，請選擇較早的時段！');
+          return;
+        }
+
+        const startStr = `${this.selectedDateStr}T${this.selectedTimeStr}:00`;
         const newId = 'front-' + Date.now();
         const newBooking = {
           id: newId,
@@ -1913,23 +1932,69 @@
           phone: cleanPhone,
           serviceItem: this.selectedService,
           symptoms: notes,
-          durationMin: 60,
+          durationMin: this.selectedDuration,
           price: this.selectedPrice,
           paymentMethod: '現場支付',
           status: '已確認',
           source: '官網線上預約',
           syncStatus: this.gasUrl ? 'syncing' : 'synced',
           notes: notes ? `[官網自主預約] ${notes}` : '[官網自主預約]',
-          start: `${this.selectedDateStr}T${this.selectedTimeStr}:00`,
+          start: startStr,
           end: `${this.selectedDateStr}T${end.toTimeString().slice(0, 5)}:00`
         };
 
-        // 1. 本地落庫保底
+        // 1. 先向雲端送出並等待確認（雲端為時段唯一真相源，由後端加鎖防重複預約）
+        if (this.gasUrl) {
+          const submitBtn = e.submitter || document.querySelector('#frontBookingForm button[type="submit"]');
+          const oldLabel = submitBtn ? submitBtn.textContent : '';
+          this._submitting = true;
+          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '送出中，請稍候…'; }
+          let result = null;
+          try {
+            const res = await fetch(this.gasUrl, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'create',
+                customerName: name,
+                phone: cleanPhone,
+                serviceItem: this.selectedService,
+                durationMin: this.selectedDuration,
+                startTime: startStr,
+                notes: notes ? `[官網線上自主預約] ${notes}` : '[官網線上自主預約]',
+                staff: '賴師傅',
+                status: '已確認',
+                publicBooking: true
+              })
+            });
+            result = await res.json();
+          } catch (err) {
+            console.warn('雲端預約送出失敗:', err);
+          } finally {
+            this._submitting = false;
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = oldLabel; }
+          }
+
+          if (!result || !result.success) {
+            if (result && result.code === 'SLOT_TAKEN') {
+              alert('😢 抱歉，這個時段剛被其他客人預約走了，請重新選擇其他時段。');
+              await this.fetchCloudBookings();
+            } else if (result && result.code === 'PAST_TIME') {
+              alert('⚠️ 此時段已經過去，請重新選擇其他時段！');
+            } else {
+              alert('⚠️ 預約送出失敗（網路或系統忙碌），您的預約尚未成立。\n請稍後再試，或直接透過 LINE 官方帳號聯繫我們。');
+            }
+            this.renderSlots();
+            return;
+          }
+          newBooking.syncStatus = 'synced';
+          newBooking.cloudSyncedId = result.eventId;
+        }
+
+        // 2. 雲端確認成功後，才寫入本地落庫與 CRM
         const bookings = this.getBookingsFromStorage();
         bookings.push(newBooking);
         this.saveBookingsToStorage(bookings);
 
-        // 2. 更新或新建顧客 CRM 記憶庫
         const customers = this.getCustomersFromStorage();
         let cust = customers.find(c => c.phone.replace(/[^0-9]/g, '') === cleanPhone);
 
@@ -1949,53 +2014,27 @@
         }
         this.saveCustomersToStorage(customers);
 
-        // 即刻在前端快取鎖定該時段，防止重複點選
+        // 立即在前端鎖定該時段（含結束時間，確保碰撞檢測正確）
         this.cloudBookings.push({
-          id: newBooking.id,
+          id: newBooking.cloudSyncedId || newBooking.id,
           customerName: name,
           phone: cleanPhone,
           serviceItem: this.selectedService,
-          start: `${this.selectedDateStr}T${this.selectedTimeStr}:00`,
+          start: startStr,
+          end: newBooking.end,
           status: '已確認'
         });
         this.renderSlots();
 
-        // 3. 同步推送至 Google Apps Script 雲端日曆 ＆ 試算表
-        if (this.gasUrl) {
-          fetch(this.gasUrl, {
-            method: 'POST',
-            body: JSON.stringify({
-              action: 'create',
-              customerName: name,
-              phone: phone,
-              serviceItem: this.selectedService,
-              durationMin: this.selectedDuration,
-              startTime: `${this.selectedDateStr}T${this.selectedTimeStr}:00`,
-              notes: notes ? `[官網線上自主預約] ${notes}` : '[官網線上自主預約]',
-              staff: '賴師傅',
-              status: '已確認',
-              secret: this.gasSecret
-            })
-          }).then(res => res.json()).then(res => {
-            if (res && res.success) {
-              newBooking.syncStatus = 'synced';
-              this.saveBookingsToStorage(bookings);
-            }
-          }).catch(err => {
-            console.warn('雲端日曆同步失敗，已保存在本機:', err);
-          });
-        }
-
-        // 4. 顯示成功確認卡片
+        // 3. 顯示成功確認卡片
         this.closeModal();
         this.showSuccessCard(newBooking);
 
-        // 5. 觸發 Google Ads 廣告轉換追蹤事件
+        // 4. 觸發 Google Ads 廣告轉換追蹤事件（僅在預約真正成立後）
         if (typeof trackConversion === 'function') {
           trackConversion('官網線上預約完成', null, false);
         }
       }
-
       showSuccessCard(b) {
         document.getElementById('succCustName').textContent = `${b.customerName} (${b.phone})`;
         document.getElementById('succTimeRange').textContent = `${b.start.replace('T', ' ')} ~ ${b.end.slice(11, 16)}`;

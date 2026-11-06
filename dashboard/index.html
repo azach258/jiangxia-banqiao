@@ -795,8 +795,8 @@
           </div>
           <div class="space-y-1.5">
             <div class="flex items-center justify-between gap-2">
-              <label class="block text-[11px] font-bold text-indigo-900">方式一：從已互動過的 LINE@ 好友清單點選配對</label>
-              <input type="text" id="detailLineFriendFilterInput" oninput="app.renderLineFriendsSelector(this.value)" placeholder="🔍 搜尋好友暱稱/姓名..." class="w-36 bg-white border border-indigo-200 rounded-md px-2 py-0.5 text-[11px] text-slate-800 focus:outline-none focus:border-indigo-500">
+              <label class="block text-[11px] font-bold text-indigo-900">方式一：從最新聊天的未綁定 LINE@ 好友點選（僅顯示最新前 5 個未連結 ID）</label>
+              <input type="text" id="detailLineFriendFilterInput" oninput="app.renderLineFriendsSelector(this.value)" placeholder="🔍 搜尋未連結暱稱..." class="w-36 bg-white border border-indigo-200 rounded-md px-2 py-0.5 text-[11px] text-slate-800 focus:outline-none focus:border-indigo-500">
             </div>
             <div id="detailLineFriendsList" class="max-h-40 overflow-y-auto space-y-1 pr-1"></div>
           </div>
@@ -1292,7 +1292,7 @@
             <span>安全驗證金鑰 (API Secret Key)</span>
             <span class="text-[11px] text-slate-400 font-normal">預設保護</span>
           </label>
-          <input type="text" id="settingGasSecret" placeholder="jiangxia_banqiao_2026" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-mono text-slate-800 bg-slate-50/50">
+          <input type="text" id="settingGasSecret" placeholder="請輸入與 GAS 一致的 API_SECRET" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-mono text-slate-800 bg-slate-50/50">
           <p class="text-[11px] text-slate-500 mt-1">需與 GAS 腳本中設定的 <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700">API_SECRET</code> 一致（預設為 jiangxia_banqiao_2026）</p>
         </div>
 
@@ -1613,7 +1613,7 @@
         this.bookings = this.bookings.filter(b => !(b.customerName && b.customerName.includes('LINE好友名冊')));
         this.syncQueue = JSON.parse(localStorage.getItem('jiangxia_sync_queue_v2') || '[]');
         this.gasUrl = localStorage.getItem('jiangxia_gas_api_url') || 'https://script.google.com/macros/s/AKfycbyOLC9IXZkivATwwB43D4WjKZM3SCZXea0JOAhH2qh368Jbg6fPJNOk4QtlTlAi5h9foQ/exec';
-        this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || 'jiangxia_banqiao_2026';
+        this.gasSecret = localStorage.getItem('jiangxia_gas_api_secret') || '';
       }
 
       isNonCustomerEvent(b) {
@@ -3410,7 +3410,7 @@
         const secret = (document.getElementById('settingGasSecret').value || '').trim();
 
         this.gasUrl = url;
-        this.gasSecret = secret || 'jiangxia_banqiao_2026';
+        this.gasSecret = secret;
 
         const customPin = (document.getElementById('settingCustomPin') ? document.getElementById('settingCustomPin').value : '').trim();
         if (customPin && customPin.length >= 4) {
@@ -3432,7 +3432,7 @@
       clearCloudSettings() {
         if (!confirm('確定要清除雲端設定嗎？系統將恢復純本地模式。')) return;
         this.gasUrl = '';
-        this.gasSecret = 'jiangxia_banqiao_2026';
+        this.gasSecret = '';
         localStorage.removeItem('jiangxia_gas_api_url');
         localStorage.removeItem('jiangxia_gas_api_secret');
 
@@ -3841,6 +3841,7 @@
             notes: (newBooking.symptoms ? `[主訴] ${newBooking.symptoms} ｜ ` : '') + (newBooking.notes || ''),
             staff: '賴師傅',
             status: newBooking.status,
+            force: true,
             secret: this.gasSecret
           };
 
@@ -5096,7 +5097,57 @@
         const listEl = document.getElementById('detailLineFriendsList');
         if (!listEl) return;
         const b = this.getActiveDetailBooking();
+        const curPhoneKey = b ? this.getCleanPhoneKey(b.phone || '') : '';
+        const currentBoundUid = b ? (b.lineUserId || '') : '';
+
+        // 收集系統中所有已經綁定至其他手機號碼的 LINE ID（一對一綁定鐵律：不得重複套用）
+        const boundUidToPhoneMap = new Map();
+        if (this.phoneLineMap) {
+          Object.entries(this.phoneLineMap).forEach(([pk, info]) => {
+            if (info && info.lineUserId) boundUidToPhoneMap.set(info.lineUserId, pk);
+          });
+        }
+        (this.bookings || []).forEach(item => {
+          const itemPk = this.getCleanPhoneKey(item.phone || '');
+          if (item.lineUserId && itemPk) {
+            boundUidToPhoneMap.set(item.lineUserId, itemPk);
+          }
+        });
+        (this.customers || []).forEach(c => {
+          const cPk = this.getCleanPhoneKey(c.phone || '');
+          if (c.lineUserId && cPk) {
+            boundUidToPhoneMap.set(c.lineUserId, cPk);
+          }
+        });
+
         let friends = Array.isArray(this.lineFriends) ? [...this.lineFriends] : [];
+
+        // 1. 過濾掉「已經連結過」的好友（排除已被其他電話綁定、或已有手機電話的好友）
+        // 若該好友已被當前這位客戶綁定，則保留供顯示「已配對」狀態；其餘已連結過的通通排除不顯示
+        friends = friends.filter(f => {
+          if (!f || !f.userId) return false;
+          // 若正是當前這筆預約綁定的 ID，保留顯示
+          if (currentBoundUid && f.userId === currentBoundUid) return true;
+
+          // 若已綁定至其他手機號碼，或該好友在名冊中已登錄手機，代表已連結過，直接排除！
+          if (boundUidToPhoneMap.has(f.userId)) {
+            const mappedPhone = boundUidToPhoneMap.get(f.userId);
+            if (mappedPhone !== curPhoneKey) return false;
+          }
+          if (f.phone && this.getCleanPhoneKey(f.phone) && this.getCleanPhoneKey(f.phone) !== curPhoneKey) {
+            return false;
+          }
+          return true;
+        });
+
+        // 2. 依最新互動/更新時間降冪排序（未標註時間者置後）
+        friends.sort((a, b) => {
+          const tA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const tB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return tB - tA;
+        });
+
+        // 3. 搜尋關鍵字過濾
         const kw = String(filterKeyword || '').trim().toLowerCase();
         if (kw) {
           const cleanKw = kw.replace(/[-_0-9\s]/g, '');
@@ -5115,15 +5166,21 @@
                    fPhone.includes(kw) || fUid.includes(kw);
           });
         }
-        if (friends.length === 0) {
+
+        // 4. 只抓取最新聊天的前 5 個未連結 ID，保持清爽不雜亂
+        const displayFriends = friends.slice(0, 5);
+
+        if (displayFriends.length === 0) {
           listEl.innerHTML = kw
-            ? `<div class="p-2.5 rounded-lg bg-white border border-indigo-200 text-slate-500 text-[11px]">找不到包含「${kw}」的好友，請直接使用下方「方式二」輸入客人的 LINE 顯示暱稱並點擊「確認連結」！</div>`
-            : '<div class="p-2.5 rounded-lg bg-white border border-indigo-200 text-slate-500 text-[11px]">目前尚無從雲端同步的 LINE 好友清單，您可直接使用下方「方式二」輸入客人的 LINE 顯示暱稱完成連結！</div>';
+            ? `<div class="p-2.5 rounded-lg bg-white border border-indigo-200 text-slate-500 text-[11px]">找不到包含「${kw}」的未連結好友。請直接在下方「方式二」輸入客人的 LINE 顯示暱稱完成連結！</div>`
+            : '<div class="p-2.5 rounded-lg bg-white border border-indigo-200 text-slate-500 text-[11px]">目前沒有未連結的 LINE 好友（已連結的已自動隱藏），您可使用下方「方式二」輸入客人的 LINE 顯示暱稱完成連結！</div>';
           return;
         }
-        listEl.innerHTML = friends.map(f => {
+
+        listEl.innerHTML = displayFriends.map(f => {
           const disp = f.lineDisplayName || f.name || ('LINE好友 ' + (f.userId || '').slice(-4));
-          const sub = f.name && f.name !== disp ? `(${f.name} ${f.phone || ''})` : (f.phone ? `(${f.phone})` : `(ID末碼: ${(f.userId || '').slice(-4)})`);
+          const timeHint = f.updatedAt ? new Intl.DateTimeFormat('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(f.updatedAt)) : '';
+          const sub = timeHint ? `(最近互動: ${timeHint})` : `(ID末碼: ${(f.userId || '').slice(-4)})`;
           const isCurrent = b && ((b.lineUserId && b.lineUserId === f.userId) || (!b.lineUserId && b.lineDisplayName && b.lineDisplayName === disp));
           const safeUid = String(f.userId || '').replace(/['"\\]/g, '');
           const safeDisp = String(disp || '').replace(/['"\\]/g, '');
@@ -5243,6 +5300,34 @@
 
       applyLineBindingToBooking(b, lineUserId, lineDisplayName) {
         const cleanP = this.getCleanPhoneKey(b.phone || '');
+
+        // 🛡️ 單一 LINE ID 綁定單一手機號鐵律：若該 LINE ID 之前已被綁定給其他手機號，強制從舊手機解除，絕不重複套用！
+        if (lineUserId) {
+          if (this.phoneLineMap) {
+            Object.keys(this.phoneLineMap).forEach(pk => {
+              if (pk !== cleanP && this.phoneLineMap[pk] && this.phoneLineMap[pk].lineUserId === lineUserId) {
+                console.warn(`🛡️ [一對一防重綁] LINE ID (${lineUserId}) 原本綁定至 ${pk}，已自動解除舊綁定並轉移至 ${cleanP || '新預約'}`);
+                delete this.phoneLineMap[pk];
+              }
+            });
+            localStorage.setItem('jiangxia_phone_line_map_v1', JSON.stringify(this.phoneLineMap));
+          }
+          (this.bookings || []).forEach(item => {
+            const itemPk = this.getCleanPhoneKey(item.phone || '');
+            if (itemPk && itemPk !== cleanP && item.lineUserId === lineUserId) {
+              item.lineUserId = '';
+              item.lineDisplayName = '';
+            }
+          });
+          (this.customers || []).forEach(c => {
+            const cPk = this.getCleanPhoneKey(c.phone || '');
+            if (cPk && cPk !== cleanP && c.lineUserId === lineUserId) {
+              c.lineUserId = '';
+              c.lineDisplayName = '';
+            }
+          });
+        }
+
         b.lineUserId = lineUserId !== undefined ? lineUserId : (b.lineUserId || '');
         b.lineDisplayName = lineDisplayName !== undefined ? lineDisplayName : (b.lineDisplayName || '');
 
