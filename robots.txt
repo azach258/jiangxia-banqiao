@@ -1,0 +1,6 @@
+﻿User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /booking-dashboard/
+
+Sitemap: https://azach258.github.io/jiangxia-banqiao/sitemap.xml
