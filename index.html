@@ -93,7 +93,10 @@
             gtag('event', 'conversion', { send_to: c.send_to, value: c.value, currency: 'TWD', transport_type: 'beacon' });
             gtag('event', type, Object.assign({ cta_location: loc, page: 'landing', transport_type: 'beacon' }, JX_UTM));
           }
-          if (window.fbq && JX_CONFIG.metaPixelId) { fbq('trackCustom', type, { cta_location: loc }); }
+          // Meta 用標準事件（可當廣告優化目標）：LINE／電話＝Contact，預約完成＝Schedule；content_name 區分是哪一種
+          if (window.fbq && JX_CONFIG.metaPixelId) {
+            fbq('track', type === 'booking_complete' ? 'Schedule' : 'Contact', { content_name: type, cta_location: loc });
+          }
         } catch (e) { /* 追蹤失敗絕不可影響跳轉 */ }
       }
 
