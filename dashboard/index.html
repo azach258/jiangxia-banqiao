@@ -621,11 +621,9 @@
             <label class="block text-xs font-semibold text-slate-700 mb-1">調理方案（收費方案） <span class="text-brand-600">*</span></label>
             <select id="formService" onchange="app.onFormServiceChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
               <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0" selected>【免費】檢查評估諮詢 ｜ NT$ 0 (到店現場評估)</option>
-              <option value="頸、背、腰 (含整體結構調整)" data-duration="60" data-price="1500">頸、背、腰 (含整體結構調整) ｜ NT$ 1,500 (約 20~30 分鐘)</option>
-              <option value="骨盆調理" data-duration="60" data-price="800">骨盆調理 ｜ NT$ 800</option>
-              <option value="四肢 (肩膀/手肘/膝蓋/腳)" data-duration="60" data-price="800">四肢 (肩膀/手肘/膝蓋/腳) ｜ NT$ 800 (約 10~20 分鐘)</option>
-              <option value="手指、手腕、腳踝" data-duration="60" data-price="600">手指、手腕、腳踝 ｜ NT$ 600</option>
-                            <option value="鬆筋按摩 (30分鐘)" data-duration="30" data-price="700">鬆筋按摩 (30分鐘) ｜ NT$ 700</option>
+              <option value="全身調理 (頸、背、腰，不限部位)" data-duration="60" data-price="1500">全身調理 (頸、背、腰，不限部位) ｜ NT$ 1,500 (約 20~30 分鐘，首次預留 1 小時)</option>
+              <option value="單部位調理 (頸/腰/骨盆/單上肢/單下肢)" data-duration="60" data-price="800">單部位調理 (頸/腰/骨盆/單上肢/單下肢，任選一) ｜ NT$ 800</option>
+              <option value="經絡按摩舒壓 (30分鐘)" data-duration="30" data-price="700">經絡按摩舒壓 (30分鐘) ｜ NT$ 700</option>
               <option value="首客禮(一) 買2送1" data-duration="60" data-price="3000">首客禮(一) 買2送1 ｜ NT$ 3,000</option>
               <option value="首客禮(二) 買4送2" data-duration="60" data-price="6000">首客禮(二) 買4送2 ｜ NT$ 6,000</option>
             </select>
@@ -638,7 +636,7 @@
             </div>
           </div>
         </div>
-        <p class="text-[11px] text-slate-400 -mt-2">※ 價格會隨方案自動切換，亦可手動輸入自訂折扣價或加購金額；整復每次占用 1 小時</p>
+        <p class="text-[11px] text-slate-400 -mt-2">※ 價格會隨方案自動切換，亦可手動輸入自訂折扣價或加購金額；整復每次占用 1 小時。兩個部位以上＝每部位 800 元疊加（如單上肢＋單下肢 1,600 元），建議改選全身調理 1,500 元</p>
 
         <!-- Anti-Collision Indicator (Light Theme) -->
         <div id="conflictStatusBox" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800">
@@ -1378,11 +1376,9 @@
     const SEED_BOOKINGS = [];
 
     const SERVICE_PRICE_OPTIONS = [
-      { name: "頸、背、腰 (含整體結構調整)", shortName: "頸、背、腰", price: 1500 },
-      { name: "骨盆調理", shortName: "骨盆調理", price: 800 },
-      { name: "四肢 (肩膀/手肘/膝蓋/腳)", shortName: "四肢調理", price: 800 },
-      { name: "手指、手腕、腳踝", shortName: "手腕腳踝", price: 600 },
-            { name: "鬆筋按摩 (30分鐘)", shortName: "鬆筋30分", price: 700 },
+      { name: "全身調理 (頸、背、腰，不限部位)", shortName: "全身調理", price: 1500 },
+      { name: "單部位調理 (頸/腰/骨盆/單上肢/單下肢)", shortName: "單部位調理", price: 800 },
+      { name: "經絡按摩舒壓 (30分鐘)", shortName: "經絡按摩", price: 700 },
       { name: "首客禮(一) 買2送1", shortName: "買2送1 ($3K)", price: 3000 },
       { name: "首客禮(二) 買4送2", shortName: "買4送2 ($6K)", price: 6000 },
       { name: "【免費】檢查評估諮詢", shortName: "【免費】評估", price: 0 }
@@ -1596,6 +1592,10 @@
         if (s.includes('免費') || s.includes('諮詢') || s.includes('評估')) return 0;
         if (s.includes('首客禮(二)') || s.includes('買4送2') || s.includes('買四送二') || s.includes('6000') || s.includes('6,000')) return 6000;
         if (s.includes('首客禮(一)') || s.includes('買2送1') || s.includes('買二送一') || s.includes('3000') || s.includes('3,000')) return 3000;
+        // 2026-11-23 新版價目：全身調理 1500／單部位 800／經絡按摩舒壓 700；以下舊品名保留，讓歷史單據仍能算出當時的價格
+        if (s.includes('全身調理')) return 1500;
+        if (s.includes('單部位')) return 800;
+        if (s.includes('經絡按摩')) return 700;
         if (s.includes('600')) return 600;
         if (s.includes('700') || s.includes('30分')) return 700;
         if (s.includes('800')) return 800;

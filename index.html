@@ -361,7 +361,7 @@
             <div class="text-center mb-14" data-reveal>
                 <p class="text-[12px] text-gold tracking-[0.4em] mb-4">服 務 價 目</p>
                 <h2 class="font-classical font-bold text-[1.65rem] sm:text-4xl tracking-[0.06em] leading-[1.5]">依部位計價，費用透明</h2>
-                <p class="mt-4 text-[13px] text-ivory/60 tracking-wide">單次最高收費 NT$1,500 封頂</p>
+                <p class="mt-4 text-[13px] text-ivory/60 tracking-wide">全身調理 NT$1,500 不限部位，單次調理最高 NT$1,500</p>
             </div>
 
             <div class="grid md:grid-cols-[5fr_7fr] gap-10 md:gap-14 items-start" data-reveal>
@@ -375,36 +375,25 @@
                 <div>
                     <ul class="border-t border-gold/40">
                     <li class="border-b border-gold/25 bg-white/[0.04]">
-                        <button type="button" onclick="frontApp.openBookingModal('頸、背、腰 (含整體結構調整)', 30, 1500)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：整體推薦：頸、背、腰 NT$1,500">
-                            <span class="block"><p class="text-[11px] text-orange tracking-[0.3em] mb-1">整體推薦</p><span class="block font-classical text-lg tracking-[0.08em]">整體推薦：頸、背、腰<span class="text-ivory/50 text-sm">（含整體結構調整）</span></span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">久坐低頭後，肩頸與腰背的整體放鬆。</span></span>
+                        <button type="button" onclick="frontApp.openBookingModal('全身調理 (頸、背、腰，不限部位)', 60, 1500)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：全身調理 NT$1,500">
+                            <span class="block"><p class="text-[11px] text-orange tracking-[0.3em] mb-1">整體推薦</p><span class="block font-classical text-lg tracking-[0.08em]">全身調理<span class="text-ivory/50 text-sm">（頸、背、腰，不限部位）</span></span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">久坐低頭後，肩頸與腰背的整體放鬆。調理約 20～30 分鐘，首次來店請預留 1 小時。</span></span>
                             <span class="shrink-0 text-right"><span class="block font-classical text-2xl text-gold">NT$1,500</span><span class="block text-[12px] text-ivory/60 group-hover:text-gold mt-1">點選預約 ›</span></span>
                         </button>
                     </li>
                     <li class="border-b border-gold/25">
-                        <button type="button" onclick="frontApp.openBookingModal('手指、手腕、腳踝', 20, 600)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：手指、手腕、腳踝 NT$600">
-                            <span class="block"><span class="block font-classical text-lg tracking-[0.08em]">手指、手腕、腳踝</span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">長時間使用手機、鍵盤，或久站之後的末梢緊繃。</span></span>
-                            <span class="shrink-0 text-right"><span class="block font-classical text-2xl text-gold">NT$600</span><span class="block text-[12px] text-ivory/60 group-hover:text-gold mt-1">點選預約 ›</span></span>
-                        </button>
-                    </li>
-                    <li class="border-b border-gold/25">
-                        <button type="button" onclick="frontApp.openBookingModal('四肢 (肩膀/手肘/膝蓋/腳)', 20, 800)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：四肢 NT$800">
-                            <span class="block"><span class="block font-classical text-lg tracking-[0.08em]">四肢<span class="text-ivory/50 text-sm">（肩膀、手肘、膝蓋、腳）</span></span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">運動、搬重或久坐之後的大關節放鬆。</span></span>
+                        <button type="button" onclick="frontApp.openBookingModal('單部位調理 (頸/腰/骨盆/單上肢/單下肢)', 60, 800)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：單部位調理 NT$800">
+                            <span class="block"><span class="block font-classical text-lg tracking-[0.08em]">單部位調理<span class="text-ivory/50 text-sm">（任選一個部位）</span></span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">頸部、腰部、骨盆，或單上肢（手指、手腕、肘、肩）、單下肢（腳踝、膝、髖）擇一。</span></span>
                             <span class="shrink-0 text-right"><span class="block font-classical text-2xl text-gold">NT$800</span><span class="block text-[12px] text-ivory/60 group-hover:text-gold mt-1">點選預約 ›</span></span>
                         </button>
                     </li>
                     <li class="border-b border-gold/25">
-                        <button type="button" onclick="frontApp.openBookingModal('骨盆調理', 20, 800)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：骨盆調理 NT$800">
-                            <span class="block"><span class="block font-classical text-lg tracking-[0.08em]">骨盆調理</span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">久坐、翹腳習慣後，下半身的受力與體態平衡。</span></span>
-                            <span class="shrink-0 text-right"><span class="block font-classical text-2xl text-gold">NT$800</span><span class="block text-[12px] text-ivory/60 group-hover:text-gold mt-1">點選預約 ›</span></span>
-                        </button>
-                    </li>
-                    <li class="border-b border-gold/25">
-                        <button type="button" onclick="frontApp.openBookingModal('鬆筋按摩 (30分鐘)', 30, 700)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：鬆筋按摩 NT$700">
-                            <span class="block"><span class="block font-classical text-lg tracking-[0.08em]">鬆筋按摩<span class="text-ivory/50 text-sm">（30 分鐘）</span></span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">以放鬆為主的徒手舒緩。</span></span>
+                        <button type="button" onclick="frontApp.openBookingModal('經絡按摩舒壓 (30分鐘)', 30, 700)" class="group w-full text-left py-5 px-3 flex items-start justify-between gap-5 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold transition" aria-label="預約：經絡按摩舒壓 NT$700">
+                            <span class="block"><span class="block font-classical text-lg tracking-[0.08em]">經絡按摩舒壓<span class="text-ivory/50 text-sm">（30 分鐘）</span></span><span class="block text-[13px] text-ivory/60 mt-1 leading-7">循著經絡，以放鬆為主的徒手舒緩。</span></span>
                             <span class="shrink-0 text-right"><span class="block font-classical text-2xl text-gold">NT$700</span><span class="block text-[12px] text-ivory/60 group-hover:text-gold mt-1">點選預約 ›</span></span>
                         </button>
                     </li>
                     </ul>
+                    <p class="mt-5 text-[13px] text-ivory/60 leading-7">同一肢的手指、手腕、肘、肩（或腳踝、膝、髖）算同一個部位，不另外加價。兩個部位以上費用會疊加（例如單上肢＋單下肢＝NT$1,600），建議直接選全身調理 NT$1,500，更划算。</p>
                     <div class="mt-6 text-center md:text-left">
                         <a href="https://lin.ee/nS9fKjy" target="_blank" onclick="trackConversion('Pricing LINE', 'https://lin.ee/nS9fKjy', true); return false;" class="inline-flex items-center justify-center gap-2 h-12 px-7 border border-gold text-gold hover:bg-gold hover:text-ink transition tracking-[0.12em] text-[14px] rounded-[3px]"><i class="fa-brands fa-line text-lg"></i> 加 LINE 詢問項目</a>
                     </div>
@@ -511,7 +500,7 @@
             </div>
             <div class="border-t border-gold/40" data-reveal>
                 <details class="group border-b border-gold/40 py-5"><summary class="cursor-pointer list-none flex justify-between items-center gap-4 font-classical text-ink tracking-[0.06em]">過程會很痛嗎？<span class="text-goldDeep text-xl transition group-open:rotate-45">+</span></summary><p class="mt-3 text-[14px] text-ash leading-8">賴師傅以太極內勁的「鬆」與「拿」為基礎，順應肌肉紋理，施作中會隨時確認您的感受並調整力道。</p></details>
-                <details class="group border-b border-gold/40 py-5"><summary class="cursor-pointer list-none flex justify-between items-center gap-4 font-classical text-ink tracking-[0.06em]">費用怎麼計算？<span class="text-goldDeep text-xl transition group-open:rotate-45">+</span></summary><p class="mt-3 text-[14px] text-ash leading-8">依部位計價，單次最高收費 NT$1,500 封頂。第一次可先預約免費檢查評估，再決定是否調理。</p></details>
+                <details class="group border-b border-gold/40 py-5"><summary class="cursor-pointer list-none flex justify-between items-center gap-4 font-classical text-ink tracking-[0.06em]">費用怎麼計算？<span class="text-goldDeep text-xl transition group-open:rotate-45">+</span></summary><p class="mt-3 text-[14px] text-ash leading-8">單一部位 NT$800；全身調理 NT$1,500（不限部位），單次調理最高就是 NT$1,500。想調兩個部位以上，建議直接選全身調理更划算。第一次可先預約免費檢查評估，再決定是否調理。</p></details>
                 <details class="group border-b border-gold/40 py-5"><summary class="cursor-pointer list-none flex justify-between items-center gap-4 font-classical text-ink tracking-[0.06em]">一定要先預約嗎？<span class="text-goldDeep text-xl transition group-open:rotate-45">+</span></summary><p class="mt-3 text-[14px] text-ash leading-8">本館採預約優先制，現場直接前來可能需要久候。建議出發前透過 LINE 或電話確認當天空檔。</p></details>
                 <details class="group border-b border-gold/40 py-5"><summary class="cursor-pointer list-none flex justify-between items-center gap-4 font-classical text-ink tracking-[0.06em]">需要穿特定的服裝嗎？<span class="text-goldDeep text-xl transition group-open:rotate-45">+</span></summary><p class="mt-3 text-[14px] text-ash leading-8">建議穿著柔軟、寬鬆、有彈性的休閒衣物。下班後直接前來，館內也備有清潔消毒後的專用衣物可供更換。</p></details>
                 <details class="group border-b border-gold/40 py-5"><summary class="cursor-pointer list-none flex justify-between items-center gap-4 font-classical text-ink tracking-[0.06em]">有特殊狀況或舊傷可以來嗎？<span class="text-goldDeep text-xl transition group-open:rotate-45">+</span></summary><p class="mt-3 text-[14px] text-ash leading-8">本館屬民俗調理業，服務目的為紓解筋骨、消除疲勞，非屬醫療行為。若您處於急性骨折、脫臼、扭挫傷急性腫脹期、術後恢復期，或有重大骨骼關節疾病，請先至醫療機構由合格專科醫師評估。</p></details>
@@ -635,14 +624,14 @@
           <!-- STEP 1 -->
           <fieldset>
             <legend class="text-[15px] font-medium text-ink mb-1">1　選擇項目</legend>
-            <p class="text-[13px] text-ash mb-3">依部位計價，實際內容以賴師傅現場評估為準。</p>
+            <p class="text-[13px] text-ash mb-3">依部位計價；兩個部位以上建議直接選全身調理，更划算。實際內容以賴師傅現場評估為準。</p>
             <div class="grid grid-cols-1 gap-2" id="serviceOptionsContainer">
               <label class="service-option flex items-center justify-between gap-3 p-3.5 rounded-[3px] border border-ash/30 bg-white cursor-pointer hover:border-goldDeep transition">
                 <div class="flex items-center gap-3">
-                  <input type="radio" name="frontService" value="頸、背、腰 (含整體結構調整)" data-duration="30" data-price="1500" checked onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
+                  <input type="radio" name="frontService" value="全身調理 (頸、背、腰，不限部位)" data-duration="60" data-price="1500" checked onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
                   <div>
-                    <span class="font-medium text-[15px] text-ink block">整體推薦：頸、背、腰</span>
-                    <span class="text-[13px] text-ash">久坐低頭後的整體放鬆｜約 30 分鐘</span>
+                    <span class="font-medium text-[15px] text-ink block">全身調理（頸、背、腰，不限部位）</span>
+                    <span class="text-[13px] text-ash">久坐低頭後的整體放鬆｜調理約 20～30 分鐘，首次來店預留 1 小時</span>
                   </div>
                 </div>
                 <div class="text-right flex-shrink-0"><span class="font-classical text-lg text-goldDeep">NT$1,500</span></div>
@@ -662,7 +651,7 @@
                   <input type="radio" name="frontService" value="首客禮(一) 買2送1" data-duration="60" data-price="3000" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
                   <div>
                     <span class="font-medium text-[15px] text-ink block">首客禮 買 2 送 1</span>
-                    <span class="text-[13px] text-ash">頸、背、腰整體調理，共 3 次｜本次約 60 分鐘</span>
+                    <span class="text-[13px] text-ash">全身調理，共 3 次｜本次預留 1 小時</span>
                   </div>
                 </div>
                 <div class="text-right flex-shrink-0"><span class="font-classical text-lg text-goldDeep">NT$3,000</span><span class="block text-[12px] text-ash/80 line-through font-normal">NT$4,500</span></div>
@@ -672,47 +661,27 @@
                   <input type="radio" name="frontService" value="首客禮(二) 買4送2" data-duration="60" data-price="6000" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
                   <div>
                     <span class="font-medium text-[15px] text-ink block">首客禮 買 4 送 2</span>
-                    <span class="text-[13px] text-ash">頸、背、腰整體調理，共 6 次｜本次約 60 分鐘</span>
+                    <span class="text-[13px] text-ash">全身調理，共 6 次｜本次預留 1 小時</span>
                   </div>
                 </div>
                 <div class="text-right flex-shrink-0"><span class="font-classical text-lg text-goldDeep">NT$6,000</span><span class="block text-[12px] text-ash/80 line-through font-normal">NT$9,000</span></div>
               </label>
               <label class="service-option flex items-center justify-between gap-3 p-3.5 rounded-[3px] border border-ash/30 bg-white cursor-pointer hover:border-goldDeep transition">
                 <div class="flex items-center gap-3">
-                  <input type="radio" name="frontService" value="四肢 (肩膀/手肘/膝蓋/腳)" data-duration="20" data-price="800" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
+                  <input type="radio" name="frontService" value="單部位調理 (頸/腰/骨盆/單上肢/單下肢)" data-duration="60" data-price="800" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
                   <div>
-                    <span class="font-medium text-[15px] text-ink block">四肢</span>
-                    <span class="text-[13px] text-ash">運動、搬重或久坐後的大關節放鬆｜約 20 分鐘</span>
+                    <span class="font-medium text-[15px] text-ink block">單部位調理</span>
+                    <span class="text-[13px] text-ash">頸部、腰部、骨盆、單上肢或單下肢擇一｜首次來店預留 1 小時</span>
                   </div>
                 </div>
                 <div class="text-right flex-shrink-0"><span class="font-classical text-lg text-goldDeep">NT$800</span></div>
               </label>
               <label class="service-option flex items-center justify-between gap-3 p-3.5 rounded-[3px] border border-ash/30 bg-white cursor-pointer hover:border-goldDeep transition">
                 <div class="flex items-center gap-3">
-                  <input type="radio" name="frontService" value="骨盆調理" data-duration="20" data-price="800" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
+                  <input type="radio" name="frontService" value="經絡按摩舒壓 (30分鐘)" data-duration="30" data-price="700" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
                   <div>
-                    <span class="font-medium text-[15px] text-ink block">骨盆調理</span>
-                    <span class="text-[13px] text-ash">久坐、翹腳習慣後，下半身的受力與體態平衡｜約 20 分鐘</span>
-                  </div>
-                </div>
-                <div class="text-right flex-shrink-0"><span class="font-classical text-lg text-goldDeep">NT$800</span></div>
-              </label>
-              <label class="service-option flex items-center justify-between gap-3 p-3.5 rounded-[3px] border border-ash/30 bg-white cursor-pointer hover:border-goldDeep transition">
-                <div class="flex items-center gap-3">
-                  <input type="radio" name="frontService" value="手指、手腕、腳踝" data-duration="20" data-price="600" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
-                  <div>
-                    <span class="font-medium text-[15px] text-ink block">手指、手腕、腳踝</span>
-                    <span class="text-[13px] text-ash">長時間使用手機、鍵盤後的末梢緊繃｜約 20 分鐘</span>
-                  </div>
-                </div>
-                <div class="text-right flex-shrink-0"><span class="font-classical text-lg text-goldDeep">NT$600</span></div>
-              </label>
-              <label class="service-option flex items-center justify-between gap-3 p-3.5 rounded-[3px] border border-ash/30 bg-white cursor-pointer hover:border-goldDeep transition">
-                <div class="flex items-center gap-3">
-                  <input type="radio" name="frontService" value="鬆筋按摩 (30分鐘)" data-duration="30" data-price="700" onchange="frontApp.handleServiceChange()" class="w-4 h-4 accent-[#856530] flex-shrink-0">
-                  <div>
-                    <span class="font-medium text-[15px] text-ink block">鬆筋按摩</span>
-                    <span class="text-[13px] text-ash">以放鬆為主的徒手舒緩｜30 分鐘</span>
+                    <span class="font-medium text-[15px] text-ink block">經絡按摩舒壓</span>
+                    <span class="text-[13px] text-ash">循經絡、以放鬆為主的徒手舒緩｜30 分鐘</span>
                   </div>
                 </div>
                 <div class="text-right flex-shrink-0"><span class="font-classical text-lg text-goldDeep">NT$700</span></div>
@@ -811,7 +780,7 @@
         id: "b-1",
         customerName: "王大偉",
         phone: "0912345678",
-        serviceItem: "頸、背、腰 (含整體結構調整)",
+        serviceItem: "全身調理 (頸、背、腰，不限部位)",
         durationMin: 60,
         price: 1500,
         paymentMethod: "現金",
@@ -825,8 +794,8 @@
         id: "b-2",
         customerName: "李小姐",
         phone: "0988765432",
-        serviceItem: "骨盆調理",
-        durationMin: 20,
+        serviceItem: "單部位調理 (頸/腰/骨盆/單上肢/單下肢)",
+        durationMin: 60,
         price: 800,
         paymentMethod: "LINE Pay",
         status: "已到店",
@@ -839,7 +808,7 @@
         id: "b-3",
         customerName: "張經理",
         phone: "0933222111",
-        serviceItem: "頸、背、腰 (含整體結構調整)",
+        serviceItem: "全身調理 (頸、背、腰，不限部位)",
         durationMin: 60,
         price: 1500,
         paymentMethod: "現金",
@@ -886,8 +855,8 @@
         const d = String(now.getDate()).padStart(2, '0');
         this.selectedDateStr = `${y}-${m}-${d}`;
         this.selectedTimeStr = "14:00";
-        this.selectedService = "頸、背、腰 (含整體結構調整)";
-        this.selectedDuration = 30;
+        this.selectedService = "全身調理 (頸、背、腰，不限部位)";
+        this.selectedDuration = 60;
         this.selectedPrice = 1500;
 
         // 雲端 API 設定 (支援 URL 參數 ?api= 或共用 localStorage)
