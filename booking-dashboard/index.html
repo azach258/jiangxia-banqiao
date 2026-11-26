@@ -620,12 +620,12 @@
           <div class="sm:col-span-2">
             <label class="block text-xs font-semibold text-slate-700 mb-1">調理方案（收費方案） <span class="text-brand-600">*</span></label>
             <select id="formService" onchange="app.onFormServiceChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white transition font-medium">
-              <option value="【免費】檢查評估諮詢" data-duration="60" data-price="0" selected>【免費】檢查評估諮詢 ｜ NT$ 0 (到店現場評估)</option>
-              <option value="全身調理 (頸、背、腰，不限部位)" data-duration="60" data-price="1500">全身調理 (頸、背、腰，不限部位) ｜ NT$ 1,500 (約 20~30 分鐘，首次預留 1 小時)</option>
-              <option value="單部位調理 (頸/腰/骨盆/單上肢/單下肢)" data-duration="60" data-price="800">單部位調理 (頸/腰/骨盆/單上肢/單下肢，任選一) ｜ NT$ 800</option>
+              <option value="【免費】檢查評估諮詢" data-duration="30" data-price="0" selected>【免費】檢查評估諮詢 ｜ NT$ 0 (到店現場評估)</option>
+              <option value="全身調理 (頸、背、腰，不限部位)" data-duration="30" data-price="1500">全身調理 (頸、背、腰，不限部位) ｜ NT$ 1,500 (約 20~30 分鐘)</option>
+              <option value="單部位調理 (頸/腰/骨盆/單上肢/單下肢)" data-duration="30" data-price="800">單部位調理 (頸/腰/骨盆/單上肢/單下肢，任選一) ｜ NT$ 800</option>
               <option value="經絡按摩舒壓 (30分鐘)" data-duration="30" data-price="700">經絡按摩舒壓 (30分鐘) ｜ NT$ 700</option>
-              <option value="首客禮(一) 買2送1" data-duration="60" data-price="3000">首客禮(一) 買2送1 ｜ NT$ 3,000</option>
-              <option value="首客禮(二) 買4送2" data-duration="60" data-price="6000">首客禮(二) 買4送2 ｜ NT$ 6,000</option>
+              <option value="首客禮(一) 買2送1" data-duration="30" data-price="3000">首客禮(一) 買2送1 ｜ NT$ 3,000</option>
+              <option value="首客禮(二) 買4送2" data-duration="30" data-price="6000">首客禮(二) 買4送2 ｜ NT$ 6,000</option>
             </select>
           </div>
           <div>
@@ -636,7 +636,7 @@
             </div>
           </div>
         </div>
-        <p class="text-[11px] text-slate-400 -mt-2">※ 價格會隨方案自動切換，亦可手動輸入自訂折扣價或加購金額；整復每次占用 1 小時。兩個部位以上＝每部位 800 元疊加（如單上肢＋單下肢 1,600 元），建議改選全身調理 1,500 元</p>
+        <p class="text-[11px] text-slate-400 -mt-2">※ 價格會隨方案自動切換，亦可手動輸入自訂折扣價或加購金額；每筆預約占用 30 分鐘。兩個部位以上＝每部位 800 元疊加（如單上肢＋單下肢 1,600 元），建議改選全身調理 1,500 元</p>
 
         <!-- Anti-Collision Indicator (Light Theme) -->
         <div id="conflictStatusBox" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2 text-emerald-800">
@@ -2323,7 +2323,7 @@
           b.customerName,
           b.phone,
           b.serviceItem,
-          b.durationMin || 60,
+          b.durationMin || 30,
           (b.price !== undefined && b.price !== null ? Number(b.price) : 1200),
           b.paymentMethod || '現金',
           b.status,
@@ -2579,7 +2579,7 @@
       }
 
       // ==========================================
-      // 3. 單一師傅排程總表 (週一至週五 14:00 ~ 22:00 ｜ 每次1小時)
+      // 3. 單一師傅排程總表 (週一至週五 14:00 ~ 22:00 ｜ 每次30分鐘)
       // ==========================================
       renderTimeline() {
         const container = document.getElementById('timelineContainer');
@@ -2813,7 +2813,7 @@
         }
         const serviceSelect = document.getElementById('formService');
         const isHalfHourSlot = time && time.endsWith(':30');
-        const duration = isHalfHourSlot ? 30 : parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        const duration = isHalfHourSlot ? 30 : parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 30, 10);
         
         const box = document.getElementById('conflictStatusBox');
         const text = document.getElementById('conflictStatusText');
@@ -3066,7 +3066,7 @@
         const service = serviceSelect.value;
         const startCheck = new Date(`${date}T${time}:00`);
         const hasNextHalfHour = this.bookings.some(b => b.status !== '已取消' && Math.abs(new Date(b.start.replace(' ', 'T')).getTime() - (startCheck.getTime() + 30 * 60 * 1000)) < 60000);
-        const duration = (time.endsWith(':30') || hasNextHalfHour) ? 30 : parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 60, 10);
+        const duration = (time.endsWith(':30') || hasNextHalfHour) ? 30 : parseInt(serviceSelect.selectedOptions[0]?.dataset.duration || 30, 10);
         // 若本次新增為半點 (例如 21:30)，且前一個整點 (例如 21:00) 原本預設結束時間為 22:00，自動將前一個整點結束時間收斂為 21:30，讓 21:00~21:30 與 21:30~22:00 完美接力！
         this.bookings.forEach(b => {
           if (b.status === '已取消') return;
@@ -3882,7 +3882,7 @@
                   phone: standardPhone,
                   serviceItem: meta.serviceItem || evt.serviceItem || '傳統整復調理',
                   bodyParts: meta.bodyParts || [],
-                  durationMin: meta.durationMin || 60,
+                  durationMin: meta.durationMin || 30,
                   price: price,
                   paymentMethod: meta.paymentMethod || evt.paymentMethod || '現金',
                   status: meta.status || evt.status || '已確認',
@@ -4186,7 +4186,7 @@
               customerName: b.customerName,
               phone: b.phone,
               serviceItem: b.serviceItem,
-              durationMin: b.durationMin || 60,
+              durationMin: b.durationMin || 30,
               price: b.price,
               paymentMethod: b.paymentMethod || '現金',
               status: b.status || '已確認',
@@ -6256,7 +6256,7 @@
           return;
         }
 
-        const duration = b.durationMin || 60;
+        const duration = b.durationMin || 30;
         const newStart = new Date(`${newDate}T${newTime}:00`);
         const newEnd = new Date(newStart.getTime() + duration * 60 * 1000);
 
